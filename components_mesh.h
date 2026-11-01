@@ -194,7 +194,10 @@ struct Part {
     std::string ten;
     Mesh3D mesh;
     MaTran4x4 bienDoiCucBo;
-    Diem3D partExplodeVec = Diem3D(0.0f, 0.0f, 0.0f); // Vector tách lớp con khi kéo slider ở Chế độ 2
+    int subAssemblyId = 0; // 0: Cố định trên PCB, 1: Cụm trung tâm, 2: Cụm phụ trợ, 3..: Cụm cổng ngoại vi
+    Diem3D partExplodeVec = Diem3D(0.0f, 0.0f, 0.0f); // Mọi Part cùng subAssemblyId có cùng partExplodeVec (độ dài <= 1.2 cm)
+    Diem3D anchorOnPCB = Diem3D(0.0f, 0.0f, 0.0f);    // Tọa độ điểm neo trên mặt PCB để vẽ đường gióng lắp ráp
+    bool isLeadAnchor = false;                         // true cho Part đại diện của cụm để vẽ 1 đường gióng duy nhất cho cả cụm
 };
 
 struct Pin {
@@ -331,58 +334,101 @@ inline void khoiTao11LinhKien(std::vector<LinhKien>& ds) {
         lk.toaDo2D       = Diem2D(460.0f, 380.0f);
         lk.rong2D        = 130.0f; lk.cao2D = 90.0f;
 
-        // PCB Xanh cổ vịt đặc trưng Arduino (0, 130, 140)
+        // CỤM 0: PCB Cố định (0, 0, 0)
         Part pcb;
         pcb.ten = "PCB";
         pcb.mesh = taoKhoiHop(6.8f, 0.20f, 5.3f, MauSac(0, 130, 140));
+        pcb.subAssemblyId = 0;
         pcb.partExplodeVec = Diem3D(0.0f, 0.0f, 0.0f);
         lk.parts.push_back(pcb);
 
-        // Cổng USB kim loại bạc tại (-2.8, 0.65, -1.2)
+        // 4 Lỗ ốc góc
+        for (float hx : {-3.1f, 3.1f}) {
+            for (float hz : {-2.3f, 2.3f}) {
+                Part hole;
+                hole.ten = "Mount_Hole";
+                hole.mesh = taoKhoiTru(0.22f, 0.22f, 8, MauSac(225, 230, 235));
+                hole.bienDoiCucBo = taoMaTranTinhTien(hx, 0.1f, hz);
+                hole.subAssemblyId = 0;
+                hole.partExplodeVec = Diem3D(0.0f, 0.0f, 0.0f);
+                lk.parts.push_back(hole);
+            }
+        }
+
+        // Đế cắm DIP-28 đen gắn cố định trên PCB
+        Part mcuSocket;
+        mcuSocket.ten = "MCU_Socket";
+        mcuSocket.mesh = taoKhoiHop(3.5f, 0.25f, 0.9f, MauSac(20, 20, 25));
+        mcuSocket.bienDoiCucBo = taoMaTranTinhTien(0.8f, 0.22f, 0.6f);
+        mcuSocket.subAssemblyId = 0;
+        mcuSocket.partExplodeVec = Diem3D(0.0f, 0.0f, 0.0f);
+        lk.parts.push_back(mcuSocket);
+
+        // Nút bấm Reset tròn đỏ
+        Part btn;
+        btn.ten = "Reset_Button";
+        btn.mesh = taoKhoiHop(0.4f, 0.35f, 0.4f, MauSac(220, 45, 45));
+        btn.bienDoiCucBo = taoMaTranTinhTien(-2.9f, 0.32f, -2.2f);
+        btn.subAssemblyId = 0;
+        btn.partExplodeVec = Diem3D(0.0f, 0.0f, 0.0f);
+        lk.parts.push_back(btn);
+
+        // Thạch anh dao động bạc hình elip
+        Part crystal;
+        crystal.ten = "Crystal";
+        crystal.mesh = taoKhoiHop(1.0f, 0.35f, 0.45f, MauSac(205, 210, 215));
+        crystal.bienDoiCucBo = taoMaTranTinhTien(-0.8f, 0.3f, -0.6f);
+        crystal.subAssemblyId = 0;
+        crystal.partExplodeVec = Diem3D(0.0f, 0.0f, 0.0f);
+        lk.parts.push_back(crystal);
+
+        // CỤM 1: Chip MCU chính ATmega328P nhấc lên +0.9 cm
+        Part mcuBody;
+        mcuBody.ten = "IC_ATmega328P";
+        mcuBody.mesh = taoKhoiHop(3.4f, 0.35f, 0.85f, MauSac(28, 30, 36));
+        mcuBody.bienDoiCucBo = taoMaTranTinhTien(0.8f, 0.55f, 0.6f);
+        mcuBody.subAssemblyId = 1;
+        mcuBody.partExplodeVec = Diem3D(0.0f, 0.9f, 0.0f);
+        mcuBody.anchorOnPCB = Diem3D(0.8f, 0.2f, 0.6f);
+        mcuBody.isLeadAnchor = true;
+        lk.parts.push_back(mcuBody);
+
+        // CỤM 2: Cổng USB-B bạc & Jack nguồn DC (-0.5, +0.4, 0.0)
         Part usb;
         usb.ten = "USB_Port";
-        usb.mesh = taoKhoiHop(1.6f, 1.1f, 1.2f, MauSac(200, 205, 210));
+        usb.mesh = taoKhoiHop(1.6f, 1.1f, 1.2f, MauSac(205, 210, 215));
         usb.bienDoiCucBo = taoMaTranTinhTien(-2.8f, 0.65f, -1.2f);
-        usb.partExplodeVec = Diem3D(0.0f, 0.0f, -2.5f);
+        usb.subAssemblyId = 2;
+        usb.partExplodeVec = Diem3D(-0.5f, 0.4f, 0.0f);
+        usb.anchorOnPCB = Diem3D(-2.8f, 0.2f, -1.2f);
+        usb.isLeadAnchor = true;
         lk.parts.push_back(usb);
 
-        // Jack nguồn DC đen tại (-2.8, 0.65, 1.5)
         Part dc;
         dc.ten = "DC_Jack";
         dc.mesh = taoKhoiHop(1.4f, 1.1f, 0.9f, MauSac(35, 35, 40));
         dc.bienDoiCucBo = taoMaTranTinhTien(-2.8f, 0.65f, 1.5f);
-        dc.partExplodeVec = Diem3D(-2.0f, 0.0f, 2.0f);
+        dc.subAssemblyId = 2;
+        dc.partExplodeVec = Diem3D(-0.5f, 0.4f, 0.0f);
         lk.parts.push_back(dc);
 
-        // Đế cắm chip MCU DIP-28 đen tại (0.8, 0.3, 0.6)
-        Part mcu;
-        mcu.ten = "MCU_Socket";
-        mcu.mesh = taoKhoiHop(2.8f, 0.4f, 0.9f, MauSac(25, 25, 30));
-        mcu.bienDoiCucBo = taoMaTranTinhTien(0.8f, 0.3f, 0.6f);
-        mcu.partExplodeVec = Diem3D(0.0f, 2.5f, 0.0f);
-        lk.parts.push_back(mcu);
-
-        // Nút bấm Reset tròn đỏ tại (-2.9, 0.35, -2.2)
-        Part btn;
-        btn.ten = "Reset_Button";
-        btn.mesh = taoKhoiHop(0.4f, 0.4f, 0.4f, MauSac(220, 50, 50));
-        btn.bienDoiCucBo = taoMaTranTinhTien(-2.9f, 0.35f, -2.2f);
-        btn.partExplodeVec = Diem3D(0.0f, 1.8f, -1.5f);
-        lk.parts.push_back(btn);
-
-        // Hàng chân cắm Pin Headers màu đen với đỉnh tiếp xúc màu vàng đồng
+        // CỤM 3: Các thanh Header cắm dây nhấc lên +0.5 cm
         Part headerDig;
         headerDig.ten = "Header_Digital";
         headerDig.mesh = taoKhoiHop(4.8f, 0.85f, 0.28f, MauSac(20, 20, 25));
         headerDig.bienDoiCucBo = taoMaTranTinhTien(0.5f, 0.5f, -2.4f);
-        headerDig.partExplodeVec = Diem3D(0.0f, 1.5f, -2.5f);
+        headerDig.subAssemblyId = 3;
+        headerDig.partExplodeVec = Diem3D(0.0f, 0.5f, 0.0f);
+        headerDig.anchorOnPCB = Diem3D(0.5f, 0.2f, -2.4f);
+        headerDig.isLeadAnchor = true;
         lk.parts.push_back(headerDig);
 
         Part headerPwr;
         headerPwr.ten = "Header_Power";
         headerPwr.mesh = taoKhoiHop(4.2f, 0.85f, 0.28f, MauSac(20, 20, 25));
         headerPwr.bienDoiCucBo = taoMaTranTinhTien(0.5f, 0.5f, 2.4f);
-        headerPwr.partExplodeVec = Diem3D(0.0f, 1.5f, 2.5f);
+        headerPwr.subAssemblyId = 3;
+        headerPwr.partExplodeVec = Diem3D(0.0f, 0.5f, 0.0f);
         lk.parts.push_back(headerPwr);
 
         // Pins: Digital (z = -2.4)
@@ -403,6 +449,8 @@ inline void khoiTao11LinhKien(std::vector<LinhKien>& ds) {
 
     // ---------------------------------------------------------------------
     // 2. MODULE CẦU H L298N (L298N) - Tầng 1 (Giữa-Sau): (0.0, 2.5, -3.5)
+    // Thiết kế chuẩn CAD/SolidWorks theo ke_hoach_trien_khai_chi_tiet_3.md
+    // Kích thước bao: 4.3 x 2.7 x 4.3 cm
     // ---------------------------------------------------------------------
     {
         LinhKien lk;
@@ -412,83 +460,217 @@ inline void khoiTao11LinhKien(std::vector<LinhKien>& ds) {
         lk.vaiTro = "Khuech dai cong suat: Dieu khien 2 dong co DC banh xe, nhan PWM (ENA, ENB) va tin hieu huong tu Arduino.";
         lk.category = InspectCategory::STATIC_VIEW_ONLY;
         lk.inspectRadius = 12.0f;
-        lk.kichThuocBao  = Diem3D(4.3f, 2.8f, 4.3f);
+        lk.kichThuocBao  = Diem3D(4.3f, 2.7f, 4.3f);
         lk.vectorTachRoi = Diem3D(0.0f, 4.5f, -6.0f);
         lk.viTriLapDat   = taoMaTranTinhTien(0.0f, 2.5f, -3.5f);
         lk.labelOffset   = Diem3D(-4.0f, 2.0f, -2.0f);
         lk.toaDo2D       = Diem2D(280.0f, 260.0f);
         lk.rong2D        = 90.0f; lk.cao2D = 80.0f;
 
-        // PCB Đỏ sẫm (185, 25, 25)
+        // --- CỤM 0 (PCB CỐ ĐỊNH, partExplodeVec = (0,0,0)) ---
+        // Tấm mạch PCB Đỏ (190, 30, 30)
         Part pcb;
-        pcb.ten = "PCB";
-        pcb.mesh = taoKhoiHop(4.3f, 0.20f, 4.3f, MauSac(185, 25, 25));
+        pcb.ten = "PCB_Board";
+        pcb.mesh = taoKhoiHop(4.3f, 0.20f, 4.3f, MauSac(190, 30, 30));
+        pcb.bienDoiCucBo = taoMaTranTinhTien(0.0f, 0.1f, 0.0f);
+        pcb.subAssemblyId = 0;
         pcb.partExplodeVec = Diem3D(0.0f, 0.0f, 0.0f);
         lk.parts.push_back(pcb);
 
-        // Khối tản nhiệt nhôm đen gồm 5 LÁ TẢN NHIỆT ĐỨNG đặc trưng
-        for (int f = -2; f <= 2; ++f) {
+        // 4 Vòng đệm / lỗ bắt ốc ở 4 góc (±1.85, 0.1, ±1.85)
+        float hx[2] = {-1.85f, 1.85f};
+        float hz[2] = {-1.85f, 1.85f};
+        for (int i = 0; i < 2; ++i) {
+            for (int j = 0; j < 2; ++j) {
+                Part hole;
+                hole.ten = "Mount_Hole";
+                hole.mesh = taoKhoiTru(0.22f, 0.24f, 8, MauSac(220, 180, 50));
+                hole.bienDoiCucBo = taoMaTranTinhTien(hx[i], 0.1f, hz[j]);
+                hole.subAssemblyId = 0;
+                hole.partExplodeVec = Diem3D(0.0f, 0.0f, 0.0f);
+                lk.parts.push_back(hole);
+            }
+        }
+
+        // IC Ổn áp 5V 78M05 tại (-0.6, 0.35, -0.8)
+        Part reg7805;
+        reg7805.ten = "Regulator_78M05";
+        reg7805.mesh = taoKhoiHop(0.9f, 0.4f, 0.6f, MauSac(40, 42, 48));
+        reg7805.bienDoiCucBo = taoMaTranTinhTien(-0.6f, 0.35f, -0.8f);
+        reg7805.subAssemblyId = 0;
+        reg7805.partExplodeVec = Diem3D(0.0f, 0.0f, 0.0f);
+        lk.parts.push_back(reg7805);
+
+        // 8 Đi-ốt bảo vệ M7 xếp 2 hàng tại (±1.1, 0.25, -0.3 .. +0.6)
+        for (int side = -1; side <= 1; side += 2) {
+            for (int k = 0; k < 4; ++k) {
+                Part diode;
+                diode.ten = "Diode_M7";
+                diode.mesh = taoKhoiHop(0.25f, 0.2f, 0.35f, MauSac(50, 50, 55));
+                diode.bienDoiCucBo = taoMaTranTinhTien(side * 1.1f, 0.25f, -0.3f + k * 0.3f);
+                diode.subAssemblyId = 0;
+                diode.partExplodeVec = Diem3D(0.0f, 0.0f, 0.0f);
+                lk.parts.push_back(diode);
+            }
+        }
+
+        // --- CỤM 1 (CỤM TẢN NHIỆT & IC L298N, partExplodeVec = (0.0, +1.1, 0.0)) ---
+        // 1. Đế lưng nhôm ngang Box(2.2, 2.2, 0.3) tại (0.0, 1.3, +0.35)
+        Part hsBase;
+        hsBase.ten = "Heatsink_Base";
+        hsBase.mesh = taoKhoiHop(2.2f, 2.2f, 0.3f, MauSac(45, 48, 55));
+        hsBase.bienDoiCucBo = taoMaTranTinhTien(0.0f, 1.3f, 0.35f);
+        hsBase.subAssemblyId = 1;
+        hsBase.partExplodeVec = Diem3D(0.0f, 1.1f, 0.0f);
+        hsBase.anchorOnPCB = Diem3D(0.0f, 0.2f, 0.35f);
+        hsBase.isLeadAnchor = true;
+        lk.parts.push_back(hsBase);
+
+        // 2. 7 Cánh tản nhiệt nhôm mỏng Box(0.14, 2.2, 1.1) dài 1.1 cm, z = +0.95
+        float finX[7] = {-0.9f, -0.6f, -0.3f, 0.0f, 0.3f, 0.6f, 0.9f};
+        for (int f = 0; f < 7; ++f) {
             Part fin;
             fin.ten = "Heatsink_Fin";
-            fin.mesh = taoKhoiHop(0.18f, 2.4f, 1.8f, MauSac(35, 38, 42));
-            fin.bienDoiCucBo = taoMaTranTinhTien(f * 0.35f, 1.3f, -0.4f);
-            fin.partExplodeVec = Diem3D(0.0f, 3.2f, 0.0f);
+            fin.mesh = taoKhoiHop(0.14f, 2.2f, 1.1f, MauSac(35, 38, 45));
+            fin.bienDoiCucBo = taoMaTranTinhTien(finX[f], 1.3f, 0.95f);
+            fin.subAssemblyId = 1;
+            fin.partExplodeVec = Diem3D(0.0f, 1.1f, 0.0f);
             lk.parts.push_back(fin);
         }
 
-        // 3 Khối Domino Terminal Xanh dương
-        Part termOutL; // OUT1, OUT2
+        // 3. Thân chip công suất IC L298N Multiwatt-15 Box(1.9, 1.1, 0.45) áp trước tản nhiệt
+        Part icBody;
+        icBody.ten = "IC_L298N_Body";
+        icBody.mesh = taoKhoiHop(1.9f, 1.1f, 0.45f, MauSac(28, 30, 35));
+        icBody.bienDoiCucBo = taoMaTranTinhTien(0.0f, 1.1f, 0.05f);
+        icBody.subAssemblyId = 1;
+        icBody.partExplodeVec = Diem3D(0.0f, 1.1f, 0.0f);
+        lk.parts.push_back(icBody);
+
+        // --- CỤM 2 (CỤM 2 TỤ LỌC NGUỒN, partExplodeVec = (0.0, +0.65, 0.0)) ---
+        float capPos[2] = {-0.75f, 0.75f};
+        for (int c = 0; c < 2; ++c) {
+            Part capBody;
+            capBody.ten = "Cap_Body";
+            capBody.mesh = taoKhoiTru(0.38f, 1.2f, 12, MauSac(30, 30, 35));
+            capBody.bienDoiCucBo = taoMaTranTinhTien(capPos[c], 0.8f, -0.2f);
+            capBody.subAssemblyId = 2;
+            capBody.partExplodeVec = Diem3D(0.0f, 0.65f, 0.0f);
+            if (c == 0) {
+                capBody.anchorOnPCB = Diem3D(-0.75f, 0.2f, -0.2f);
+                capBody.isLeadAnchor = true;
+            }
+            lk.parts.push_back(capBody);
+
+            Part capLid;
+            capLid.ten = "Cap_Lid";
+            capLid.mesh = taoKhoiTru(0.32f, 0.05f, 12, MauSac(210, 215, 220));
+            capLid.bienDoiCucBo = taoMaTranTinhTien(capPos[c], 1.42f, -0.2f);
+            capLid.subAssemblyId = 2;
+            capLid.partExplodeVec = Diem3D(0.0f, 0.65f, 0.0f);
+            lk.parts.push_back(capLid);
+        }
+
+        // --- CỤM 3 (CỔNG OUT1-OUT2 TRÁI, partExplodeVec = (-0.5, +0.5, 0.0)) ---
+        Part termOutL;
         termOutL.ten = "Term_OUT_L";
-        termOutL.mesh = taoKhoiHop(1.0f, 1.2f, 1.6f, MauSac(30, 100, 220));
-        termOutL.bienDoiCucBo = taoMaTranTinhTien(-1.6f, 0.7f, 0.6f);
-        termOutL.partExplodeVec = Diem3D(-2.5f, 0.0f, 0.0f);
+        termOutL.mesh = taoKhoiHop(0.75f, 1.0f, 1.0f, MauSac(25, 115, 230));
+        termOutL.bienDoiCucBo = taoMaTranTinhTien(-1.75f, 0.7f, 0.5f);
+        termOutL.subAssemblyId = 3;
+        termOutL.partExplodeVec = Diem3D(-0.5f, 0.5f, 0.0f);
+        termOutL.anchorOnPCB = Diem3D(-1.75f, 0.2f, 0.5f);
+        termOutL.isLeadAnchor = true;
         lk.parts.push_back(termOutL);
 
-        Part termOutR; // OUT3, OUT4
+        for (float vz : {0.2f, 0.8f}) {
+            Part screw;
+            screw.ten = "Screw";
+            screw.mesh = taoKhoiTru(0.2f, 0.08f, 8, MauSac(210, 215, 220));
+            screw.bienDoiCucBo = taoMaTranTinhTien(-1.75f, 1.24f, vz);
+            screw.subAssemblyId = 3;
+            screw.partExplodeVec = Diem3D(-0.5f, 0.5f, 0.0f);
+            lk.parts.push_back(screw);
+        }
+
+        // --- CỤM 4 (CỔNG OUT3-OUT4 PHẢI, partExplodeVec = (+0.5, +0.5, 0.0)) ---
+        Part termOutR;
         termOutR.ten = "Term_OUT_R";
-        termOutR.mesh = taoKhoiHop(1.0f, 1.2f, 1.6f, MauSac(30, 100, 220));
-        termOutR.bienDoiCucBo = taoMaTranTinhTien(1.6f, 0.7f, 0.6f);
-        termOutR.partExplodeVec = Diem3D(2.5f, 0.0f, 0.0f);
+        termOutR.mesh = taoKhoiHop(0.75f, 1.0f, 1.0f, MauSac(25, 115, 230));
+        termOutR.bienDoiCucBo = taoMaTranTinhTien(1.75f, 0.7f, 0.5f);
+        termOutR.subAssemblyId = 4;
+        termOutR.partExplodeVec = Diem3D(0.5f, 0.5f, 0.0f);
+        termOutR.anchorOnPCB = Diem3D(1.75f, 0.2f, 0.5f);
+        termOutR.isLeadAnchor = true;
         lk.parts.push_back(termOutR);
 
-        Part termPwr; // +12V, GND, +5V
+        for (float vz : {0.2f, 0.8f}) {
+            Part screw;
+            screw.ten = "Screw";
+            screw.mesh = taoKhoiTru(0.2f, 0.08f, 8, MauSac(210, 215, 220));
+            screw.bienDoiCucBo = taoMaTranTinhTien(1.75f, 1.24f, vz);
+            screw.subAssemblyId = 4;
+            screw.partExplodeVec = Diem3D(0.5f, 0.5f, 0.0f);
+            lk.parts.push_back(screw);
+        }
+
+        // --- CỤM 5 (CỔNG NGUỒN 3 VÍT, partExplodeVec = (0.0, +0.5, -0.5)) ---
+        Part termPwr;
         termPwr.ten = "Term_Power";
-        termPwr.mesh = taoKhoiHop(2.2f, 1.2f, 1.0f, MauSac(30, 100, 220));
-        termPwr.bienDoiCucBo = taoMaTranTinhTien(0.0f, 0.7f, 1.6f);
-        termPwr.partExplodeVec = Diem3D(0.0f, 0.0f, 2.5f);
+        termPwr.mesh = taoKhoiHop(1.5f, 1.0f, 0.75f, MauSac(25, 115, 230));
+        termPwr.bienDoiCucBo = taoMaTranTinhTien(-0.2f, 0.7f, -1.65f);
+        termPwr.subAssemblyId = 5;
+        termPwr.partExplodeVec = Diem3D(0.0f, 0.5f, -0.5f);
+        termPwr.anchorOnPCB = Diem3D(-0.2f, 0.2f, -1.65f);
+        termPwr.isLeadAnchor = true;
         lk.parts.push_back(termPwr);
 
-        // 2 Tụ lọc đứng màu đen bạc
-        Part cap1;
-        cap1.ten = "Cap1";
-        cap1.mesh = taoKhoiTru(0.42f, 1.4f, 10, MauSac(30, 32, 36));
-        cap1.bienDoiCucBo = taoMaTranTinhTien(-0.6f, 0.8f, 0.8f);
-        cap1.partExplodeVec = Diem3D(-0.5f, 2.2f, 1.0f);
-        lk.parts.push_back(cap1);
+        for (float vx : {-0.6f, -0.2f, 0.2f}) {
+            Part screw;
+            screw.ten = "Screw";
+            screw.mesh = taoKhoiTru(0.2f, 0.08f, 8, MauSac(210, 215, 220));
+            screw.bienDoiCucBo = taoMaTranTinhTien(vx, 1.24f, -1.65f);
+            screw.subAssemblyId = 5;
+            screw.partExplodeVec = Diem3D(0.0f, 0.5f, -0.5f);
+            lk.parts.push_back(screw);
+        }
 
-        Part cap2;
-        cap2.ten = "Cap2";
-        cap2.mesh = taoKhoiTru(0.42f, 1.4f, 10, MauSac(30, 32, 36));
-        cap2.bienDoiCucBo = taoMaTranTinhTien(0.6f, 0.8f, 0.8f);
-        cap2.partExplodeVec = Diem3D(0.5f, 2.2f, 1.0f);
-        lk.parts.push_back(cap2);
+        // --- CỤM 6 (CỤM HEADER 6 CHÂN, partExplodeVec = (0.0, +0.45, -0.3)) ---
+        Part hdrBase;
+        hdrBase.ten = "Header_Base";
+        hdrBase.mesh = taoKhoiHop(1.6f, 0.25f, 0.25f, MauSac(25, 25, 30));
+        hdrBase.bienDoiCucBo = taoMaTranTinhTien(0.8f, 0.35f, -1.75f);
+        hdrBase.subAssemblyId = 6;
+        hdrBase.partExplodeVec = Diem3D(0.0f, 0.45f, -0.3f);
+        hdrBase.anchorOnPCB = Diem3D(0.8f, 0.2f, -1.75f);
+        hdrBase.isLeadAnchor = true;
+        lk.parts.push_back(hdrBase);
+
+        for (int p = 0; p < 6; ++p) {
+            Part pin;
+            pin.ten = "Pin_Header";
+            pin.mesh = taoKhoiHop(0.08f, 0.6f, 0.08f, MauSac(235, 195, 50));
+            pin.bienDoiCucBo = taoMaTranTinhTien(0.3f + p * 0.2f, 0.6f, -1.75f);
+            pin.subAssemblyId = 6;
+            pin.partExplodeVec = Diem3D(0.0f, 0.45f, -0.3f);
+            lk.parts.push_back(pin);
+        }
 
         // Pins:
-        lk.pins.push_back({"ENA",  Diem3D(-1.2f, 0.4f, -1.9f), -1});
-        lk.pins.push_back({"IN1",  Diem3D(-0.8f, 0.4f, -1.9f), -1});
-        lk.pins.push_back({"IN2",  Diem3D(-0.2f, 0.4f, -1.9f), -1});
-        lk.pins.push_back({"IN3",  Diem3D( 0.2f, 0.4f, -1.9f), -1});
-        lk.pins.push_back({"IN4",  Diem3D( 0.8f, 0.4f, -1.9f), -1});
-        lk.pins.push_back({"ENB",  Diem3D( 1.2f, 0.4f, -1.9f), -1});
+        lk.pins.push_back({"ENA",  Diem3D( 0.3f, 0.6f, -1.75f), -1});
+        lk.pins.push_back({"IN1",  Diem3D( 0.5f, 0.6f, -1.75f), -1});
+        lk.pins.push_back({"IN2",  Diem3D( 0.7f, 0.6f, -1.75f), -1});
+        lk.pins.push_back({"IN3",  Diem3D( 0.9f, 0.6f, -1.75f), -1});
+        lk.pins.push_back({"IN4",  Diem3D( 1.1f, 0.6f, -1.75f), -1});
+        lk.pins.push_back({"ENB",  Diem3D( 1.3f, 0.6f, -1.75f), -1});
 
-        lk.pins.push_back({"OUT1", Diem3D(-1.9f, 0.8f,  0.2f), -1});
-        lk.pins.push_back({"OUT2", Diem3D(-1.9f, 0.8f,  1.0f), -1});
-        lk.pins.push_back({"OUT3", Diem3D( 1.9f, 0.8f,  0.2f), -1});
-        lk.pins.push_back({"OUT4", Diem3D( 1.9f, 0.8f,  1.0f), -1});
+        lk.pins.push_back({"OUT1", Diem3D(-1.75f, 0.8f,  0.2f), -1});
+        lk.pins.push_back({"OUT2", Diem3D(-1.75f, 0.8f,  0.8f), -1});
+        lk.pins.push_back({"OUT3", Diem3D( 1.75f, 0.8f,  0.2f), -1});
+        lk.pins.push_back({"OUT4", Diem3D( 1.75f, 0.8f,  0.8f), -1});
 
-        lk.pins.push_back({"+12V", Diem3D(-0.8f, 0.8f,  1.9f), -1});
-        lk.pins.push_back({"GND",  Diem3D( 0.0f, 0.8f,  1.9f), -1});
-        lk.pins.push_back({"+5V",  Diem3D( 0.8f, 0.8f,  1.9f), -1});
+        lk.pins.push_back({"+12V", Diem3D(-0.6f, 0.8f, -1.65f), -1});
+        lk.pins.push_back({"GND",  Diem3D(-0.2f, 0.8f, -1.65f), -1});
+        lk.pins.push_back({"+5V",  Diem3D( 0.2f, 0.8f, -1.65f), -1});
 
         ds[LK_L298N] = lk;
     }
@@ -515,6 +697,7 @@ inline void khoiTao11LinhKien(std::vector<LinhKien>& ds) {
         Part gb;
         gb.ten = "Gearbox";
         gb.mesh = taoKhoiHop(3.7f, 2.2f, 1.9f, MauSac(235, 190, 20));
+        gb.subAssemblyId = 0;
         gb.partExplodeVec = Diem3D(0.0f, 0.0f, 0.0f);
         lk.parts.push_back(gb);
 
@@ -523,7 +706,10 @@ inline void khoiTao11LinhKien(std::vector<LinhKien>& ds) {
         can.ten = "Motor_Can";
         can.mesh = taoKhoiTruZ(0.9f, 2.8f, 12, MauSac(210, 215, 220));
         can.bienDoiCucBo = taoMaTranTinhTien(0.0f, 0.0f, -1.5f);
-        can.partExplodeVec = Diem3D(0.0f, 0.0f, -3.2f);
+        can.subAssemblyId = 1;
+        can.partExplodeVec = Diem3D(0.0f, 0.0f, -1.0f);
+        can.anchorOnPCB = Diem3D(0.0f, 0.0f, -1.5f);
+        can.isLeadAnchor = true;
         lk.parts.push_back(can);
 
         lk.pins.push_back({"A", Diem3D(-0.4f, 0.0f, -2.9f), -1});
@@ -553,6 +739,7 @@ inline void khoiTao11LinhKien(std::vector<LinhKien>& ds) {
         Part gb;
         gb.ten = "Gearbox";
         gb.mesh = taoKhoiHop(3.7f, 2.2f, 1.9f, MauSac(235, 190, 20));
+        gb.subAssemblyId = 0;
         gb.partExplodeVec = Diem3D(0.0f, 0.0f, 0.0f);
         lk.parts.push_back(gb);
 
@@ -560,7 +747,10 @@ inline void khoiTao11LinhKien(std::vector<LinhKien>& ds) {
         can.ten = "Motor_Can";
         can.mesh = taoKhoiTruZ(0.9f, 2.8f, 12, MauSac(210, 215, 220));
         can.bienDoiCucBo = taoMaTranTinhTien(0.0f, 0.0f, -1.5f);
-        can.partExplodeVec = Diem3D(0.0f, 0.0f, -3.2f);
+        can.subAssemblyId = 1;
+        can.partExplodeVec = Diem3D(0.0f, 0.0f, -1.0f);
+        can.anchorOnPCB = Diem3D(0.0f, 0.0f, -1.5f);
+        can.isLeadAnchor = true;
         lk.parts.push_back(can);
 
         lk.pins.push_back({"A", Diem3D(-0.4f, 0.0f, -2.9f), -1});
@@ -592,7 +782,8 @@ inline void khoiTao11LinhKien(std::vector<LinhKien>& ds) {
         tt.ten = "Turntable_Plate";
         tt.mesh = taoKhoiTru(2.8f, 0.8f, 16, MauSac(180, 190, 205));
         tt.bienDoiCucBo = taoMaTranTinhTien(0.0f, 0.4f, 0.0f);
-        tt.partExplodeVec = Diem3D(0.0f, -1.0f, 0.0f);
+        tt.subAssemblyId = 0;
+        tt.partExplodeVec = Diem3D(0.0f, -0.4f, 0.0f);
         lk.parts.push_back(tt);
 
         // Vỏ Servo MG996R màu xanh đen
@@ -600,7 +791,10 @@ inline void khoiTao11LinhKien(std::vector<LinhKien>& ds) {
         body.ten = "Servo_Body";
         body.mesh = taoKhoiHop(4.0f, 3.6f, 2.0f, MauSac(35, 42, 52));
         body.bienDoiCucBo = taoMaTranTinhTien(0.0f, 2.2f, 0.0f);
-        body.partExplodeVec = Diem3D(0.0f, 0.5f, 0.0f);
+        body.subAssemblyId = 1;
+        body.partExplodeVec = Diem3D(0.0f, 0.4f, 0.0f);
+        body.anchorOnPCB = Diem3D(0.0f, 0.8f, 0.0f);
+        body.isLeadAnchor = true;
         lk.parts.push_back(body);
 
         // Giá đỡ chữ U vươn lên đỡ khớp khuỷu
@@ -608,7 +802,10 @@ inline void khoiTao11LinhKien(std::vector<LinhKien>& ds) {
         uBracket.ten = "U_Bracket";
         uBracket.mesh = taoKhoiHop(3.2f, 1.5f, 2.4f, MauSac(170, 180, 195));
         uBracket.bienDoiCucBo = taoMaTranTinhTien(0.0f, 3.2f, 0.0f);
-        uBracket.partExplodeVec = Diem3D(0.0f, 2.0f, 0.0f);
+        uBracket.subAssemblyId = 2;
+        uBracket.partExplodeVec = Diem3D(0.0f, 0.7f, 0.0f);
+        uBracket.anchorOnPCB = Diem3D(0.0f, 2.2f, 0.0f);
+        uBracket.isLeadAnchor = true;
         lk.parts.push_back(uBracket);
 
         lk.pins.push_back({"SIG", Diem3D(-0.4f, 0.8f, -1.0f), -1});
@@ -641,21 +838,26 @@ inline void khoiTao11LinhKien(std::vector<LinhKien>& ds) {
         armLower1.ten = "Lower_Arm_Link_L";
         armLower1.mesh = taoKhoiHop(0.35f, 3.8f, 1.2f, MauSac(180, 190, 205));
         armLower1.bienDoiCucBo = taoMaTranTinhTien(-1.5f, -1.8f, 0.0f);
-        armLower1.partExplodeVec = Diem3D(-1.5f, 0.0f, 0.0f);
+        armLower1.subAssemblyId = 1;
+        armLower1.partExplodeVec = Diem3D(-0.6f, 0.0f, 0.0f);
         lk.parts.push_back(armLower1);
 
         Part armLower2;
         armLower2.ten = "Lower_Arm_Link_R";
         armLower2.mesh = taoKhoiHop(0.35f, 3.8f, 1.2f, MauSac(180, 190, 205));
         armLower2.bienDoiCucBo = taoMaTranTinhTien(1.5f, -1.8f, 0.0f);
-        armLower2.partExplodeVec = Diem3D(1.5f, 0.0f, 0.0f);
+        armLower2.subAssemblyId = 1;
+        armLower2.partExplodeVec = Diem3D(0.6f, 0.0f, 0.0f);
         lk.parts.push_back(armLower2);
 
         // Vỏ Servo MG996R nằm ngang
         Part body;
         body.ten = "Servo_Body";
         body.mesh = taoKhoiHop(3.8f, 2.0f, 3.6f, MauSac(35, 42, 52));
-        body.partExplodeVec = Diem3D(0.0f, 1.5f, 0.0f);
+        body.subAssemblyId = 2;
+        body.partExplodeVec = Diem3D(0.0f, 0.6f, 0.0f);
+        body.anchorOnPCB = Diem3D(0.0f, 0.0f, 0.0f);
+        body.isLeadAnchor = true;
         lk.parts.push_back(body);
 
         // Thanh giằng cánh tay trên vươn về trước (dài 8.0 cm)
@@ -663,7 +865,10 @@ inline void khoiTao11LinhKien(std::vector<LinhKien>& ds) {
         forearm.ten = "Upper_Forearm";
         forearm.mesh = taoKhoiHop(1.4f, 0.8f, 7.8f, MauSac(175, 185, 200));
         forearm.bienDoiCucBo = taoMaTranTinhTien(0.0f, 0.0f, 4.2f);
-        forearm.partExplodeVec = Diem3D(0.0f, 0.0f, 2.5f);
+        forearm.subAssemblyId = 3;
+        forearm.partExplodeVec = Diem3D(0.0f, 0.0f, 0.7f);
+        forearm.anchorOnPCB = Diem3D(0.0f, 0.0f, 1.0f);
+        forearm.isLeadAnchor = true;
         lk.parts.push_back(forearm);
 
         lk.pins.push_back({"SIG", Diem3D(-0.4f, 0.8f, -1.8f), -1});
@@ -695,7 +900,10 @@ inline void khoiTao11LinhKien(std::vector<LinhKien>& ds) {
         Part body;
         body.ten = "Micro_Servo";
         body.mesh = taoKhoiHop(2.3f, 2.2f, 1.2f, MauSac(30, 90, 200));
-        body.partExplodeVec = Diem3D(0.0f, 1.5f, 0.0f);
+        body.subAssemblyId = 1;
+        body.partExplodeVec = Diem3D(0.0f, 0.5f, 0.0f);
+        body.anchorOnPCB = Diem3D(0.0f, 0.0f, 0.0f);
+        body.isLeadAnchor = true;
         lk.parts.push_back(body);
 
         // Khung đế ngàm
@@ -703,7 +911,10 @@ inline void khoiTao11LinhKien(std::vector<LinhKien>& ds) {
         baseGrip.ten = "Gripper_Base";
         baseGrip.mesh = taoKhoiHop(4.8f, 0.5f, 1.4f, MauSac(200, 100, 25));
         baseGrip.bienDoiCucBo = taoMaTranTinhTien(0.0f, 0.0f, 1.2f);
-        baseGrip.partExplodeVec = Diem3D(0.0f, 0.0f, 1.5f);
+        baseGrip.subAssemblyId = 2;
+        baseGrip.partExplodeVec = Diem3D(0.0f, 0.0f, 0.6f);
+        baseGrip.anchorOnPCB = Diem3D(0.0f, 0.0f, 0.5f);
+        baseGrip.isLeadAnchor = true;
         lk.parts.push_back(baseGrip);
 
         // 2 Ngón kẹp chữ L đối xứng
@@ -711,14 +922,16 @@ inline void khoiTao11LinhKien(std::vector<LinhKien>& ds) {
         fingerL.ten = "Finger_Left";
         fingerL.mesh = taoKhoiHop(0.4f, 1.8f, 3.2f, MauSac(230, 120, 30));
         fingerL.bienDoiCucBo = taoMaTranTinhTien(-1.6f, 0.0f, 2.8f);
-        fingerL.partExplodeVec = Diem3D(-2.0f, 0.0f, 2.5f);
+        fingerL.subAssemblyId = 3;
+        fingerL.partExplodeVec = Diem3D(-0.6f, 0.0f, 0.6f);
         lk.parts.push_back(fingerL);
 
         Part fingerR;
         fingerR.ten = "Finger_Right";
         fingerR.mesh = taoKhoiHop(0.4f, 1.8f, 3.2f, MauSac(230, 120, 30));
         fingerR.bienDoiCucBo = taoMaTranTinhTien(1.6f, 0.0f, 2.8f);
-        fingerR.partExplodeVec = Diem3D(2.0f, 0.0f, 2.5f);
+        fingerR.subAssemblyId = 3;
+        fingerR.partExplodeVec = Diem3D(0.6f, 0.0f, 0.6f);
         lk.parts.push_back(fingerR);
 
         lk.pins.push_back({"SIG", Diem3D(-0.3f, 1.0f, -0.5f), -1});
@@ -750,37 +963,46 @@ inline void khoiTao11LinhKien(std::vector<LinhKien>& ds) {
         Part pcb;
         pcb.ten = "PCB";
         pcb.mesh = taoKhoiHop(4.5f, 2.0f, 0.20f, MauSac(20, 95, 190));
+        pcb.subAssemblyId = 0;
         pcb.partExplodeVec = Diem3D(0.0f, 0.0f, 0.0f);
         lk.parts.push_back(pcb);
 
-        // 2 Mắt phát/thu siêu âm nhôm bạc
+        // 2 Mắt phát/thu siêu âm nhôm bạc nhấc ra trước +0.8 cm
         Part tx;
         tx.ten = "Transducer_T";
         tx.mesh = taoKhoiTruZ(0.8f, 1.2f, 12, MauSac(200, 205, 215));
         tx.bienDoiCucBo = taoMaTranTinhTien(-1.3f, 0.0f, 0.65f);
-        tx.partExplodeVec = Diem3D(0.0f, 0.0f, 2.5f);
+        tx.subAssemblyId = 1;
+        tx.partExplodeVec = Diem3D(0.0f, 0.0f, 0.8f);
+        tx.anchorOnPCB = Diem3D(-1.3f, 0.0f, 0.1f);
+        tx.isLeadAnchor = true;
         lk.parts.push_back(tx);
 
         Part rx;
         rx.ten = "Transducer_R";
         rx.mesh = taoKhoiTruZ(0.8f, 1.2f, 12, MauSac(200, 205, 215));
         rx.bienDoiCucBo = taoMaTranTinhTien(1.3f, 0.0f, 0.65f);
-        rx.partExplodeVec = Diem3D(0.0f, 0.0f, 2.5f);
+        rx.subAssemblyId = 1;
+        rx.partExplodeVec = Diem3D(0.0f, 0.0f, 0.8f);
+        rx.anchorOnPCB = Diem3D(1.3f, 0.0f, 0.1f);
+        rx.isLeadAnchor = true;
         lk.parts.push_back(rx);
 
-        // 2 Lưới đen chữ T / R
+        // 2 Lưới đen chữ T / R đi cùng mắt siêu âm
         Part meshT;
         meshT.ten = "Mesh_T";
         meshT.mesh = taoKhoiTruZ(0.65f, 0.08f, 12, MauSac(35, 40, 48));
         meshT.bienDoiCucBo = taoMaTranTinhTien(-1.3f, 0.0f, 1.28f);
-        meshT.partExplodeVec = Diem3D(0.0f, 0.0f, 3.2f);
+        meshT.subAssemblyId = 1;
+        meshT.partExplodeVec = Diem3D(0.0f, 0.0f, 0.8f);
         lk.parts.push_back(meshT);
 
         Part meshR;
         meshR.ten = "Mesh_R";
         meshR.mesh = taoKhoiTruZ(0.65f, 0.08f, 12, MauSac(35, 40, 48));
         meshR.bienDoiCucBo = taoMaTranTinhTien(1.3f, 0.0f, 1.28f);
-        meshR.partExplodeVec = Diem3D(0.0f, 0.0f, 3.2f);
+        meshR.subAssemblyId = 1;
+        meshR.partExplodeVec = Diem3D(0.0f, 0.0f, 0.8f);
         lk.parts.push_back(meshR);
 
         // Thạch anh dao động bạc
@@ -788,7 +1010,8 @@ inline void khoiTao11LinhKien(std::vector<LinhKien>& ds) {
         crystal.ten = "Crystal";
         crystal.mesh = taoKhoiHop(0.9f, 0.4f, 0.3f, MauSac(210, 210, 215));
         crystal.bienDoiCucBo = taoMaTranTinhTien(0.0f, 0.6f, 0.2f);
-        crystal.partExplodeVec = Diem3D(0.0f, 1.8f, 0.0f);
+        crystal.subAssemblyId = 0;
+        crystal.partExplodeVec = Diem3D(0.0f, 0.0f, 0.0f);
         lk.parts.push_back(crystal);
 
         // 4 Chân cắm ở mặt sau
@@ -822,6 +1045,7 @@ inline void khoiTao11LinhKien(std::vector<LinhKien>& ds) {
         Part pcb;
         pcb.ten = "PCB";
         pcb.mesh = taoKhoiHop(4.3f, 0.20f, 2.1f, MauSac(15, 70, 160));
+        pcb.subAssemblyId = 0;
         pcb.partExplodeVec = Diem3D(0.0f, 0.0f, 0.0f);
         lk.parts.push_back(pcb);
 
@@ -830,30 +1054,38 @@ inline void khoiTao11LinhKien(std::vector<LinhKien>& ds) {
         capIn.ten = "Cap_In";
         capIn.mesh = taoKhoiTru(0.42f, 1.0f, 10, MauSac(190, 195, 200));
         capIn.bienDoiCucBo = taoMaTranTinhTien(-1.5f, 0.6f, 0.0f);
-        capIn.partExplodeVec = Diem3D(-1.0f, 2.0f, 0.0f);
+        capIn.subAssemblyId = 2;
+        capIn.partExplodeVec = Diem3D(0.0f, 0.5f, 0.0f);
+        capIn.anchorOnPCB = Diem3D(-1.5f, 0.2f, 0.0f);
+        capIn.isLeadAnchor = true;
         lk.parts.push_back(capIn);
 
         Part capOut;
         capOut.ten = "Cap_Out";
         capOut.mesh = taoKhoiTru(0.42f, 1.0f, 10, MauSac(190, 195, 200));
         capOut.bienDoiCucBo = taoMaTranTinhTien(1.5f, 0.6f, 0.0f);
-        capOut.partExplodeVec = Diem3D(1.0f, 2.0f, 0.0f);
+        capOut.subAssemblyId = 2;
+        capOut.partExplodeVec = Diem3D(0.0f, 0.5f, 0.0f);
         lk.parts.push_back(capOut);
 
-        // Cuộn cảm vuông đen ở giữa
+        // Cuộn cảm vuông đen ở giữa nhấc lên +0.7 cm
         Part ind;
         ind.ten = "Inductor";
         ind.mesh = taoKhoiHop(1.2f, 0.8f, 1.2f, MauSac(35, 35, 38));
         ind.bienDoiCucBo = taoMaTranTinhTien(0.0f, 0.5f, -0.2f);
-        ind.partExplodeVec = Diem3D(0.0f, 2.2f, -0.5f);
+        ind.subAssemblyId = 1;
+        ind.partExplodeVec = Diem3D(0.0f, 0.7f, 0.0f);
+        ind.anchorOnPCB = Diem3D(0.0f, 0.2f, -0.2f);
+        ind.isLeadAnchor = true;
         lk.parts.push_back(ind);
 
-        // Biến trở tinh chỉnh màu xanh lam có ốc đồng vàng
+        // Biến trở tinh chỉnh màu xanh lam có ốc đồng vàng nhấc lên +0.5 cm
         Part pot;
         pot.ten = "Potentiometer";
         pot.mesh = taoKhoiHop(0.9f, 1.0f, 0.5f, MauSac(40, 130, 230));
         pot.bienDoiCucBo = taoMaTranTinhTien(0.0f, 0.6f, 0.6f);
-        pot.partExplodeVec = Diem3D(0.0f, 2.2f, 0.8f);
+        pot.subAssemblyId = 2;
+        pot.partExplodeVec = Diem3D(0.0f, 0.5f, 0.0f);
         lk.parts.push_back(pot);
 
         lk.pins.push_back({"IN+",  Diem3D(-1.8f, 0.2f, -0.7f), -1});
@@ -886,37 +1118,46 @@ inline void khoiTao11LinhKien(std::vector<LinhKien>& ds) {
         Part tray;
         tray.ten = "Battery_Tray";
         tray.mesh = taoKhoiHop(7.5f, 1.4f, 4.2f, MauSac(28, 30, 35));
+        tray.subAssemblyId = 0;
         tray.partExplodeVec = Diem3D(0.0f, 0.0f, 0.0f);
         lk.parts.push_back(tray);
 
-        // 2 Viên pin 18650 trụ màu hồng tím đặc trưng (235, 80, 130)
+        // 2 Viên pin 18650 trụ màu hồng tím đặc trưng (235, 80, 130) nhấc lên +1.0 cm
         Part cell1;
         cell1.ten = "Cell_1";
         cell1.mesh = taoKhoiTruX(0.85f, 6.5f, 12, MauSac(235, 80, 130));
         cell1.bienDoiCucBo = taoMaTranTinhTien(0.0f, 0.65f, -1.0f);
-        cell1.partExplodeVec = Diem3D(0.0f, 3.2f, -1.0f);
+        cell1.subAssemblyId = 1;
+        cell1.partExplodeVec = Diem3D(0.0f, 1.0f, 0.0f);
+        cell1.anchorOnPCB = Diem3D(0.0f, 0.65f, -1.0f);
+        cell1.isLeadAnchor = true;
         lk.parts.push_back(cell1);
 
         Part cell2;
         cell2.ten = "Cell_2";
         cell2.mesh = taoKhoiTruX(0.85f, 6.5f, 12, MauSac(235, 80, 130));
         cell2.bienDoiCucBo = taoMaTranTinhTien(0.0f, 0.65f, 1.0f);
-        cell2.partExplodeVec = Diem3D(0.0f, 3.2f, 1.0f);
+        cell2.subAssemblyId = 1;
+        cell2.partExplodeVec = Diem3D(0.0f, 1.0f, 0.0f);
         lk.parts.push_back(cell2);
 
-        // Khối công tắc Rocker Switch đen kèm nút đỏ
+        // Khối công tắc Rocker Switch đen kèm nút đỏ nhấc nhẹ (+0.6, +0.5, 0.0)
         Part swBody;
         swBody.ten = "Switch_Body";
         swBody.mesh = taoKhoiHop(1.4f, 1.2f, 1.6f, MauSac(35, 35, 40));
         swBody.bienDoiCucBo = taoMaTranTinhTien(3.0f, 0.6f, 0.0f);
-        swBody.partExplodeVec = Diem3D(2.5f, 0.0f, 0.0f);
+        swBody.subAssemblyId = 2;
+        swBody.partExplodeVec = Diem3D(0.6f, 0.5f, 0.0f);
+        swBody.anchorOnPCB = Diem3D(3.0f, 0.2f, 0.0f);
+        swBody.isLeadAnchor = true;
         lk.parts.push_back(swBody);
 
         Part swBtn;
         swBtn.ten = "Rocker_Button";
         swBtn.mesh = taoKhoiHop(1.0f, 0.4f, 1.2f, MauSac(230, 35, 35));
         swBtn.bienDoiCucBo = taoMaTranTinhTien(3.0f, 1.3f, 0.0f);
-        swBtn.partExplodeVec = Diem3D(2.5f, 1.5f, 0.0f);
+        swBtn.subAssemblyId = 2;
+        swBtn.partExplodeVec = Diem3D(0.6f, 0.5f, 0.0f);
         lk.parts.push_back(swBtn);
 
         lk.pins.push_back({"BAT+", Diem3D(-3.4f, 0.5f, -1.0f), -1});
@@ -945,26 +1186,31 @@ inline void khoiTao11LinhKien(std::vector<LinhKien>& ds) {
         lk.toaDo2D       = Diem2D(280.0f, 480.0f);
         lk.rong2D        = 95.0f; lk.cao2D = 65.0f;
 
-        // Thanh 1: Bus 7.4V (Vỏ trắng ngà, dải chỉ thị ĐỎ)
+        // Thanh 1: Bus 7.4V (Vỏ trắng ngà, dải chỉ thị ĐỎ) tách sang -0.6 cm
         Part b1;
         b1.ten = "Bus_7.4V";
         b1.mesh = taoKhoiHop(5.4f, 1.0f, 1.0f, MauSac(215, 220, 225));
         b1.bienDoiCucBo = taoMaTranTinhTien(0.0f, 0.5f, -1.3f);
-        b1.partExplodeVec = Diem3D(0.0f, 0.0f, -2.8f);
+        b1.subAssemblyId = 1;
+        b1.partExplodeVec = Diem3D(0.0f, 0.0f, -0.6f);
+        b1.anchorOnPCB = Diem3D(0.0f, 0.2f, -1.3f);
+        b1.isLeadAnchor = true;
         lk.parts.push_back(b1);
 
         Part s1;
         s1.ten = "Stripe_Red";
         s1.mesh = taoKhoiHop(5.4f, 0.15f, 0.35f, MauSac(220, 30, 30));
         s1.bienDoiCucBo = taoMaTranTinhTien(0.0f, 1.08f, -1.3f);
-        s1.partExplodeVec = Diem3D(0.0f, 0.0f, -2.8f);
+        s1.subAssemblyId = 1;
+        s1.partExplodeVec = Diem3D(0.0f, 0.0f, -0.6f);
         lk.parts.push_back(s1);
 
-        // Thanh 2: Bus GND (Vỏ trắng ngà, dải chỉ thị ĐEN)
+        // Thanh 2: Bus GND (Vỏ trắng ngà, dải chỉ thị ĐEN) cố định ở giữa
         Part b2;
         b2.ten = "Bus_GND";
         b2.mesh = taoKhoiHop(5.4f, 1.0f, 1.0f, MauSac(215, 220, 225));
         b2.bienDoiCucBo = taoMaTranTinhTien(0.0f, 0.5f, 0.0f);
+        b2.subAssemblyId = 0;
         b2.partExplodeVec = Diem3D(0.0f, 0.0f, 0.0f);
         lk.parts.push_back(b2);
 
@@ -972,22 +1218,27 @@ inline void khoiTao11LinhKien(std::vector<LinhKien>& ds) {
         s2.ten = "Stripe_Black";
         s2.mesh = taoKhoiHop(5.4f, 0.15f, 0.35f, MauSac(40, 40, 45));
         s2.bienDoiCucBo = taoMaTranTinhTien(0.0f, 1.08f, 0.0f);
+        s2.subAssemblyId = 0;
         s2.partExplodeVec = Diem3D(0.0f, 0.0f, 0.0f);
         lk.parts.push_back(s2);
 
-        // Thanh 3: Bus 5V-servo (Vỏ trắng ngà, dải chỉ thị CAM/VÀNG)
+        // Thanh 3: Bus 5V-servo (Vỏ trắng ngà, dải chỉ thị CAM/VÀNG) tách sang +0.6 cm
         Part b3;
         b3.ten = "Bus_5V";
         b3.mesh = taoKhoiHop(5.4f, 1.0f, 1.0f, MauSac(215, 220, 225));
         b3.bienDoiCucBo = taoMaTranTinhTien(0.0f, 0.5f, 1.3f);
-        b3.partExplodeVec = Diem3D(0.0f, 0.0f, 2.8f);
+        b3.subAssemblyId = 2;
+        b3.partExplodeVec = Diem3D(0.0f, 0.0f, 0.6f);
+        b3.anchorOnPCB = Diem3D(0.0f, 0.2f, 1.3f);
+        b3.isLeadAnchor = true;
         lk.parts.push_back(b3);
 
         Part s3;
         s3.ten = "Stripe_Orange";
         s3.mesh = taoKhoiHop(5.4f, 0.15f, 0.35f, MauSac(245, 140, 20));
         s3.bienDoiCucBo = taoMaTranTinhTien(0.0f, 1.08f, 1.3f);
-        s3.partExplodeVec = Diem3D(0.0f, 0.0f, 2.8f);
+        s3.subAssemblyId = 2;
+        s3.partExplodeVec = Diem3D(0.0f, 0.0f, 0.6f);
         lk.parts.push_back(s3);
 
         // Bus 7.4V (4 cổng)

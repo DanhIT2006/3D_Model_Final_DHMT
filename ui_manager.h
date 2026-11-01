@@ -218,60 +218,32 @@ struct TrinhQuanLyGiaoDien {
         slKep.nhan = "SERVO KEP (GRIP)";
         cacThanhTruot.push_back(slKep);
 
-        // 3. Nút bấm điều khiển xe & Gắp/Thả
+        // 3. Nút bấm điều khiển xe & Gắp/Thả (9 nút chuẩn 88px, cách nhau 10px: [230..318], [328..416], ...)
         cacNutDieuKhienXe.clear();
-        NutBamUI btnGap;
-        btnGap.x0 = 240; btnGap.y0 = 15; btnGap.x1 = 340; btnGap.y1 = 48;
-        btnGap.nhan = "GAP / THA";
-        cacNutDieuKhienXe.push_back(btnGap);
+        int btnW = 88;
+        int btnGap = 10;
+        int startX = 230;
 
-        NutBamUI btnTien;
-        btnTien.x0 = 355; btnTien.y0 = 15; btnTien.x1 = 415; btnTien.y1 = 48;
-        btnTien.nhan = "TIEN";
-        cacNutDieuKhienXe.push_back(btnTien);
+        const char* nhanMacDinh[9] = {
+            "GAP / THA", "TIEN", "LUI", "TRAI", "PHAI", "DUNG", "XOAY 45", "LAT NGANG", "RESET GOC"
+        };
 
-        NutBamUI btnLui;
-        btnLui.x0 = 425; btnLui.y0 = 15; btnLui.x1 = 485; btnLui.y1 = 48;
-        btnLui.nhan = "LUI";
-        cacNutDieuKhienXe.push_back(btnLui);
+        for (int i = 0; i < 9; ++i) {
+            NutBamUI btn;
+            btn.x0 = startX + i * (btnW + btnGap);
+            btn.y0 = 15;
+            btn.x1 = btn.x0 + btnW;
+            btn.y1 = 48;
+            btn.nhan = nhanMacDinh[i];
+            cacNutDieuKhienXe.push_back(btn);
+        }
 
-        NutBamUI btnTrai;
-        btnTrai.x0 = 495; btnTrai.y0 = 15; btnTrai.x1 = 555; btnTrai.y1 = 48;
-        btnTrai.nhan = "TRAI";
-        cacNutDieuKhienXe.push_back(btnTrai);
-
-        NutBamUI btnPhai;
-        btnPhai.x0 = 565; btnPhai.y0 = 15; btnPhai.x1 = 625; btnPhai.y1 = 48;
-        btnPhai.nhan = "PHAI";
-        cacNutDieuKhienXe.push_back(btnPhai);
-
-        NutBamUI btnDung;
-        btnDung.x0 = 635; btnDung.y0 = 15; btnDung.x1 = 695; btnDung.y1 = 48;
-        btnDung.nhan = "DUNG";
-        cacNutDieuKhienXe.push_back(btnDung);
-
-        // Nút xoay và lật cho sơ đồ 2D
-        NutBamUI btnXoay2D;
-        btnXoay2D.x0 = 715; btnXoay2D.y0 = 15; btnXoay2D.x1 = 805; btnXoay2D.y1 = 48;
-        btnXoay2D.nhan = "XOAY 45";
-        cacNutDieuKhienXe.push_back(btnXoay2D);
-
-        NutBamUI btnLatNgang;
-        btnLatNgang.x0 = 815; btnLatNgang.y0 = 15; btnLatNgang.x1 = 905; btnLatNgang.y1 = 48;
-        btnLatNgang.nhan = "LAT NGANG";
-        cacNutDieuKhienXe.push_back(btnLatNgang);
-
-        NutBamUI btnReset2D;
-        btnReset2D.x0 = 915; btnReset2D.y0 = 15; btnReset2D.x1 = 1005; btnReset2D.y1 = 48;
-        btnReset2D.nhan = "RESET 2D";
-        cacNutDieuKhienXe.push_back(btnReset2D);
-
-        // 4. Hộp kiểm Checkbox ở BottomBar
+        // 4. Hộp kiểm Checkbox ở BottomBar (dời sang x = 1118 để không chạm nút 9 tại 1102)
         cacHopKiem.clear();
-        cacHopKiem.push_back({1030, 80, 15, &hienThiDayDien,  "Hien day noi"});
-        cacHopKiem.push_back({1030, 56, 15, &hienThiNhanChan, "Nhan ten chan"});
-        cacHopKiem.push_back({1030, 32, 15, &cheDoKhungDay,   "Khung day (Wire)"});
-        cacHopKiem.push_back({1030,  8, 15, &coLapLinhKien,   "Co lap linh kien"});
+        cacHopKiem.push_back({1118, 80, 15, &hienThiDayDien,  "Hien day noi"});
+        cacHopKiem.push_back({1118, 56, 15, &hienThiNhanChan, "Nhan ten chan"});
+        cacHopKiem.push_back({1118, 32, 15, &cheDoKhungDay,   "Khung day (Wire)"});
+        cacHopKiem.push_back({1118,  8, 15, &coLapLinhKien,   "Co lap linh kien"});
     }
 
     void capNhatQuyenTuongTac(const std::vector<LinhKien>& ds) {
@@ -301,26 +273,44 @@ struct TrinhQuanLyGiaoDien {
             cacNutDieuKhienXe[5].nhan = "DUNG";
             cacNutDieuKhienXe[5].coTheTuongTac = true;
 
-            cacNutDieuKhienXe[6].coTheTuongTac = false; // Xoay 2D
-            cacNutDieuKhienXe[7].coTheTuongTac = false; // Lật ngang 2D
-            cacNutDieuKhienXe[8].coTheTuongTac = false; // Reset 2D
+            cacNutDieuKhienXe[6].nhan = "XOAY 45";
+            cacNutDieuKhienXe[6].coTheTuongTac = false; // Xoay 2D khóa ở Chế độ 1 & 3
+            cacNutDieuKhienXe[7].nhan = "LAT NGANG";
+            cacNutDieuKhienXe[7].coTheTuongTac = false; // Lật ngang khóa ở Chế độ 1 & 3
+            cacNutDieuKhienXe[8].nhan = "RESET GOC";
+            cacNutDieuKhienXe[8].coTheTuongTac = true;
         }
         else if (cheDoHienTai == CHE_DO_SO_DO_2D) {
             // Chế độ 4: Chỉ tương tác sơ đồ 2D (Pan/Zoom/Rotate/Flip)
             for (auto& sl : cacThanhTruot) sl.coTheTuongTac = false;
-            for (int i = 0; i <= 5; ++i) cacNutDieuKhienXe[i].coTheTuongTac = false;
+            for (int i = 0; i <= 5; ++i) {
+                cacNutDieuKhienXe[i].coTheTuongTac = false;
+            }
+            cacNutDieuKhienXe[0].nhan = "GAP / THA";
+            cacNutDieuKhienXe[1].nhan = "TIEN";
+            cacNutDieuKhienXe[2].nhan = "LUI";
+            cacNutDieuKhienXe[3].nhan = "TRAI";
+            cacNutDieuKhienXe[4].nhan = "PHAI";
+            cacNutDieuKhienXe[5].nhan = "DUNG";
+
+            cacNutDieuKhienXe[6].nhan = "XOAY 45";
             cacNutDieuKhienXe[6].coTheTuongTac = true;
+            cacNutDieuKhienXe[7].nhan = "LAT NGANG";
             cacNutDieuKhienXe[7].coTheTuongTac = true;
+            cacNutDieuKhienXe[8].nhan = "RESET 2D";
             cacNutDieuKhienXe[8].coTheTuongTac = true;
         }
         else if (cheDoHienTai == CHE_DO_LINH_KIEN) {
-            // Chế độ 2: BÀN GIA CÔNG & KIỂM THỬ 3D ĐỘC LẬP (PHẦN B MỤC 2)
+            // Chế độ 2: BÀN GIA CÔNG & KIỂM THỬ 3D ĐỘC LẬP
             cacThanhTruot[0].nhan = "TACH LOP CON (PARTS)";
             cacThanhTruot[0].coTheTuongTac = true;
 
-            cacNutDieuKhienXe[6].coTheTuongTac = false;
-            cacNutDieuKhienXe[7].coTheTuongTac = false;
-            cacNutDieuKhienXe[8].coTheTuongTac = false;
+            cacNutDieuKhienXe[6].nhan = "XOAY 45";
+            cacNutDieuKhienXe[6].coTheTuongTac = true;  // Xoay góc nhìn 45 độ quanh bàn gia công
+            cacNutDieuKhienXe[7].nhan = "LAT NGANG";
+            cacNutDieuKhienXe[7].coTheTuongTac = false; // Lật ngang chỉ dùng cho sơ đồ 2D
+            cacNutDieuKhienXe[8].nhan = "RESET CAM";
+            cacNutDieuKhienXe[8].coTheTuongTac = true;  // Đưa camera & Tách lớp con về 0.0
 
             if (linhKienDangChon >= 1 && linhKienDangChon < (int)ds.size()) {
                 InspectCategory cat = ds[linhKienDangChon].category;
@@ -337,8 +327,16 @@ struct TrinhQuanLyGiaoDien {
                     cacNutDieuKhienXe[0].nhan = "GAP / THA";
                     cacNutDieuKhienXe[0].coTheTuongTac = true;
 
-                    // Khóa toàn bộ nút lái xe
-                    for (int i = 1; i <= 5; ++i) cacNutDieuKhienXe[i].coTheTuongTac = false;
+                    cacNutDieuKhienXe[1].nhan = "TIEN";
+                    cacNutDieuKhienXe[1].coTheTuongTac = false;
+                    cacNutDieuKhienXe[2].nhan = "LUI";
+                    cacNutDieuKhienXe[2].coTheTuongTac = false;
+                    cacNutDieuKhienXe[3].nhan = "TRAI";
+                    cacNutDieuKhienXe[3].coTheTuongTac = false;
+                    cacNutDieuKhienXe[4].nhan = "PHAI";
+                    cacNutDieuKhienXe[4].coTheTuongTac = false;
+                    cacNutDieuKhienXe[5].nhan = "DUNG";
+                    cacNutDieuKhienXe[5].coTheTuongTac = false;
                 }
                 else if (cat == InspectCategory::ROTARY_MOTOR_WHEEL) {
                     // Động cơ & Bánh xe: Khóa Slider Servo, Mở Quay thuận / nghịch / dừng
@@ -346,34 +344,58 @@ struct TrinhQuanLyGiaoDien {
                     cacThanhTruot[2].coTheTuongTac = false;
                     cacThanhTruot[3].coTheTuongTac = false;
 
+                    cacNutDieuKhienXe[0].nhan = "GAP / THA";
                     cacNutDieuKhienXe[0].coTheTuongTac = false;
 
                     cacNutDieuKhienXe[1].nhan = "QUAY THUAN";
                     cacNutDieuKhienXe[1].coTheTuongTac = true;
                     cacNutDieuKhienXe[2].nhan = "QUAY NGHICH";
                     cacNutDieuKhienXe[2].coTheTuongTac = true;
+                    cacNutDieuKhienXe[3].nhan = "TRAI";
                     cacNutDieuKhienXe[3].coTheTuongTac = false;
+                    cacNutDieuKhienXe[4].nhan = "PHAI";
                     cacNutDieuKhienXe[4].coTheTuongTac = false;
                     cacNutDieuKhienXe[5].nhan = "DUNG MO-TO";
                     cacNutDieuKhienXe[5].coTheTuongTac = true;
                 }
                 else if (cat == InspectCategory::TOGGLE_SWITCH) {
-                    // Hộp pin & Công tắc: Mở nút Bật/Tắt công tắc nguồn
+                    // Hộp pin & Công tắc: Mở nút Bật/Tắt công tắc nguồn tại Nút 0 [CONG TAC]
                     cacThanhTruot[1].coTheTuongTac = false;
                     cacThanhTruot[2].coTheTuongTac = false;
                     cacThanhTruot[3].coTheTuongTac = false;
 
-                    cacNutDieuKhienXe[0].coTheTuongTac = false;
-                    cacNutDieuKhienXe[1].nhan = "BAT/TAT NGUON";
-                    cacNutDieuKhienXe[1].coTheTuongTac = true;
-                    for (int i = 2; i <= 5; ++i) cacNutDieuKhienXe[i].coTheTuongTac = false;
+                    cacNutDieuKhienXe[0].nhan = "CONG TAC";
+                    cacNutDieuKhienXe[0].coTheTuongTac = true;
+
+                    cacNutDieuKhienXe[1].nhan = "TIEN";
+                    cacNutDieuKhienXe[1].coTheTuongTac = false;
+                    cacNutDieuKhienXe[2].nhan = "LUI";
+                    cacNutDieuKhienXe[2].coTheTuongTac = false;
+                    cacNutDieuKhienXe[3].nhan = "TRAI";
+                    cacNutDieuKhienXe[3].coTheTuongTac = false;
+                    cacNutDieuKhienXe[4].nhan = "PHAI";
+                    cacNutDieuKhienXe[4].coTheTuongTac = false;
+                    cacNutDieuKhienXe[5].nhan = "DUNG";
+                    cacNutDieuKhienXe[5].coTheTuongTac = false;
                 }
                 else {
                     // STATIC_VIEW_ONLY: Khóa toàn bộ các nút cơ học! Chỉ xem CAD
                     cacThanhTruot[1].coTheTuongTac = false;
                     cacThanhTruot[2].coTheTuongTac = false;
                     cacThanhTruot[3].coTheTuongTac = false;
-                    for (int i = 0; i <= 5; ++i) cacNutDieuKhienXe[i].coTheTuongTac = false;
+
+                    cacNutDieuKhienXe[0].nhan = "GAP / THA";
+                    cacNutDieuKhienXe[0].coTheTuongTac = false;
+                    cacNutDieuKhienXe[1].nhan = "TIEN";
+                    cacNutDieuKhienXe[1].coTheTuongTac = false;
+                    cacNutDieuKhienXe[2].nhan = "LUI";
+                    cacNutDieuKhienXe[2].coTheTuongTac = false;
+                    cacNutDieuKhienXe[3].nhan = "TRAI";
+                    cacNutDieuKhienXe[3].coTheTuongTac = false;
+                    cacNutDieuKhienXe[4].nhan = "PHAI";
+                    cacNutDieuKhienXe[4].coTheTuongTac = false;
+                    cacNutDieuKhienXe[5].nhan = "DUNG";
+                    cacNutDieuKhienXe[5].coTheTuongTac = false;
                 }
             }
         }

@@ -379,6 +379,44 @@ void renderCanh3D(float dt) {
                 themPartVaoDanhSachRender(part, mPart, lkHienTai.id, camTarget, thetaRad, phiRad, R_cam, D_proj, cx, cy, wmin, wmax, huongSang, danhSachPhanTu);
             }
         }
+
+        // 5. Đường gióng lắp ráp nét đứt (Explode Assembly Guide Lines) - Mục B.2
+        if (g_ui.tyLeTachRoi > 0.05f) {
+            MaTran4x4 matBaseAnchor;
+            if (lkHienTai.category == InspectCategory::ROTARY_MOTOR_WHEEL) {
+                matBaseAnchor = taoMaTranTinhTien(0.0f, 2.5f, 0.0f);
+            } else if (lkHienTai.category == InspectCategory::TOGGLE_SWITCH) {
+                matBaseAnchor = taoMaTranTinhTien(0.0f, 0.8f, 0.0f);
+            } else if (lkHienTai.category != InspectCategory::ARM_MANIPULATOR) {
+                matBaseAnchor = taoMaTranTinhTien(0.0f, 0.2f, 0.0f);
+            }
+
+            for (const auto& part : lkHienTai.parts) {
+                if (part.isLeadAnchor && part.partExplodeVec.doDai() > 0.01f) {
+                    Diem3D pBase = matBaseAnchor.bienDoi(part.anchorOnPCB);
+                    Diem3D pExp  = matBaseAnchor.bienDoi(part.anchorOnPCB + part.partExplodeVec * g_ui.tyLeTachRoi);
+
+                    Diem3D v1 = chuyenHeToaDoQuanSat(pBase, camTarget, thetaRad, phiRad, R_cam);
+                    Diem3D v2 = chuyenHeToaDoQuanSat(pExp,  camTarget, thetaRad, phiRad, R_cam);
+
+                    Diem2D s1 = chieuLenManHinh(v1, D_proj, true, cx, cy);
+                    Diem2D s2 = chieuLenManHinh(v2, D_proj, true, cx, cy);
+
+                    Diem2D cA = s1, cB = s2;
+                    if (xenDoanThangCohenSutherland(cA, cB, wmin, wmax)) {
+                        PhanTuCanVe3D pt;
+                        pt.kieu = PHAN_TU_DOAN_DAY;
+                        pt.pA = cA;
+                        pt.pB = cB;
+                        pt.doSauZ = (v1.z + v2.z) * 0.5f;
+                        pt.mauSac = MauSac(220, 190, 60); // Màu vàng hổ phách kỹ thuật
+                        pt.doDay = 2;
+                        pt.laKhungDay = false;
+                        danhSachPhanTu.push_back(pt);
+                    }
+                }
+            }
+        }
     } else {
         // =====================================================================
         // CHẾ ĐỘ 1 (TỔNG THỂ) & CHẾ ĐỘ 3 (BÊN TRONG XE): RENDER TOÀN BỘ XE
@@ -753,6 +791,48 @@ void veNhan3D() {
             veChu((int)lx - textOffset, (int)ly - 4, lk.ma.c_str(), BangMau::CANH_BAO_VANG, GLUT_BITMAP_HELVETICA_12);
         }
 
+        // 3. Điểm neo và hiệu ứng cho các cụm tách rời khi Explode > 0.05f
+        if (g_ui.tyLeTachRoi > 0.05f) {
+            MaTran4x4 matBaseAnchor;
+            if (lk.category == InspectCategory::ROTARY_MOTOR_WHEEL) {
+                matBaseAnchor = taoMaTranTinhTien(0.0f, 2.5f, 0.0f);
+            } else if (lk.category == InspectCategory::TOGGLE_SWITCH) {
+                matBaseAnchor = taoMaTranTinhTien(0.0f, 0.8f, 0.0f);
+            } else if (lk.category != InspectCategory::ARM_MANIPULATOR) {
+                matBaseAnchor = taoMaTranTinhTien(0.0f, 0.2f, 0.0f);
+            }
+
+            for (const auto& part : lk.parts) {
+                if (part.isLeadAnchor && part.partExplodeVec.doDai() > 0.01f) {
+                    Diem3D pBase = matBaseAnchor.bienDoi(part.anchorOnPCB);
+                    Diem3D pExp  = matBaseAnchor.bienDoi(part.anchorOnPCB + part.partExplodeVec * g_ui.tyLeTachRoi);
+
+                    Diem3D v1 = chuyenHeToaDoQuanSat(pBase, camTarget, thetaRad, phiRad, R_cam);
+                    Diem3D v2 = chuyenHeToaDoQuanSat(pExp,  camTarget, thetaRad, phiRad, R_cam);
+
+                    Diem2D s1 = chieuLenManHinh(v1, D_proj, true, cx, cy);
+                    Diem2D s2 = chieuLenManHinh(v2, D_proj, true, cx, cy);
+
+                    // Điểm neo trên PCB (vàng đồng)
+                    if (s1.x >= wmin.x + 5 && s1.x <= wmax.x - 5 && s1.y >= wmin.y + 5 && s1.y <= wmax.y - 5) {
+                        glColor4ub(220, 180, 50, 240);
+                        glPointSize(5.0f);
+                        glBegin(GL_POINTS);
+                        glVertex2f(s1.x, s1.y);
+                        glEnd();
+                    }
+                    // Điểm chân cụm nhấc lên (vàng hổ phách sáng)
+                    if (s2.x >= wmin.x + 5 && s2.x <= wmax.x - 5 && s2.y >= wmin.y + 5 && s2.y <= wmax.y - 5) {
+                        glColor4ub(255, 230, 80, 255);
+                        glPointSize(6.0f);
+                        glBegin(GL_POINTS);
+                        glVertex2f(s2.x, s2.y);
+                        glEnd();
+                    }
+                }
+            }
+        }
+
         glDisable(GL_BLEND);
         glPointSize(1.0f);
         glLineWidth(1.0f);
@@ -1011,11 +1091,29 @@ void mouseButton(int button, int state, int x, int y) {
                                 g_tocDoQuayMoTo = 0.0f;
                             }
                         } else if (lk.category == InspectCategory::TOGGLE_SWITCH) {
-                            if (i == 1) { // BẬT/TẮT NGUỒN
+                            if (i == 0) { // Nút CÔNG TẮC (Nút 0)
                                 g_congTacPinBat = !g_congTacPinBat;
                             }
                         }
-                    } else {
+                        if (i == 6) { // Nút XOAY 45 (Nút 6) ở Chế độ 2
+                            g_ui.camTheta += 45.0f;
+                        } else if (i == 8) { // Nút RESET CAM (Nút 8) ở Chế độ 2
+                            g_ui.camTheta = 45.0f;
+                            g_ui.camPhi = 25.0f;
+                            g_ui.tyLeTachRoi = 0.0f;
+                            g_ui.chonLinhKien(g_ui.linhKienDangChon, g_dsLinhKien);
+                        }
+                    } else if (g_ui.cheDoHienTai == CHE_DO_SO_DO_2D) {
+                        if (i == 6) { // Xoay 2D 45 độ
+                            g_ui.soDo2DGocRad += (float)M_PI * 0.25f;
+                        } else if (i == 7) { // Lật ngang 2D
+                            g_ui.soDo2DLatNgang = !g_ui.soDo2DLatNgang;
+                        } else if (i == 8) { // Reset 2D
+                            g_ui.soDo2DPanX = 0; g_ui.soDo2DPanY = 0;
+                            g_ui.soDo2DZoom = 1.0f; g_ui.soDo2DGocRad = 0;
+                            g_ui.soDo2DLatNgang = false;
+                        }
+                    } else { // Chế độ 1 (Tổng thể) & Chế độ 3 (Bên trong xe)
                         if (i == 0) { // Nút GẮP / THẢ
                             if (g_vatThe.dangBiGap) g_vatThe.thaVat(g_tayGap);
                             else g_vatThe.thuGapVat(g_tayGap);
@@ -1029,14 +1127,11 @@ void mouseButton(int button, int state, int x, int y) {
                             g_xeRobot.vL += 14.0f; g_xeRobot.vR -= 14.0f;
                         } else if (i == 5) { // Dừng
                             g_xeRobot.vL = g_xeRobot.vR = 0.0f;
-                        } else if (i == 6) { // Xoay 2D 45 độ
-                            g_ui.soDo2DGocRad += (float)M_PI * 0.25f;
-                        } else if (i == 7) { // Lật ngang 2D
-                            g_ui.soDo2DLatNgang = !g_ui.soDo2DLatNgang;
-                        } else if (i == 8) { // Reset 2D
-                            g_ui.soDo2DPanX = 0; g_ui.soDo2DPanY = 0;
-                            g_ui.soDo2DZoom = 1.0f; g_ui.soDo2DGocRad = 0;
-                            g_ui.soDo2DLatNgang = false;
+                        } else if (i == 8) { // Reset góc nhìn xe
+                            g_ui.camTheta = 45.0f;
+                            g_ui.camPhi = 25.0f;
+                            g_ui.camTargetMucTieu = Diem3D(g_xeRobot.x, (g_ui.cheDoHienTai == CHE_DO_BEN_TRONG ? 2.5f : 3.5f), g_xeRobot.z);
+                            g_ui.camDistMucTieu = (g_ui.cheDoHienTai == CHE_DO_BEN_TRONG ? 26.0f : 34.0f);
                         }
                     }
                     glutPostRedisplay();
@@ -1241,10 +1336,13 @@ void keyboard(unsigned char key, int x, int y) {
 }
 
 void reshape(int w, int h) {
-    glViewport(0, 0, w, h);
+    if (w != CUA_SO_RONG || h != CUA_SO_CAO) {
+        glutReshapeWindow(CUA_SO_RONG, CUA_SO_CAO);
+    }
+    glViewport(0, 0, CUA_SO_RONG, CUA_SO_CAO);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluOrtho2D(0, w, 0, h);
+    gluOrtho2D(0, CUA_SO_RONG, 0, CUA_SO_CAO);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 }
