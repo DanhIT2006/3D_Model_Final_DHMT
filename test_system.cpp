@@ -96,8 +96,57 @@ int main() {
     assert(okDay);
     std::cout << "  => TEST 4: PASS!\n\n";
 
+    // -------------------------------------------------------------
+    // TEST 5: KIỂM THỬ KHUNG XE 2 TẦNG & 11 CỤM LINH KIỆN MULTI-PART
+    // -------------------------------------------------------------
+    std::cout << "[TEST 5] Kiem thu Khung xe 2 tang & 11 Linh kien Multi-part:\n";
+    KhungXe2Tang khungXe = taoKhungXe2Tang();
+    std::cout << "  - So tru dong standoffs: " << khungXe.standoffs.size() << " (Mong doi: 4)\n";
+    assert(khungXe.standoffs.size() == 4);
+
+    size_t tongSoPartLK = 0;
+    for (int i = 1; i <= TONG_SO_LINH_KIEN; ++i) {
+        assert(!dsLK[i].parts.empty());
+        tongSoPartLK += dsLK[i].parts.size();
+    }
+    std::cout << "  - Tong so part tren 11 linh kien: " << tongSoPartLK << " parts (Mong doi >= 30)\n";
+    assert(tongSoPartLK >= 30);
+    std::cout << "  => TEST 5: PASS!\n\n";
+
+    // -------------------------------------------------------------
+    // TEST 6: KIỂM THỬ NỘI SUY BÉZIER BẬC 2 VÀ ĐỊNH TUYẾN DÂY NÂNG CẤP
+    // -------------------------------------------------------------
+    std::cout << "[TEST 6] Kiem thu Noi suy Bezier bac 2 (CG.3 Trang 99):\n";
+    Diem3D p0(0, 0, 0), p1(10, 20, 0), p2(20, 0, 0);
+    Diem3D pMid = tinhBezierBac2(p0, p1, p2, 0.5f);
+    // B(0.5) = 0.25*p0 + 0.5*p1 + 0.25*p2 = (10, 10, 0)
+    std::cout << "  - Diem giua Bezier t=0.5: (" << pMid.x << ", " << pMid.y << ", " << pMid.z << ") -> Mong doi: (10, 10, 0)\n";
+    assert(std::abs(pMid.x - 10.0f) < 1e-4f && std::abs(pMid.y - 10.0f) < 1e-4f);
+
+    // Kiểm thử định tuyến 34 dây không bị văng lên trời
+    CungCapTayGap tayGap;
+    tayGap.khoiTao();
+    MaTran4x4 matId;
+    for (size_t i = 0; i < bangDay.size(); ++i) {
+        const auto& d = bangDay[i];
+        Diem3D locA, locB;
+        dsLK[d.idLKA].timChan(d.chanA, locA);
+        dsLK[d.idLKB].timChan(d.chanB, locB);
+        Diem3D pA = dsLK[d.idLKA].viTriLapDat.bienDoi(locA);
+        Diem3D pB = dsLK[d.idLKB].viTriLapDat.bienDoi(locB);
+        std::vector<Diem3D> pts = taoDuongDiDay3DNangCap(pA, pB, d.idLKA, d.idLKB, (int)i + 1,
+            tayGap.matWorldWrist, tayGap.matWorldElbow, tayGap.matWorldBase, matId);
+        assert(pts.size() >= 2);
+        for (const auto& pt : pts) {
+            // Chiều cao y không được vượt quá độ cao sải tay cực đại (y <= 25 cm)
+            assert(pt.y >= 0.0f && pt.y <= 25.0f);
+        }
+    }
+    std::cout << "  - 34 day noi deu sinh duong di hop le, khong vuot qua gioi han khong gian xe.\n";
+    std::cout << "  => TEST 6: PASS!\n\n";
+
     std::cout << "=======================================================\n";
-    std::cout << "   TAT CA 4 CA KIEM THU DEU DAT CHUAN 100% (ALL PASSED)\n";
+    std::cout << "   TAT CA 6 CA KIEM THU DEU DAT CHUAN 100% (ALL PASSED)\n";
     std::cout << "=======================================================\n";
     return 0;
 }

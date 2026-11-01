@@ -78,10 +78,10 @@ struct CungCapTayGap {
     MoHinhServo servoKhuu; // Servo 2: Khớp khuỷu vai
     MoHinhServo servoKep;  // Servo 3: Ngàm kẹp
 
-    // Kích thước các đốt tay máy (cm)
-    float hChassis = 1.6f;
-    float L1 = 4.5f; // Chiều dài đốt dưới
-    float L2 = 5.0f; // Chiều dài đốt trên
+    // Kích thước các đốt tay máy (cm) theo Phần B Mục 1
+    float hChassis = 6.8f; // Gắn trên sàn Tầng 2
+    float L1 = 3.7f;       // Khoảng cách từ Đế lên trục quay Khuỷu
+    float L2 = 8.5f;       // Chiều dài cánh tay trên vươn tới ngàm kẹp
 
     // Ma trận thế giới tính được của từng khớp
     MaTran4x4 matWorldBase;
@@ -99,17 +99,17 @@ struct CungCapTayGap {
         servoKhuu.capNhat(dt);
         servoKep.capNhat(dt);
 
-        // 1. Đế xoay (Node_Base): Quay quanh trục Y góc (theta1 - 90)
+        // 1. Đế xoay (Node_Base): Đặt tại (0.0, 6.8, +6.5) trên UpperDeck
         float gocDeRad = (servoDe.gocHienTai - 90.0f) * (float)M_PI / 180.0f;
-        MaTran4x4 matLocalBase = taoMaTranQuayY(gocDeRad) * taoMaTranTinhTien(0.0f, hChassis, 4.5f);
+        MaTran4x4 matLocalBase = taoMaTranQuayY(gocDeRad) * taoMaTranTinhTien(0.0f, hChassis, 6.5f);
         matWorldBase = matLocalBase * matWorldCar;
 
-        // 2. Khớp khuỷu (Node_Elbow): Quay quanh trục X góc (theta2 - 90)
+        // 2. Khớp khuỷu (Node_Elbow): Đặt tại cục bộ (0.0, 3.7, 0.0) so với Đế
         float gocKhuuRad = (servoKhuu.gocHienTai - 90.0f) * (float)M_PI / 180.0f;
         MaTran4x4 matLocalElbow = taoMaTranQuayX(gocKhuuRad) * taoMaTranTinhTien(0.0f, L1, 0.0f);
         matWorldElbow = matLocalElbow * matWorldBase;
 
-        // 3. Cổ tay & Ngàm gắp (Node_Wrist)
+        // 3. Cổ tay & Ngàm gắp (Node_Wrist): Đặt tại cục bộ (0.0, 0.0, 8.5) so với Khuỷu
         MaTran4x4 matLocalWrist = taoMaTranTinhTien(0.0f, 0.0f, L2);
         matWorldWrist = matLocalWrist * matWorldElbow;
     }
@@ -121,7 +121,7 @@ struct CungCapTayGap {
 // =========================================================================
 
 struct VatTheTuongTac {
-    Diem3D viTriTheGioi = Diem3D(0.0f, 1.2f, 16.0f); // Vị trí khối hộp trên sàn
+    Diem3D viTriTheGioi = Diem3D(0.0f, 1.2f, 18.0f); // Vị trí khối hộp trên sàn phía trước xe
     float kichThuoc = 2.4f; // Cạnh 2.4 cm
     MauSac mauSac = MauSac(46, 204, 113); // Màu xanh ngọc bắt mắt
     bool dangBiGap = false;

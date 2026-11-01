@@ -82,17 +82,148 @@ inline std::vector<DayDien> khoiTao34DayDien() {
 }
 
 // =========================================================================
-// THUẬT TOÁN ĐI DÂY GẤP KHÚC 3D (3D WAYPOINT ROUTING - Mục 5.2)
-// Nối A và B qua 4 điểm: A -> P1 (nhô lên kênh) -> P2 (đi ngang) -> B
+// THUẬT TOÁN ĐI DÂY 3D THEO MÁNG CÁP VÀ BÁM XƯƠNG CÁNH TAY ROBOT
+// KẾT HỢP NỘI SUY ĐƯỜNG CONG BÉZIER BẬC 2 (Tài liệu CG.3 Trang 99)
 // =========================================================================
 
+// Công thức đường cong Bézier bậc 2: P(t) = (1-t)^2 * A + 2*t*(1-t) * B + t^2 * C
+inline Diem3D tinhBezierBac2(const Diem3D& A, const Diem3D& B, const Diem3D& C, float t) {
+    float u = 1.0f - t;
+    float tt = t * t;
+    float uu = u * u;
+    float ut2 = 2.0f * u * t;
+    return Diem3D(
+        uu * A.x + ut2 * B.x + tt * C.x,
+        uu * A.y + ut2 * B.y + tt * C.y,
+        uu * A.z + ut2 * B.z + tt * C.z
+    );
+}
+
+// Bo tròn các góc uốn gấp khúc bằng đường cong Bézier bậc 2
+inline std::vector<Diem3D> lamMuotDuongDayBezier(const std::vector<Diem3D>& rawPts) {
+    if (rawPts.size() <= 2) return rawPts;
+
+    std::vector<Diem3D> smoothPts;
+    smoothPts.push_back(rawPts.front());
+
+    for (size_t i = 1; i + 1 < rawPts.size(); ++i) {
+        Diem3D pPrev = rawPts[i - 1];
+        Diem3D pCurr = rawPts[i];
+        Diem3D pNext = rawPts[i + 1];
+
+        float d1 = (pCurr - pPrev).doDai();
+        float d2 = (pNext - pCurr).doDai();
+        float r = std::min(0.6f, std::min(d1, d2) * 0.35f);
+
+        if (r < 0.05f) {
+            smoothPts.push_back(pCurr);
+            continue;
+        }
+
+        Diem3D dir1 = (pPrev - pCurr).donVi();
+        Diem3D dir2 = (pNext - pCurr).donVi();
+
+        Diem3D ptA = pCurr + dir1 * r;
+        Diem3D ptB = pCurr; // Điểm kiểm soát
+        Diem3D ptC = pCurr + dir2 * r;
+
+        smoothPts.push_back(ptA);
+        // Sinh 3 điểm nội suy dọc đường cong Bézier
+        smoothPts.push_back(tinhBezierBac2(ptA, ptB, ptC, 0.25f));
+        smoothPts.push_back(tinhBezierBac2(ptA, ptB, ptC, 0.50f));
+        smoothPts.push_back(tinhBezierBac2(ptA, ptB, ptC, 0.75f));
+        smoothPts.push_back(ptC);
+    }
+
+    smoothPts.push_back(rawPts.back());
+    return smoothPts;
+}
+
+// Thuật toán định tuyến 3 tuyến theo Phần B Mục 4:
+// - Tuyến 1: Dây cố định bo mạch chạy vào Máng cáp trung tâm (y_duct = 4.2 cm) giữa 2 tầng
+// - Tuyến 2: Dây Servo bám dọc xương cánh tay qua Node_Wrist -> Node_Elbow -> Node_Base
+// - Tuyến 3: Làm mượt các góc rẽ bằng Bézier bậc 2
+inline std::vector<Diem3D> taoDuongDiDay3DNangCap(
+    const Diem3D& A, const Diem3D& B,
+    int idLKA, int idLKB, int indexDay,
+    const MaTran4x4& matWrist,
+    const MaTran4x4& matElbow,
+    const MaTran4x4& matBase,
+    const MaTran4x4& matCar)
+{
+    std::vector<Diem3D> rawPts;
+    rawPts.push_back(A);
+
+    // --- TUYẾN 2: DÂY SERVO BÁM XƯƠNG CÁNH TAY ---
+    if (idLKA == LK_SERVO_KEP || idLKB == LK_SERVO_KEP) {
+        int j = (indexDay - 28);
+        if (j < 0) j = 0; if (j > 2) j = 2;
+        float offset = -0.5f + 0.2f * (float)j;
+
+        Diem3D W_wrist = matWrist.bienDoi(Diem3D(offset,  0.5f, -1.0f));
+        Diem3D W_elbow = matElbow.bienDoi(Diem3D(offset,  0.6f,  0.5f));
+        Diem3D W_base  = matBase.bienDoi(Diem3D(offset,   0.5f, -1.2f));
+        Diem3D W_deck  = matCar.bienDoi(Diem3D(offset,    6.8f,  3.5f));
+
+        rawPts.push_back(W_wrist);
+        rawPts.push_back(W_elbow);
+        rawPts.push_back(W_base);
+        rawPts.push_back(W_deck);
+    }
+    else if (idLKA == LK_SERVO_KHUU || idLKB == LK_SERVO_KHUU) {
+        int j = (indexDay - 25);
+        if (j < 0) j = 0; if (j > 2) j = 2;
+        float offset = -0.6f + 0.2f * (float)j;
+
+        Diem3D W_elbow = matElbow.bienDoi(Diem3D(offset,  0.6f,  0.5f));
+        Diem3D W_base  = matBase.bienDoi(Diem3D(offset,   0.5f, -1.2f));
+        Diem3D W_deck  = matCar.bienDoi(Diem3D(offset,    6.8f,  3.5f));
+
+        rawPts.push_back(W_elbow);
+        rawPts.push_back(W_base);
+        rawPts.push_back(W_deck);
+    }
+    else if (idLKA == LK_SERVO_DE || idLKB == LK_SERVO_DE) {
+        int j = (indexDay - 22);
+        if (j < 0) j = 0; if (j > 2) j = 2;
+        float offset = -0.5f + 0.2f * (float)j;
+
+        Diem3D W_base = matBase.bienDoi(Diem3D(offset, 0.5f, -1.0f));
+        Diem3D W_deck = matCar.bienDoi(Diem3D(offset,  6.8f,  3.5f));
+
+        rawPts.push_back(W_base);
+        rawPts.push_back(W_deck);
+    }
+    // --- TUYẾN 1: DÂY CỐ ĐỊNH CHẠY TRONG MÁNG CÁP TRUNG TÂM (y_duct = 4.2 cm) ---
+    else {
+        // Điểm nhô ngắn khỏi đầu chân cắm
+        Diem3D pLiftA = A + Diem3D(0.0f, (A.y < 3.0f ? 0.6f : -0.5f), 0.0f);
+        Diem3D pLiftB = B + Diem3D(0.0f, (B.y < 3.0f ? 0.6f : -0.5f), 0.0f);
+        rawPts.push_back(pLiftA);
+
+        // Làn cáp trong máng cáp trung tâm
+        float xLane = -0.7f + 0.12f * (float)(indexDay % 12);
+        float yLane =  3.8f + 0.08f * (float)(indexDay / 12);
+
+        // Chuyển làn cáp theo tọa độ xe
+        Diem3D midA = matCar.bienDoi(Diem3D(xLane, yLane, (matCar.nghichDaoBienDoiCung().bienDoi(A)).z));
+        Diem3D midB = matCar.bienDoi(Diem3D(xLane, yLane, (matCar.nghichDaoBienDoiCung().bienDoi(B)).z));
+
+        rawPts.push_back(midA);
+        rawPts.push_back(midB);
+        rawPts.push_back(pLiftB);
+    }
+
+    rawPts.push_back(B);
+
+    // Tuyến 3: Bo tròn mượt mà bằng Bézier bậc 2
+    return lamMuotDuongDayBezier(rawPts);
+}
+
+// Wrapper tương thích ngược
 inline std::vector<Diem3D> taoDuongDiDay3D(const Diem3D& A, const Diem3D& B, int indexDay) {
-    float yChannel = std::max(A.y, B.y) + 1.5f + 0.08f * indexDay;
-    Diem3D P0 = A;
-    Diem3D P1(A.x, yChannel, A.z);
-    Diem3D P2(B.x, yChannel, B.z);
-    Diem3D P3 = B;
-    return {P0, P1, P2, P3};
+    MaTran4x4 I;
+    return taoDuongDiDay3DNangCap(A, B, 1, 2, indexDay, I, I, I, I);
 }
 
 // =========================================================================

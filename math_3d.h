@@ -39,6 +39,14 @@ struct Diem3D {
         return Diem3D(x / d, y / d, z / d);
     }
 
+    Diem3D donVi() const {
+        return chuanHoa();
+    }
+
+    Diem3D operator*(const Diem3D& o) const {
+        return tichCoHuong(*this, o);
+    }
+
     static float tichVoHuong(const Diem3D& a, const Diem3D& b) {
         return a.x * b.x + a.y * b.y + a.z * b.z;
     }
