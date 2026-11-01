@@ -1,5 +1,5 @@
-#ifndef CAU_HINH_H
-#define CAU_HINH_H
+#ifndef CONFIG_H
+#define CONFIG_H
 
 #include <cstdint>
 #include <string>

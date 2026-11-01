@@ -1,7 +1,7 @@
-#ifndef TOAN_HOC_DO_HOA_H
-#define TOAN_HOC_DO_HOA_H
+#ifndef MATH_3D_H
+#define MATH_3D_H
 
-#include "cau_hinh.h"
+#include "config.h"
 #include <cmath>
 
 // =========================================================================
@@ -315,4 +315,10 @@ inline Diem2D chieuLenManHinh(const Diem3D& p0, float D, bool laPhoiCanh, float 
     return p2d;
 }
 
-#endif // TOAN_HOC_DO_HOA_H
+// Standard Type Aliases for Computer Graphics
+using Vector2 = Diem2D;
+using Vector3 = Diem3D;
+using Matrix4x4 = MaTran4x4;
+using Matrix3x3 = MaTran3x3;
+
+#endif // MATH_3D_H

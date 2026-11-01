@@ -38,17 +38,17 @@ Hệ thống được tổ chức thành các module chuyên biệt:
 ```
 CongCuDoHoa3D/
 │
-├── cau_hinh.h              # Hằng số giao diện, bảng màu Cyberpunk CAD, mã định danh 11 linh kiện & chế độ
-├── toan_hoc_do_hoa.h       # Vector hàng Q = P * M, Ma trận 4x4, Ma trận 3x3, Pipeline tọa độ quan sát & chiếu
-├── raster_co_so.h          # FrameBuffer RAM, Bresenham đoạn thẳng (8 octants), Bresenham đường tròn, Font chữ
-├── xen_va_to_mau.h         # Cohen-Sutherland, Sutherland-Hodgman, Scanline Fill (ET/AET), Stack Boundary Fill
-├── linh_kien_va_mesh.h     # Mesh 3D procedural (Hộp, Trụ, Chân cắm Pin) cho 11 linh kiện chuẩn cơ khí
-├── bang_dau_day.h          # Danh mục 34 dây nối (5 nhóm), Định tuyến dây 3D trực giao, Bộ kiểm tra toàn vẹn
-├── dong_hoc_xe_tay_gap.h   # Động học vi sai xe, Động học cánh tay 3-DOF, PWM Servo, Gắp thả vật thể bằng ma trận nghịch đảo
-├── giao_dien_ui.h          # 5 Phân vùng UI (TopBar, LeftPanel, CenterViewport, RightPanel, BottomBar), Camera Fly-to
-├── chinh.cpp               # Master file tích hợp vòng lặp GLUT, bộ đệm phần mềm glDrawPixels, 3D & 2D rendering
+├── config.h                # Cấu hình hằng số, bảng màu Cyberpunk CAD, mã định danh 11 linh kiện & chế độ
+├── math_3d.h               # Vector hàng Q = P * M, Ma trận 4x4, Ma trận 3x3, Pipeline tọa độ quan sát & chiếu
+├── rasterizer.h            # FrameBuffer RAM, Bresenham đoạn thẳng (8 octants), Bresenham đường tròn, Font chữ
+├── clipping_fill.h         # Cohen-Sutherland, Sutherland-Hodgman, Scanline Fill (ET/AET), Stack Boundary Fill
+├── components_mesh.h       # Mesh 3D procedural (Hộp, Trụ, Chân cắm Pin) cho 11 linh kiện chuẩn cơ khí
+├── wiring_table.h          # Danh mục 34 dây nối (5 nhóm), Định tuyến dây 3D trực giao, Bộ kiểm tra toàn vẹn
+├── robot_kinematics.h      # Động học vi sai xe, Động học cánh tay 3-DOF, PWM Servo, Gắp thả vật thể
+├── ui_manager.h            # 5 Phân vùng UI (TopBar, LeftPanel, CenterViewport, RightPanel, BottomBar), Camera Fly-to
+├── main.cpp                # File mã nguồn chính: tích hợp GLUT, vòng lặp game 60 FPS, 3D & 2D rendering
 │
-├── kiem_thu_he_thong.cpp   # Bộ kiểm thử tự động (Unit Test) cho PWM, Cohen-Sutherland, Sutherland-Hodgman, 34 dây nối
+├── test_system.cpp         # Bộ kiểm thử tự động (Unit Test) cho PWM, Cohen-Sutherland, Sutherland-Hodgman, 34 dây nối
 ├── run.bat                 # Script tự động biên dịch MinGW g++ (-O2) và khởi chạy chương trình
 └── README.md               # Tài liệu thuyết minh kỹ thuật và kịch bản demo bảo vệ
 ```
@@ -92,16 +92,16 @@ CongCuDoHoa3D/
 
 | STT | Tên Thuật toán | Vị trí cài đặt trong Code | Ứng dụng cụ thể trong Phần mềm |
 |:---:|:---|:---|:---|
-| **1** | **Toán tử Vector hàng & Ma trận 4x4 / 3x3** | `toan_hoc_do_hoa.h` | Tự cài đặt biến đổi tịnh tiến, tỉ lệ, quay quanh trục tọa độ và trục bất kỳ theo chuẩn $Q = P \cdot M$; tính toán ma trận nghịch đảo vật rắn để kẹp đồ vật. |
-| **2** | **Bresenham vẽ đoạn thẳng (8 Bát phân)** | `raster_co_so.h` (`veDoanThangBresenham`) | Vẽ 34 đường dây nối ở chế độ Sơ đồ 2D và vẽ đường biên cho các bảng mạch, thanh trượt UI. |
-| **3** | **Bresenham vẽ đường tròn & đĩa đặc** | `raster_co_so.h` (`veDuongTronBresenham`, `veHinhTronDacBresenham`) | Vẽ các nút chân cắm (Pin), đinh ốc vít lắp ráp bo mạch, và các khớp servo. |
-| **4** | **Cohen-Sutherland Line Clipping (Mã 4-bit)** | `xen_va_to_mau.h` (`xenDoanThangCohenSutherland`) | Xén tỉa các đường dây nối và lưới tọa độ khi bị kéo tràn ra ngoài vùng Center Viewport $([240, 1040] \times [40, 740])$. |
-| **5** | **Sutherland-Hodgman Polygon Clipping** | `xen_va_to_mau.h` (`xenDaGiacSutherlandHodgman`) | Cắt tỉa các đa giác 2D (khung bo mạch, tấm mica) theo 4 cạnh của cửa sổ hiển thị. |
-| **6** | **Tô màu đa giác Scanline (ET / AET)** | `xen_va_to_mau.h` (`toMauScanline`) | Tô màu các bề mặt bo mạch PCB (xanh lục Arduino, đỏ L298N, xanh dương Buck) với bảng cạnh tích cực và danh sách giao điểm đã sắp xếp. |
-| **7** | **Tô loang Boundary Fill (Ngăn xếp Stack)** | `xen_va_to_mau.h` (`toLoangBoundaryFillStack`) | Tô loang vùng khép kín khi click chuột vào sơ đồ bo mạch 2D, giải quyết triệt để lỗi tràn stack (Stack Overflow) của đệ quy thông thường. |
-| **8** | **Khử mặt khuất Back-Face Culling** | `chinh.cpp` (`tinhTichVoHuong(phapTuyen, huongNhin) <= 0`) | Loại bỏ các mặt đáy/mặt sau của các khối hộp 3D trước khi chiếu lên màn hình, tăng tốc độ dựng hình. |
-| **9** | **Thuật toán Thợ sơn (Painter's Algorithm)** | `chinh.cpp` (`std::sort` theo độ sâu $Z_{cam}$) | Sắp xếp các chi tiết từ xa đến gần để vẽ tuần tự lên bộ đệm khung hình phần mềm. |
-| **10** | **Bắt điểm 3D (3D Color Picking)** | `chinh.cpp` (`glReadPixels` trên Back Buffer) | Nhận diện click chuột chính xác vào từng linh kiện 3D nhờ gán mã màu RGB độc nhất cho hitbox tàng hình. |
+| **1** | **Toán tử Vector hàng & Ma trận 4x4 / 3x3** | `math_3d.h` | Tự cài đặt biến đổi tịnh tiến, tỉ lệ, quay quanh trục tọa độ và trục bất kỳ theo chuẩn $Q = P \cdot M$; tính toán ma trận nghịch đảo vật rắn để kẹp đồ vật. |
+| **2** | **Bresenham vẽ đoạn thẳng (8 Bát phân)** | `rasterizer.h` (`veDoanThangBresenham`) | Vẽ 34 đường dây nối ở chế độ Sơ đồ 2D và vẽ đường biên cho các bảng mạch, thanh trượt UI. |
+| **3** | **Bresenham vẽ đường tròn & đĩa đặc** | `rasterizer.h` (`veDuongTronBresenham`, `veHinhTronDacBresenham`) | Vẽ các nút chân cắm (Pin), đinh ốc vít lắp ráp bo mạch, và các khớp servo. |
+| **4** | **Cohen-Sutherland Line Clipping (Mã 4-bit)** | `clipping_fill.h` (`xenDoanThangCohenSutherland`) | Xén tỉa các đường dây nối và lưới tọa độ khi bị kéo tràn ra ngoài vùng Center Viewport $([240, 1040] \times [40, 740])$. |
+| **5** | **Sutherland-Hodgman Polygon Clipping** | `clipping_fill.h` (`xenDaGiacSutherlandHodgman`) | Cắt tỉa các đa giác 2D (khung bo mạch, tấm mica) theo 4 cạnh của cửa sổ hiển thị. |
+| **6** | **Tô màu đa giác Scanline (ET / AET)** | `clipping_fill.h` (`toMauScanline`) | Tô màu các bề mặt bo mạch PCB (xanh lục Arduino, đỏ L298N, xanh dương Buck) với bảng cạnh tích cực và danh sách giao điểm đã sắp xếp. |
+| **7** | **Tô loang Boundary Fill (Ngăn xếp Stack)** | `clipping_fill.h` (`toLoangBoundaryFillStack`) | Tô loang vùng khép kín khi click chuột vào sơ đồ bo mạch 2D, giải quyết triệt để lỗi tràn stack (Stack Overflow) của đệ quy thông thường. |
+| **8** | **Khử mặt khuất Back-Face Culling** | `main.cpp` (`tinhTichVoHuong(phapTuyen, huongNhin) <= 0`) | Loại bỏ các mặt đáy/mặt sau của các khối hộp 3D trước khi chiếu lên màn hình, tăng tốc độ dựng hình. |
+| **9** | **Thuật toán Thợ sơn (Painter's Algorithm)** | `main.cpp` (`std::sort` theo độ sâu $Z_{cam}$) | Sắp xếp các chi tiết từ xa đến gần để vẽ tuần tự lên bộ đệm khung hình phần mềm. |
+| **10** | **Bắt điểm 3D (3D Color Picking)** | `main.cpp` (`glReadPixels` trên Back Buffer) | Nhận diện click chuột chính xác vào từng linh kiện 3D nhờ gán mã màu RGB độc nhất cho hitbox tàng hình. |
 
 ---
 
@@ -154,7 +154,7 @@ Chỉ cần nhấp đúp vào file `run.bat` hoặc chạy trong PowerShell / Co
 ### Cách 2: Biên dịch thủ công từ dòng lệnh
 ```powershell
 # Biên dịch chương trình chính
-g++ chinh.cpp -O2 -o mo_phong_xe_robot_3d.exe -lfreeglut -lopengl32 -lglu32
+g++ main.cpp -O2 -o mo_phong_xe_robot_3d.exe -lfreeglut -lopengl32 -lglu32
 
 # Chạy ứng dụng
 .\mo_phong_xe_robot_3d.exe
@@ -163,8 +163,8 @@ g++ chinh.cpp -O2 -o mo_phong_xe_robot_3d.exe -lfreeglut -lopengl32 -lglu32
 ### Cách 3: Chạy bộ kiểm thử tự động (Unit Test Suite)
 ```powershell
 # Biên dịch và chạy bộ test thuật toán
-g++ kiem_thu_he_thong.cpp -o kiem_thu_he_thong.exe
-.\kiem_thu_he_thong.exe
+g++ test_system.cpp -o test_system.exe -lfreeglut -lopengl32 -lglu32
+.\test_system.exe
 ```
 *Kết quả kiểm thử tự động xác nhận 100% test cases cho PWM Mapping, Cohen-Sutherland, Sutherland-Hodgman và tính toàn vẹn của 34 đường dây nối đều đạt chuẩn.*
 

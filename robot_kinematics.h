@@ -1,8 +1,8 @@
-#ifndef DONG_HOC_XE_TAY_GAP_H
-#define DONG_HOC_XE_TAY_GAP_H
+#ifndef ROBOT_KINEMATICS_H
+#define ROBOT_KINEMATICS_H
 
-#include "cau_hinh.h"
-#include "toan_hoc_do_hoa.h"
+#include "config.h"
+#include "math_3d.h"
 #include <cmath>
 #include <algorithm>
 
@@ -162,4 +162,9 @@ struct VatTheTuongTac {
     }
 };
 
-#endif // DONG_HOC_XE_TAY_GAP_H
+// Standard Type Aliases
+using RobotChassis = DongHocXe;
+using RobotArm = CungCapTayGap;
+using InteractiveObject = VatTheTuongTac;
+
+#endif // ROBOT_KINEMATICS_H

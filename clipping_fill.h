@@ -1,9 +1,9 @@
-#ifndef XEN_VA_TO_MAU_H
-#define XEN_VA_TO_MAU_H
+#ifndef CLIPPING_FILL_H
+#define CLIPPING_FILL_H
 
-#include "cau_hinh.h"
-#include "toan_hoc_do_hoa.h"
-#include "raster_co_so.h"
+#include "config.h"
+#include "math_3d.h"
+#include "rasterizer.h"
 #include <vector>
 #include <algorithm>
 
@@ -254,4 +254,4 @@ inline void toLoangBoundaryFillStack(int x0, int y0, MauSac fillCol, MauSac boun
     }
 }
 
-#endif // XEN_VA_TO_MAU_H
+#endif // CLIPPING_FILL_H

@@ -1,11 +1,11 @@
-#include "cau_hinh.h"
-#include "toan_hoc_do_hoa.h"
-#include "raster_co_so.h"
-#include "xen_va_to_mau.h"
-#include "linh_kien_va_mesh.h"
-#include "bang_dau_day.h"
-#include "dong_hoc_xe_tay_gap.h"
-#include "giao_dien_ui.h"
+#include "config.h"
+#include "math_3d.h"
+#include "rasterizer.h"
+#include "clipping_fill.h"
+#include "components_mesh.h"
+#include "wiring_table.h"
+#include "robot_kinematics.h"
+#include "ui_manager.h"
 
 #include <GL/glut.h>
 #include <chrono>

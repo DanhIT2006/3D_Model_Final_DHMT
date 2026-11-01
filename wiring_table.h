@@ -1,9 +1,9 @@
-#ifndef BANG_DAU_DAY_H
-#define BANG_DAU_DAY_H
+#ifndef WIRING_TABLE_H
+#define WIRING_TABLE_H
 
-#include "cau_hinh.h"
-#include "toan_hoc_do_hoa.h"
-#include "linh_kien_va_mesh.h"
+#include "config.h"
+#include "math_3d.h"
+#include "components_mesh.h"
 #include <vector>
 #include <string>
 #include <iostream>
@@ -160,4 +160,7 @@ inline bool kiemTraToanVenDay(const std::vector<DayDien>& bangDay, const std::ve
     return hopLe;
 }
 
-#endif // BANG_DAU_DAY_H
+// Standard Type Aliases
+using Wire = DayDien;
+
+#endif // WIRING_TABLE_H

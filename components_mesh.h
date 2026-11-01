@@ -1,8 +1,8 @@
-#ifndef LINH_KIEN_VA_MESH_H
-#define LINH_KIEN_VA_MESH_H
+#ifndef COMPONENTS_MESH_H
+#define COMPONENTS_MESH_H
 
-#include "cau_hinh.h"
-#include "toan_hoc_do_hoa.h"
+#include "config.h"
+#include "math_3d.h"
 #include <vector>
 #include <string>
 
@@ -587,4 +587,7 @@ inline void khoiTao11LinhKien(std::vector<LinhKien>& ds) {
     }
 }
 
-#endif // LINH_KIEN_VA_MESH_H
+// Standard Type Aliases
+using Component = LinhKien;
+
+#endif // COMPONENTS_MESH_H

@@ -1,7 +1,7 @@
-#ifndef RASTER_CO_SO_H
-#define RASTER_CO_SO_H
+#ifndef RASTERIZER_H
+#define RASTERIZER_H
 
-#include "cau_hinh.h"
+#include "config.h"
 #include <GL/glut.h>
 #include <cstring>
 #include <vector>
@@ -191,4 +191,4 @@ inline void veChu(int x, int y, const char* str, MauSac c, void* font = GLUT_BIT
     }
 }
 
-#endif // RASTER_CO_SO_H
+#endif // RASTERIZER_H
