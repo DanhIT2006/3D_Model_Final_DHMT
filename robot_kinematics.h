@@ -113,6 +113,19 @@ struct CungCapTayGap {
         MaTran4x4 matLocalWrist = taoMaTranTinhTien(0.0f, 0.0f, L2);
         matWorldWrist = matLocalWrist * matWorldElbow;
     }
+
+    // Tính ma trận các khớp khi đưa vào Bàn gia công / Kiểm thử 3D Độc lập (Chế độ 2)
+    void tinhMaTranBanThucNghiem(MaTran4x4& outBase, MaTran4x4& outElbow, MaTran4x4& outWrist, float tyLeTachRoi = 0.0f) const {
+        float gocDeRad = (servoDe.gocHienTai - 90.0f) * (float)M_PI / 180.0f;
+        outBase = taoMaTranQuayY(gocDeRad) * taoMaTranTinhTien(0.0f, 0.4f + tyLeTachRoi * 1.5f, 0.0f);
+
+        float gocKhuuRad = (servoKhuu.gocHienTai - 90.0f) * (float)M_PI / 180.0f;
+        MaTran4x4 matLocalElbow = taoMaTranQuayX(gocKhuuRad) * taoMaTranTinhTien(0.0f, L1 + tyLeTachRoi * 2.0f, 0.0f);
+        outElbow = matLocalElbow * outBase;
+
+        MaTran4x4 matLocalWrist = taoMaTranTinhTien(0.0f, 0.0f, L2 + tyLeTachRoi * 2.5f);
+        outWrist = matLocalWrist * outElbow;
+    }
 };
 
 // =========================================================================
@@ -122,10 +135,13 @@ struct CungCapTayGap {
 
 struct VatTheTuongTac {
     Diem3D viTriTheGioi = Diem3D(0.0f, 1.2f, 18.0f); // Vị trí khối hộp trên sàn phía trước xe
+    Diem3D viTriBanThucNghiem = Diem3D(0.0f, 1.2f, 9.0f); // Vị trí khối hộp trên bàn thử Chế độ 2
     float kichThuoc = 2.4f; // Cạnh 2.4 cm
     MauSac mauSac = MauSac(46, 204, 113); // Màu xanh ngọc bắt mắt
     bool dangBiGap = false;
-    MaTran4x4 matLocalObj; // Tọa độ tương đối khi gắn vào Wrist
+    bool dangBiGapTrenBan = false;
+    MaTran4x4 matLocalObj; // Tọa độ tương đối khi gắn vào Wrist (trên xe)
+    MaTran4x4 matLocalObjBan; // Tọa độ tương đối khi gắn vào Wrist (trên bàn thử)
 
     // Kiểm tra khoảng cách ngàm tới vật thể và kẹp
     bool thuGapVat(const CungCapTayGap& arm) {
@@ -158,6 +174,46 @@ struct VatTheTuongTac {
             // Cập nhật vị trí thế giới theo chuyển động cánh tay
             MaTran4x4 matWorldObj = matLocalObj * arm.matWorldWrist;
             viTriTheGioi = matWorldObj.bienDoi(Diem3D(0, 0, 0));
+        }
+    }
+
+    bool thuGapVatTrenBan(const MaTran4x4& matWrist, float gocKep) {
+        Diem3D posWrist = matWrist.bienDoi(Diem3D(0, 0, 0));
+        float kc = (posWrist - viTriBanThucNghiem).doDai();
+        if (kc <= 3.8f && gocKep < 60.0f) {
+            dangBiGapTrenBan = true;
+            MaTran4x4 invWrist = matWrist.nghichDaoBienDoiCung();
+            MaTran4x4 matWorldObj = taoMaTranTinhTien(viTriBanThucNghiem.x, viTriBanThucNghiem.y, viTriBanThucNghiem.z);
+            matLocalObjBan = matWorldObj * invWrist;
+            return true;
+        }
+        return false;
+    }
+
+    void thaVatTrenBan(const MaTran4x4& matWrist) {
+        if (!dangBiGapTrenBan) return;
+        MaTran4x4 matWorldObj = matLocalObjBan * matWrist;
+        viTriBanThucNghiem = matWorldObj.bienDoi(Diem3D(0, 0, 0));
+        viTriBanThucNghiem.y = kichThuoc * 0.5f;
+        dangBiGapTrenBan = false;
+    }
+
+    bool thuGapVatTrenBan(const CungCapTayGap& arm) {
+        MaTran4x4 mBase, mElbow, mWrist;
+        arm.tinhMaTranBanThucNghiem(mBase, mElbow, mWrist, 0.0f);
+        return thuGapVatTrenBan(mWrist, arm.servoKep.gocHienTai);
+    }
+
+    void thaVatTrenBan(const CungCapTayGap& arm) {
+        MaTran4x4 mBase, mElbow, mWrist;
+        arm.tinhMaTranBanThucNghiem(mBase, mElbow, mWrist, 0.0f);
+        thaVatTrenBan(mWrist);
+    }
+
+    void capNhatTrenBan(const MaTran4x4& matWrist) {
+        if (dangBiGapTrenBan) {
+            MaTran4x4 matWorldObj = matLocalObjBan * matWrist;
+            viTriBanThucNghiem = matWorldObj.bienDoi(Diem3D(0, 0, 0));
         }
     }
 };

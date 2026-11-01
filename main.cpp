@@ -35,6 +35,11 @@ VatTheTuongTac  g_vatThe;
 // Quản lý giao diện UI
 TrinhQuanLyGiaoDien g_ui;
 
+// Trạng thái kiểm thử độc lập linh kiện trong Chế độ 2 (Phần B Mục 2)
+float g_gocQuayMoTo   = 0.0f; // Góc quay của mô-tơ/bánh xe (độ)
+float g_tocDoQuayMoTo = 0.0f; // Vận tốc góc mô-tơ (độ/giây)
+bool  g_congTacPinBat = true; // Trạng thái công tắc nguồn (BAT/TAT)
+
 // Quản lý tương tác chuột
 int  g_chuotCuX = 0, g_chuotCuY = 0;
 bool g_dangKeoChuotTrai  = false;
@@ -220,156 +225,316 @@ void renderCanh3D(float dt) {
 
     std::vector<PhanTuCanVe3D> danhSachPhanTu;
 
-    // --- 1. VẼ LƯỚI MẶT SÀN ---
-    MauSac mauLuoi = BangMau::VIEN_PANEL.lamToi(0.55f);
-    for (int i = -16; i <= 16; i += 2) {
-        Diem3D pA1((float)i, 0.0f, -16.0f), pA2((float)i, 0.0f, 16.0f);
-        Diem3D vA1 = chuyenHeToaDoQuanSat(pA1, camTarget, thetaRad, phiRad, R_cam);
-        Diem3D vA2 = chuyenHeToaDoQuanSat(pA2, camTarget, thetaRad, phiRad, R_cam);
-        Diem2D sA1 = chieuLenManHinh(vA1, D_proj, true, cx, cy);
-        Diem2D sA2 = chieuLenManHinh(vA2, D_proj, true, cx, cy);
+    if (g_ui.cheDoHienTai == CHE_DO_LINH_KIEN) {
+        // =====================================================================
+        // CHẾ ĐỘ 2: MÔI TRƯỜNG BÀN GIA CÔNG & KIỂM THỬ 3D ĐỘC LẬP (CAD WORKBENCH)
+        // (Phần B Đặc tả: Cô lập 100%, không vẽ xe, không vẽ dây, chỉ vẽ linh kiện tại (0,0,0))
+        // =====================================================================
 
-        Diem2D cA = sA1, cB = sA2;
-        if (xenDoanThangCohenSutherland(cA, cB, wmin, wmax)) {
-            veDoanThangBresenham((int)cA.x, (int)cA.y, (int)cB.x, (int)cB.y, mauLuoi);
+        // 1. Vẽ bàn lưới gia công 16x16 cm tại y = 0
+        MauSac mauLuoiPhu = MauSac(35, 45, 58);
+        MauSac mauTrucSan  = MauSac(65, 85, 115);
+        MauSac mauVienSan  = MauSac(75, 105, 140);
+
+        for (int i = -8; i <= 8; ++i) {
+            MauSac cX = (i == 0) ? mauTrucSan : mauLuoiPhu;
+            Diem3D pA1((float)i, 0.0f, -8.0f), pA2((float)i, 0.0f, 8.0f);
+            Diem3D vA1 = chuyenHeToaDoQuanSat(pA1, camTarget, thetaRad, phiRad, R_cam);
+            Diem3D vA2 = chuyenHeToaDoQuanSat(pA2, camTarget, thetaRad, phiRad, R_cam);
+            Diem2D sA1 = chieuLenManHinh(vA1, D_proj, true, cx, cy);
+            Diem2D sA2 = chieuLenManHinh(vA2, D_proj, true, cx, cy);
+            Diem2D cA = sA1, cB = sA2;
+            if (xenDoanThangCohenSutherland(cA, cB, wmin, wmax)) {
+                veDoanThangBresenham((int)cA.x, (int)cA.y, (int)cB.x, (int)cB.y, cX);
+            }
+
+            MauSac cZ = (i == 0) ? mauTrucSan : mauLuoiPhu;
+            Diem3D pB1(-8.0f, 0.0f, (float)i), pB2(8.0f, 0.0f, (float)i);
+            Diem3D vB1 = chuyenHeToaDoQuanSat(pB1, camTarget, thetaRad, phiRad, R_cam);
+            Diem3D vB2 = chuyenHeToaDoQuanSat(pB2, camTarget, thetaRad, phiRad, R_cam);
+            Diem2D sB1 = chieuLenManHinh(vB1, D_proj, true, cx, cy);
+            Diem2D sB2 = chieuLenManHinh(vB2, D_proj, true, cx, cy);
+            cA = sB1; cB = sB2;
+            if (xenDoanThangCohenSutherland(cA, cB, wmin, wmax)) {
+                veDoanThangBresenham((int)cA.x, (int)cA.y, (int)cB.x, (int)cB.y, cZ);
+            }
         }
 
-        Diem3D pB1(-16.0f, 0.0f, (float)i), pB2(16.0f, 0.0f, (float)i);
-        Diem3D vB1 = chuyenHeToaDoQuanSat(pB1, camTarget, thetaRad, phiRad, R_cam);
-        Diem3D vB2 = chuyenHeToaDoQuanSat(pB2, camTarget, thetaRad, phiRad, R_cam);
-        Diem2D sB1 = chieuLenManHinh(vB1, D_proj, true, cx, cy);
-        Diem2D sB2 = chieuLenManHinh(vB2, D_proj, true, cx, cy);
-
-        cA = sB1; cB = sB2;
-        if (xenDoanThangCohenSutherland(cA, cB, wmin, wmax)) {
-            veDoanThangBresenham((int)cA.x, (int)cA.y, (int)cB.x, (int)cB.y, mauLuoi);
+        // 2. Vẽ 3 Trục tọa độ chuẩn Ox (Đỏ), Oy (Xanh lá), Oz (Xanh dương)
+        struct Truc3D { Diem3D goc, ngon; MauSac mau; };
+        std::vector<Truc3D> cacTruc = {
+            {Diem3D(0.0f, 0.02f, 0.0f), Diem3D(6.0f, 0.02f, 0.0f), MauSac(235, 55, 55)},  // Ox
+            {Diem3D(0.0f, 0.02f, 0.0f), Diem3D(0.0f, 6.0f, 0.0f),  MauSac(45, 215, 75)},  // Oy
+            {Diem3D(0.0f, 0.02f, 0.0f), Diem3D(0.0f, 0.02f, 6.0f), MauSac(50, 135, 245)}  // Oz
+        };
+        for (const auto& tr : cacTruc) {
+            Diem3D v1 = chuyenHeToaDoQuanSat(tr.goc,  camTarget, thetaRad, phiRad, R_cam);
+            Diem3D v2 = chuyenHeToaDoQuanSat(tr.ngon, camTarget, thetaRad, phiRad, R_cam);
+            Diem2D s1 = chieuLenManHinh(v1, D_proj, true, cx, cy);
+            Diem2D s2 = chieuLenManHinh(v2, D_proj, true, cx, cy);
+            Diem2D cA = s1, cB = s2;
+            if (xenDoanThangCohenSutherland(cA, cB, wmin, wmax)) {
+                veDoanThangDay((int)cA.x, (int)cA.y, (int)cB.x, (int)cB.y, tr.mau, 2);
+            }
         }
-    }
 
-    // --- 2. VẬT THỂ TƯƠNG TÁC (KHỐI HÀNG HÓA MÀU XANH NGỌC) ---
-    Part partVatThe;
-    partVatThe.ten = "VatThe";
-    partVatThe.mesh = taoKhoiHop(g_vatThe.kichThuoc, g_vatThe.kichThuoc, g_vatThe.kichThuoc, g_vatThe.mauSac);
-    partVatThe.bienDoiCucBo = taoMaTranTinhTien(g_vatThe.viTriTheGioi.x, g_vatThe.viTriTheGioi.y, g_vatThe.viTriTheGioi.z);
-    themPartVaoDanhSachRender(partVatThe, MaTran4x4(), -1, camTarget, thetaRad, phiRad, R_cam, D_proj, cx, cy, wmin, wmax, huongSang, danhSachPhanTu);
-
-    // --- 3. KHUNG XE 2 TẦNG ACRYLIC (PHẦN B MỤC 1) ---
-    if (g_ui.cheDoHienTai != CHE_DO_BEN_TRONG) {
-        // Tầng 1 (LowerDeck): y = 2.2 cm
-        themPartVaoDanhSachRender(g_khungXe.lowerDeck, matWorldCar, -1, camTarget, thetaRad, phiRad, R_cam, D_proj, cx, cy, wmin, wmax, huongSang, danhSachPhanTu);
-
-        // Tầng 2 (UpperDeck): y = 6.5 cm (Tách rời theo trục Y trong Exploded View)
-        MaTran4x4 matUpper = matWorldCar;
-        if (g_ui.tyLeTachRoi > 1e-4f) {
-            matUpper = taoMaTranTinhTien(0.0f, g_ui.tyLeTachRoi * 5.5f, 0.0f) * matWorldCar;
+        // 3. Đường gióng kích thước bao (Dimension Lines)
+        const auto& lkHienTai = g_dsLinhKien[g_ui.linhKienDangChon];
+        float hw = lkHienTai.kichThuocBao.x * 0.5f;
+        float hd = lkHienTai.kichThuocBao.z * 0.5f;
+        Diem3D b0(-hw, 0.02f, -hd), b1(hw, 0.02f, -hd), b2(hw, 0.02f, hd), b3(-hw, 0.02f, hd);
+        std::vector<std::pair<Diem3D, Diem3D>> vienBao = {{b0, b1}, {b1, b2}, {b2, b3}, {b3, b0}};
+        MauSac mauVienBao(0, 168, 204);
+        for (const auto& e : vienBao) {
+            Diem3D v1 = chuyenHeToaDoQuanSat(e.first,  camTarget, thetaRad, phiRad, R_cam);
+            Diem3D v2 = chuyenHeToaDoQuanSat(e.second, camTarget, thetaRad, phiRad, R_cam);
+            Diem2D s1 = chieuLenManHinh(v1, D_proj, true, cx, cy);
+            Diem2D s2 = chieuLenManHinh(v2, D_proj, true, cx, cy);
+            Diem2D cA = s1, cB = s2;
+            if (xenDoanThangCohenSutherland(cA, cB, wmin, wmax)) {
+                veDoanThangBresenham((int)cA.x, (int)cA.y, (int)cB.x, (int)cB.y, mauVienBao);
+            }
         }
-        themPartVaoDanhSachRender(g_khungXe.upperDeck, matUpper, -1, camTarget, thetaRad, phiRad, R_cam, D_proj, cx, cy, wmin, wmax, huongSang, danhSachPhanTu);
 
-        // 4 Trụ đồng lục giác Standoff
-        for (const auto& st : g_khungXe.standoffs) {
-            themPartVaoDanhSachRender(st, matWorldCar, -1, camTarget, thetaRad, phiRad, R_cam, D_proj, cx, cy, wmin, wmax, huongSang, danhSachPhanTu);
+        // 4. Thu thập các mặt của linh kiện được chọn theo phân loại tương tác
+        if (lkHienTai.category == InspectCategory::ARM_MANIPULATOR) {
+            // Hiển thị nguyên Cụm tay gắp 3-DOF tại tâm bàn (0, 0, 0)
+            MaTran4x4 matBase, matElbow, matWrist;
+            g_tayGap.tinhMaTranBanThucNghiem(matBase, matElbow, matWrist, g_ui.tyLeTachRoi);
+
+            // Cập nhật khối vật mẫu thử gắp trên bàn thử
+            g_vatThe.capNhatTrenBan(matWrist);
+
+            for (const auto& part : g_dsLinhKien[LK_SERVO_DE].parts) {
+                themPartVaoDanhSachRender(part, matBase, LK_SERVO_DE, camTarget, thetaRad, phiRad, R_cam, D_proj, cx, cy, wmin, wmax, huongSang, danhSachPhanTu);
+            }
+            for (const auto& part : g_dsLinhKien[LK_SERVO_KHUU].parts) {
+                themPartVaoDanhSachRender(part, matElbow, LK_SERVO_KHUU, camTarget, thetaRad, phiRad, R_cam, D_proj, cx, cy, wmin, wmax, huongSang, danhSachPhanTu);
+            }
+            for (const auto& part : g_dsLinhKien[LK_SERVO_KEP].parts) {
+                themPartVaoDanhSachRender(part, matWrist, LK_SERVO_KEP, camTarget, thetaRad, phiRad, R_cam, D_proj, cx, cy, wmin, wmax, huongSang, danhSachPhanTu);
+            }
+
+            // Vật mẫu thử gắp trên bàn
+            Part partVatMau;
+            partVatMau.ten = "VatMau";
+            partVatMau.mesh = taoKhoiHop(g_vatThe.kichThuoc, g_vatThe.kichThuoc, g_vatThe.kichThuoc, g_vatThe.mauSac);
+            partVatMau.bienDoiCucBo = taoMaTranTinhTien(g_vatThe.viTriBanThucNghiem.x, g_vatThe.viTriBanThucNghiem.y, g_vatThe.viTriBanThucNghiem.z);
+            themPartVaoDanhSachRender(partVatMau, MaTran4x4(), -1, camTarget, thetaRad, phiRad, R_cam, D_proj, cx, cy, wmin, wmax, huongSang, danhSachPhanTu);
         }
-    }
+        else if (lkHienTai.category == InspectCategory::ROTARY_MOTOR_WHEEL) {
+            // Hiển thị Mô-tơ DC + Trục quay + Bánh xe tại tâm bàn
+            g_gocQuayMoTo += g_tocDoQuayMoTo * dt;
+            float radMoTo = g_gocQuayMoTo * (float)M_PI / 180.0f;
+            float huongTach = (lkHienTai.id == LK_DONG_CO_T) ? -4.5f : 4.5f;
 
-    // Máng cáp trung tâm (Central Cable Duct)
-    themPartVaoDanhSachRender(g_khungXe.cableDuct, matWorldCar, -1, camTarget, thetaRad, phiRad, R_cam, D_proj, cx, cy, wmin, wmax, huongSang, danhSachPhanTu);
+            MaTran4x4 matMotor = taoMaTranTinhTien(0.0f, 2.5f, 0.0f);
+            for (const auto& part : lkHienTai.parts) {
+                MaTran4x4 mPart = taoMaTranTinhTien(part.partExplodeVec.x * g_ui.tyLeTachRoi,
+                                                    part.partExplodeVec.y * g_ui.tyLeTachRoi,
+                                                    part.partExplodeVec.z * g_ui.tyLeTachRoi)
+                                * part.bienDoiCucBo * matMotor;
+                themPartVaoDanhSachRender(part, mPart, lkHienTai.id, camTarget, thetaRad, phiRad, R_cam, D_proj, cx, cy, wmin, wmax, huongSang, danhSachPhanTu);
+            }
 
-    // 2 Bánh xe và mâm xe
-    themPartVaoDanhSachRender(g_khungXe.wheelL, matWorldCar, -1, camTarget, thetaRad, phiRad, R_cam, D_proj, cx, cy, wmin, wmax, huongSang, danhSachPhanTu);
-    themPartVaoDanhSachRender(g_khungXe.rimL,   matWorldCar, -1, camTarget, thetaRad, phiRad, R_cam, D_proj, cx, cy, wmin, wmax, huongSang, danhSachPhanTu);
-    themPartVaoDanhSachRender(g_khungXe.wheelR, matWorldCar, -1, camTarget, thetaRad, phiRad, R_cam, D_proj, cx, cy, wmin, wmax, huongSang, danhSachPhanTu);
-    themPartVaoDanhSachRender(g_khungXe.rimR,   matWorldCar, -1, camTarget, thetaRad, phiRad, R_cam, D_proj, cx, cy, wmin, wmax, huongSang, danhSachPhanTu);
-
-    // Bánh mắt trâu caster
-    themPartVaoDanhSachRender(g_khungXe.caster, matWorldCar, -1, camTarget, thetaRad, phiRad, R_cam, D_proj, cx, cy, wmin, wmax, huongSang, danhSachPhanTu);
-
-    // --- 4. THU THẬP CÁC MẶT CỦA 11 LINH KIỆN VÀO DANH SÁCH RENDER ---
-    for (int lkId = 1; lkId <= TONG_SO_LINH_KIEN; ++lkId) {
-        const auto& lk = g_dsLinhKien[lkId];
-        if (!lk.hienThi) continue;
-        if (g_ui.coLapLinhKien && lkId != g_ui.linhKienDangChon) continue;
-
-        MaTran4x4 matWorldLK = tinhMaTranTheGioiLinhKien(lk, matWorldCar, g_ui.tyLeTachRoi);
-
-        for (const auto& part : lk.parts) {
-            themPartVaoDanhSachRender(part, matWorldLK, lkId, camTarget, thetaRad, phiRad, R_cam, D_proj, cx, cy, wmin, wmax, huongSang, danhSachPhanTu);
+            // Gắn Bánh xe và Mâm xe vào mô-tơ trên bàn thử, cho phép quay và tách rời
+            MaTran4x4 matWheel = taoMaTranQuayX(radMoTo)
+                               * taoMaTranTinhTien(huongTach * (0.6f + g_ui.tyLeTachRoi * 0.8f), 2.5f, 0.0f);
+            Part wheelPart = (lkHienTai.id == LK_DONG_CO_T) ? g_khungXe.wheelL : g_khungXe.wheelR;
+            Part rimPart   = (lkHienTai.id == LK_DONG_CO_T) ? g_khungXe.rimL   : g_khungXe.rimR;
+            wheelPart.bienDoiCucBo = MaTran4x4();
+            rimPart.bienDoiCucBo   = MaTran4x4();
+            themPartVaoDanhSachRender(wheelPart, matWheel, lkHienTai.id, camTarget, thetaRad, phiRad, R_cam, D_proj, cx, cy, wmin, wmax, huongSang, danhSachPhanTu);
+            themPartVaoDanhSachRender(rimPart,   matWheel, lkHienTai.id, camTarget, thetaRad, phiRad, R_cam, D_proj, cx, cy, wmin, wmax, huongSang, danhSachPhanTu);
         }
-    }
-
-    // --- 5. ĐỊNH TUYẾN & THU THẬP 34 ĐƯỜNG DÂY DẪN 3D (PHẦN B MỤC 4) ---
-    if (g_ui.hienThiDayDien) {
-        for (size_t i = 0; i < g_bangDay.size(); ++i) {
-            const auto& day = g_bangDay[i];
-
-            // Bỏ qua dây nếu một trong hai linh kiện bị ẩn
-            if (!g_dsLinhKien[day.idLKA].hienThi || !g_dsLinhKien[day.idLKB].hienThi) continue;
-            if (g_ui.coLapLinhKien && (day.idLKA != g_ui.linhKienDangChon && day.idLKB != g_ui.linhKienDangChon)) continue;
-
-            Diem3D localA, localB;
-            if (!g_dsLinhKien[day.idLKA].timChan(day.chanA, localA)) continue;
-            if (!g_dsLinhKien[day.idLKB].timChan(day.chanB, localB)) continue;
-
-            MaTran4x4 matA = tinhMaTranTheGioiLinhKien(g_dsLinhKien[day.idLKA], matWorldCar, g_ui.tyLeTachRoi);
-            MaTran4x4 matB = tinhMaTranTheGioiLinhKien(g_dsLinhKien[day.idLKB], matWorldCar, g_ui.tyLeTachRoi);
-
-            Diem3D posWorldA = matA.bienDoi(localA);
-            Diem3D posWorldB = matB.bienDoi(localB);
-
-            // Sinh chuỗi điểm định tuyến theo máng cáp / bám xương cánh tay & Bézier bậc 2
-            std::vector<Diem3D> waypoints = taoDuongDiDay3DNangCap(
-                posWorldA, posWorldB, day.idLKA, day.idLKB, (int)i + 1,
-                g_tayGap.matWorldWrist, g_tayGap.matWorldElbow, g_tayGap.matWorldBase, matWorldCar
-            );
-
-            // Xác định màu sắc và độ dày hiển thị
-            bool lienQuanLK = (g_ui.linhKienDangChon > 0 &&
-                              (day.idLKA == g_ui.linhKienDangChon || day.idLKB == g_ui.linhKienDangChon));
-            MauSac mauDayRender = day.mauDay;
-            int doDayRender = 2;
-
-            if (g_ui.linhKienDangChon > 0) {
-                if (lienQuanLK) {
-                    mauDayRender = day.mauDay.lamSang(1.25f);
-                    doDayRender = 3;
+        else if (lkHienTai.category == InspectCategory::TOGGLE_SWITCH) {
+            // Hiển thị Hộp pin + 2 Cell pin + Công tắc bập bênh
+            MaTran4x4 matBat = taoMaTranTinhTien(0.0f, 0.8f, 0.0f);
+            for (const auto& part : lkHienTai.parts) {
+                MaTran4x4 mPart = matBat;
+                if (part.ten == "Rocker_Button") {
+                    float gocNghiengRad = (g_congTacPinBat ? 15.0f : -15.0f) * (float)M_PI / 180.0f;
+                    mPart = taoMaTranQuayZ(gocNghiengRad)
+                          * taoMaTranTinhTien(part.partExplodeVec.x * g_ui.tyLeTachRoi,
+                                              part.partExplodeVec.y * g_ui.tyLeTachRoi,
+                                              part.partExplodeVec.z * g_ui.tyLeTachRoi)
+                          * part.bienDoiCucBo * matBat;
                 } else {
-                    mauDayRender = day.mauDay.lamToi(0.35f);
-                    doDayRender = 1;
+                    mPart = taoMaTranTinhTien(part.partExplodeVec.x * g_ui.tyLeTachRoi,
+                                              part.partExplodeVec.y * g_ui.tyLeTachRoi,
+                                              part.partExplodeVec.z * g_ui.tyLeTachRoi)
+                          * part.bienDoiCucBo * matBat;
                 }
-            } else {
-                mauDayRender = day.mauDay.lamToi(0.85f);
+                themPartVaoDanhSachRender(part, mPart, lkHienTai.id, camTarget, thetaRad, phiRad, R_cam, D_proj, cx, cy, wmin, wmax, huongSang, danhSachPhanTu);
+            }
+        }
+        else {
+            // Linh kiện tĩnh: ARD, L298N, HCSR04, BUCK, DOMINO
+            MaTran4x4 matBench = taoMaTranTinhTien(0.0f, 0.2f, 0.0f);
+            for (const auto& part : lkHienTai.parts) {
+                MaTran4x4 mPart = taoMaTranTinhTien(part.partExplodeVec.x * g_ui.tyLeTachRoi,
+                                                    part.partExplodeVec.y * g_ui.tyLeTachRoi,
+                                                    part.partExplodeVec.z * g_ui.tyLeTachRoi)
+                                * part.bienDoiCucBo * matBench;
+                themPartVaoDanhSachRender(part, mPart, lkHienTai.id, camTarget, thetaRad, phiRad, R_cam, D_proj, cx, cy, wmin, wmax, huongSang, danhSachPhanTu);
+            }
+        }
+    } else {
+        // =====================================================================
+        // CHẾ ĐỘ 1 (TỔNG THỂ) & CHẾ ĐỘ 3 (BÊN TRONG XE): RENDER TOÀN BỘ XE
+        // =====================================================================
+
+        // --- 1. VẼ LƯỚI MẶT SÀN ---
+        MauSac mauLuoi = BangMau::VIEN_PANEL.lamToi(0.55f);
+        for (int i = -16; i <= 16; i += 2) {
+            Diem3D pA1((float)i, 0.0f, -16.0f), pA2((float)i, 0.0f, 16.0f);
+            Diem3D vA1 = chuyenHeToaDoQuanSat(pA1, camTarget, thetaRad, phiRad, R_cam);
+            Diem3D vA2 = chuyenHeToaDoQuanSat(pA2, camTarget, thetaRad, phiRad, R_cam);
+            Diem2D sA1 = chieuLenManHinh(vA1, D_proj, true, cx, cy);
+            Diem2D sA2 = chieuLenManHinh(vA2, D_proj, true, cx, cy);
+
+            Diem2D cA = sA1, cB = sA2;
+            if (xenDoanThangCohenSutherland(cA, cB, wmin, wmax)) {
+                veDoanThangBresenham((int)cA.x, (int)cA.y, (int)cB.x, (int)cB.y, mauLuoi);
             }
 
-            // Chiếu từng đoạn nhỏ và đưa vào danh sách Painter's Algorithm
-            for (size_t seg = 0; seg + 1 < waypoints.size(); ++seg) {
-                Diem3D p1 = waypoints[seg];
-                Diem3D p2 = waypoints[seg + 1];
+            Diem3D pB1(-16.0f, 0.0f, (float)i), pB2(16.0f, 0.0f, (float)i);
+            Diem3D vB1 = chuyenHeToaDoQuanSat(pB1, camTarget, thetaRad, phiRad, R_cam);
+            Diem3D vB2 = chuyenHeToaDoQuanSat(pB2, camTarget, thetaRad, phiRad, R_cam);
+            Diem2D sB1 = chieuLenManHinh(vB1, D_proj, true, cx, cy);
+            Diem2D sB2 = chieuLenManHinh(vB2, D_proj, true, cx, cy);
 
-                Diem3D v1 = chuyenHeToaDoQuanSat(p1, camTarget, thetaRad, phiRad, R_cam);
-                Diem3D v2 = chuyenHeToaDoQuanSat(p2, camTarget, thetaRad, phiRad, R_cam);
-
-                Diem2D s1 = chieuLenManHinh(v1, D_proj, true, cx, cy);
-                Diem2D s2 = chieuLenManHinh(v2, D_proj, true, cx, cy);
-
-                Diem2D cA = s1, cB = s2;
-                if (xenDoanThangCohenSutherland(cA, cB, wmin, wmax)) {
-                    PhanTuCanVe3D pt;
-                    pt.kieu = PHAN_TU_DOAN_DAY;
-                    pt.pA = cA;
-                    pt.pB = cB;
-                    pt.doSauZ = (v1.z + v2.z) * 0.5f;
-                    pt.mauSac = mauDayRender;
-                    pt.doDay = doDayRender;
-                    pt.laKhungDay = false;
-                    danhSachPhanTu.push_back(pt);
-                }
+            cA = sB1; cB = sB2;
+            if (xenDoanThangCohenSutherland(cA, cB, wmin, wmax)) {
+                veDoanThangBresenham((int)cA.x, (int)cA.y, (int)cB.x, (int)cB.y, mauLuoi);
             }
+        }
 
-            // Vẽ chân cắm chấm tròn nếu được bật
-            if (g_ui.hienThiNhanChan) {
-                Diem3D vA = chuyenHeToaDoQuanSat(posWorldA, camTarget, thetaRad, phiRad, R_cam);
-                Diem2D sA = chieuLenManHinh(vA, D_proj, true, cx, cy);
-                if (sA.x >= wmin.x && sA.x <= wmax.x && sA.y >= wmin.y && sA.y <= wmax.y) {
-                    veHinhTronDac((int)sA.x, (int)sA.y, lienQuanLK ? 4 : 2, lienQuanLK ? MauSac(255, 230, 80) : day.mauDay);
+        // --- 2. VẬT THỂ TƯƠNG TÁC (KHỐI HÀNG HÓA MÀU XANH NGỌC) ---
+        Part partVatThe;
+        partVatThe.ten = "VatThe";
+        partVatThe.mesh = taoKhoiHop(g_vatThe.kichThuoc, g_vatThe.kichThuoc, g_vatThe.kichThuoc, g_vatThe.mauSac);
+        partVatThe.bienDoiCucBo = taoMaTranTinhTien(g_vatThe.viTriTheGioi.x, g_vatThe.viTriTheGioi.y, g_vatThe.viTriTheGioi.z);
+        themPartVaoDanhSachRender(partVatThe, MaTran4x4(), -1, camTarget, thetaRad, phiRad, R_cam, D_proj, cx, cy, wmin, wmax, huongSang, danhSachPhanTu);
+
+        // --- 3. KHUNG XE 2 TẦNG ACRYLIC (PHẦN B MỤC 1) ---
+        if (g_ui.cheDoHienTai != CHE_DO_BEN_TRONG) {
+            // Tầng 1 (LowerDeck): y = 2.2 cm
+            themPartVaoDanhSachRender(g_khungXe.lowerDeck, matWorldCar, -1, camTarget, thetaRad, phiRad, R_cam, D_proj, cx, cy, wmin, wmax, huongSang, danhSachPhanTu);
+
+            // Tầng 2 (UpperDeck): y = 6.5 cm (Tách rời theo trục Y trong Exploded View)
+            MaTran4x4 matUpper = matWorldCar;
+            if (g_ui.tyLeTachRoi > 1e-4f) {
+                matUpper = taoMaTranTinhTien(0.0f, g_ui.tyLeTachRoi * 5.5f, 0.0f) * matWorldCar;
+            }
+            themPartVaoDanhSachRender(g_khungXe.upperDeck, matUpper, -1, camTarget, thetaRad, phiRad, R_cam, D_proj, cx, cy, wmin, wmax, huongSang, danhSachPhanTu);
+
+            // 4 Trụ đồng lục giác Standoff
+            for (const auto& st : g_khungXe.standoffs) {
+                themPartVaoDanhSachRender(st, matWorldCar, -1, camTarget, thetaRad, phiRad, R_cam, D_proj, cx, cy, wmin, wmax, huongSang, danhSachPhanTu);
+            }
+        }
+
+        // Máng cáp trung tâm (Central Cable Duct)
+        themPartVaoDanhSachRender(g_khungXe.cableDuct, matWorldCar, -1, camTarget, thetaRad, phiRad, R_cam, D_proj, cx, cy, wmin, wmax, huongSang, danhSachPhanTu);
+
+        // 2 Bánh xe và mâm xe
+        themPartVaoDanhSachRender(g_khungXe.wheelL, matWorldCar, -1, camTarget, thetaRad, phiRad, R_cam, D_proj, cx, cy, wmin, wmax, huongSang, danhSachPhanTu);
+        themPartVaoDanhSachRender(g_khungXe.rimL,   matWorldCar, -1, camTarget, thetaRad, phiRad, R_cam, D_proj, cx, cy, wmin, wmax, huongSang, danhSachPhanTu);
+        themPartVaoDanhSachRender(g_khungXe.wheelR, matWorldCar, -1, camTarget, thetaRad, phiRad, R_cam, D_proj, cx, cy, wmin, wmax, huongSang, danhSachPhanTu);
+        themPartVaoDanhSachRender(g_khungXe.rimR,   matWorldCar, -1, camTarget, thetaRad, phiRad, R_cam, D_proj, cx, cy, wmin, wmax, huongSang, danhSachPhanTu);
+
+        // Bánh mắt trâu caster
+        themPartVaoDanhSachRender(g_khungXe.caster, matWorldCar, -1, camTarget, thetaRad, phiRad, R_cam, D_proj, cx, cy, wmin, wmax, huongSang, danhSachPhanTu);
+
+        // --- 4. THU THẬP CÁC MẶT CỦA 11 LINH KIỆN VÀO DANH SÁCH RENDER ---
+        for (int lkId = 1; lkId <= TONG_SO_LINH_KIEN; ++lkId) {
+            const auto& lk = g_dsLinhKien[lkId];
+            if (!lk.hienThi) continue;
+            if (g_ui.coLapLinhKien && lkId != g_ui.linhKienDangChon) continue;
+
+            MaTran4x4 matWorldLK = tinhMaTranTheGioiLinhKien(lk, matWorldCar, g_ui.tyLeTachRoi);
+
+            for (const auto& part : lk.parts) {
+                themPartVaoDanhSachRender(part, matWorldLK, lkId, camTarget, thetaRad, phiRad, R_cam, D_proj, cx, cy, wmin, wmax, huongSang, danhSachPhanTu);
+            }
+        }
+
+        // --- 5. ĐỊNH TUYẾN & THU THẬP 34 ĐƯỜNG DÂY DẪN 3D (PHẦN B MỤC 4) ---
+        if (g_ui.hienThiDayDien) {
+            for (size_t i = 0; i < g_bangDay.size(); ++i) {
+                const auto& day = g_bangDay[i];
+
+                // Bỏ qua dây nếu một trong hai linh kiện bị ẩn
+                if (!g_dsLinhKien[day.idLKA].hienThi || !g_dsLinhKien[day.idLKB].hienThi) continue;
+                if (g_ui.coLapLinhKien && (day.idLKA != g_ui.linhKienDangChon && day.idLKB != g_ui.linhKienDangChon)) continue;
+
+                Diem3D localA, localB;
+                if (!g_dsLinhKien[day.idLKA].timChan(day.chanA, localA)) continue;
+                if (!g_dsLinhKien[day.idLKB].timChan(day.chanB, localB)) continue;
+
+                MaTran4x4 matA = tinhMaTranTheGioiLinhKien(g_dsLinhKien[day.idLKA], matWorldCar, g_ui.tyLeTachRoi);
+                MaTran4x4 matB = tinhMaTranTheGioiLinhKien(g_dsLinhKien[day.idLKB], matWorldCar, g_ui.tyLeTachRoi);
+
+                Diem3D posWorldA = matA.bienDoi(localA);
+                Diem3D posWorldB = matB.bienDoi(localB);
+
+                // Sinh chuỗi điểm định tuyến theo máng cáp / bám xương cánh tay & Bézier bậc 2
+                std::vector<Diem3D> waypoints = taoDuongDiDay3DNangCap(
+                    posWorldA, posWorldB, day.idLKA, day.idLKB, (int)i + 1,
+                    g_tayGap.matWorldWrist, g_tayGap.matWorldElbow, g_tayGap.matWorldBase, matWorldCar
+                );
+
+                // Xác định màu sắc và độ dày hiển thị
+                bool lienQuanLK = (g_ui.linhKienDangChon > 0 &&
+                                  (day.idLKA == g_ui.linhKienDangChon || day.idLKB == g_ui.linhKienDangChon));
+                MauSac mauDayRender = day.mauDay;
+                int doDayRender = 2;
+
+                if (g_ui.linhKienDangChon > 0) {
+                    if (lienQuanLK) {
+                        mauDayRender = day.mauDay.lamSang(1.25f);
+                        doDayRender = 3;
+                    } else {
+                        mauDayRender = day.mauDay.lamToi(0.35f);
+                        doDayRender = 1;
+                    }
+                } else {
+                    mauDayRender = day.mauDay.lamToi(0.85f);
+                }
+
+                // Chiếu từng đoạn nhỏ và đưa vào danh sách Painter's Algorithm
+                for (size_t seg = 0; seg + 1 < waypoints.size(); ++seg) {
+                    Diem3D p1 = waypoints[seg];
+                    Diem3D p2 = waypoints[seg + 1];
+
+                    Diem3D v1 = chuyenHeToaDoQuanSat(p1, camTarget, thetaRad, phiRad, R_cam);
+                    Diem3D v2 = chuyenHeToaDoQuanSat(p2, camTarget, thetaRad, phiRad, R_cam);
+
+                    Diem2D s1 = chieuLenManHinh(v1, D_proj, true, cx, cy);
+                    Diem2D s2 = chieuLenManHinh(v2, D_proj, true, cx, cy);
+
+                    Diem2D cA = s1, cB = s2;
+                    if (xenDoanThangCohenSutherland(cA, cB, wmin, wmax)) {
+                        PhanTuCanVe3D pt;
+                        pt.kieu = PHAN_TU_DOAN_DAY;
+                        pt.pA = cA;
+                        pt.pB = cB;
+                        pt.doSauZ = (v1.z + v2.z) * 0.5f;
+                        pt.mauSac = mauDayRender;
+                        pt.doDay = doDayRender;
+                        pt.laKhungDay = false;
+                        danhSachPhanTu.push_back(pt);
+                    }
+                }
+
+                // Vẽ chân cắm chấm tròn nếu được bật
+                if (g_ui.hienThiNhanChan) {
+                    Diem3D vA = chuyenHeToaDoQuanSat(posWorldA, camTarget, thetaRad, phiRad, R_cam);
+                    Diem2D sA = chieuLenManHinh(vA, D_proj, true, cx, cy);
+                    if (sA.x >= wmin.x && sA.x <= wmax.x && sA.y >= wmin.y && sA.y <= wmax.y) {
+                        veHinhTronDac((int)sA.x, (int)sA.y, lienQuanLK ? 4 : 2, lienQuanLK ? MauSac(255, 230, 80) : day.mauDay);
+                    }
                 }
             }
         }
@@ -517,6 +682,81 @@ void veNhan3D() {
     Diem3D camTarget = g_ui.camTargetHienTai;
     if (g_ui.cheDoHienTai == CHE_DO_TONG_THE) {
         camTarget = Diem3D(g_xeRobot.x, 1.2f, g_xeRobot.z);
+    }
+
+    if (g_ui.cheDoHienTai == CHE_DO_LINH_KIEN) {
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        // 1. Nhãn 3 trục tọa độ chuẩn Ox (Đỏ), Oy (Xanh lá), Oz (Xanh dương)
+        struct TrucLabel { Diem3D p; const char* text; MauSac col; };
+        std::vector<TrucLabel> labels = {
+            {Diem3D(6.4f, 0.02f, 0.0f), "+X", MauSac(235, 55, 55)},
+            {Diem3D(0.0f, 6.4f, 0.0f),  "+Y", MauSac(45, 215, 75)},
+            {Diem3D(0.0f, 0.02f, 6.4f), "+Z", MauSac(50, 135, 245)}
+        };
+        for (const auto& lb : labels) {
+            Diem3D v = chuyenHeToaDoQuanSat(lb.p, camTarget, thetaRad, phiRad, R_cam);
+            Diem2D s = chieuLenManHinh(v, D_proj, true, cx, cy);
+            if (s.x >= wmin.x + 10 && s.x <= wmax.x - 10 && s.y >= wmin.y + 10 && s.y <= wmax.y - 10) {
+                veChu((int)s.x - 6, (int)s.y - 4, lb.text, lb.col, GLUT_BITMAP_HELVETICA_12);
+            }
+        }
+
+        // 2. Nhãn Callout cho linh kiện đang chọn
+        const auto& lk = g_dsLinhKien[g_ui.linhKienDangChon];
+        float hComp = lk.kichThuocBao.y;
+        Diem3D anchor(0.0f, hComp * 0.5f, 0.0f);
+        Diem3D vC = chuyenHeToaDoQuanSat(anchor, camTarget, thetaRad, phiRad, R_cam);
+        Diem2D sC = chieuLenManHinh(vC, D_proj, true, cx, cy);
+
+        if (sC.x >= wmin.x + 10 && sC.x <= wmax.x - 10 && sC.y >= wmin.y + 10 && sC.y <= wmax.y - 10) {
+            float lx = sC.x + 55.0f;
+            float ly = sC.y + 35.0f;
+            float boxW = 85.0f;
+            float boxH = 22.0f;
+
+            if (lx + boxW * 0.5f > wmax.x - 5) lx = wmax.x - 5 - boxW * 0.5f;
+            if (ly + boxH * 0.5f > wmax.y - 5) ly = wmax.y - 5 - boxH * 0.5f;
+
+            // Điểm mỏ neo
+            glColor4ub(255, 210, 60, 230);
+            glPointSize(5.0f);
+            glBegin(GL_POINTS);
+            glVertex2f(sC.x, sC.y);
+            glEnd();
+
+            // Đường chỉ dẫn leader line
+            glLineWidth(1.6f);
+            glColor4ub(255, 200, 50, 220);
+            glBegin(GL_LINES);
+            glVertex2f(sC.x, sC.y);
+            glVertex2f(lx - boxW * 0.5f, ly);
+            glEnd();
+
+            // Hộp nền
+            float x0 = lx - boxW * 0.5f, y0 = ly - boxH * 0.5f;
+            float x1 = lx + boxW * 0.5f, y1 = ly + boxH * 0.5f;
+            glColor4ub(16, 24, 38, 235);
+            glBegin(GL_QUADS);
+            glVertex2f(x0, y0); glVertex2f(x1, y0); glVertex2f(x1, y1); glVertex2f(x0, y1);
+            glEnd();
+
+            // Viền hộp
+            glColor4ub(255, 204, 0, 255);
+            glLineWidth(1.8f);
+            glBegin(GL_LINE_LOOP);
+            glVertex2f(x0, y0); glVertex2f(x1, y0); glVertex2f(x1, y1); glVertex2f(x0, y1);
+            glEnd();
+
+            int textOffset = (int)(lk.ma.length() * 3.5f);
+            veChu((int)lx - textOffset, (int)ly - 4, lk.ma.c_str(), BangMau::CANH_BAO_VANG, GLUT_BITMAP_HELVETICA_12);
+        }
+
+        glDisable(GL_BLEND);
+        glPointSize(1.0f);
+        glLineWidth(1.0f);
+        return;
     }
 
     float radCar = g_xeRobot.gocHuong * (float)M_PI / 180.0f;
@@ -724,6 +964,16 @@ void mouseButton(int button, int state, int x, int y) {
                     g_ui.cheDoHienTai = (CheDoHienThi)i;
                     if (g_ui.cheDoHienTai == CHE_DO_LINH_KIEN) {
                         g_ui.chonLinhKien(g_ui.linhKienDangChon, g_dsLinhKien);
+                    } else if (g_ui.cheDoHienTai == CHE_DO_TONG_THE) {
+                        g_ui.camTargetMucTieu = Diem3D(g_xeRobot.x, 3.5f, g_xeRobot.z);
+                        g_ui.camDistMucTieu = 34.0f;
+                        g_ui.capNhatQuyenTuongTac(g_dsLinhKien);
+                    } else if (g_ui.cheDoHienTai == CHE_DO_BEN_TRONG) {
+                        g_ui.camTargetMucTieu = Diem3D(g_xeRobot.x, 2.5f, g_xeRobot.z);
+                        g_ui.camDistMucTieu = 26.0f;
+                        g_ui.capNhatQuyenTuongTac(g_dsLinhKien);
+                    } else {
+                        g_ui.capNhatQuyenTuongTac(g_dsLinhKien);
                     }
                     glutPostRedisplay();
                     return;
@@ -745,27 +995,49 @@ void mouseButton(int button, int state, int x, int y) {
             // 3. Kiểm tra bấm vào các nút điều khiển ở BottomBar
             for (size_t i = 0; i < g_ui.cacNutDieuKhienXe.size(); ++i) {
                 if (g_ui.cacNutDieuKhienXe[i].kiemTraChuot(x, glY)) {
-                    if (i == 0) { // Nút GẮP / THẢ
-                        if (g_vatThe.dangBiGap) g_vatThe.thaVat(g_tayGap);
-                        else g_vatThe.thuGapVat(g_tayGap);
-                    } else if (i == 1) { // Tiến
-                        g_xeRobot.vL += 18.0f; g_xeRobot.vR += 18.0f;
-                    } else if (i == 2) { // Lùi
-                        g_xeRobot.vL -= 18.0f; g_xeRobot.vR -= 18.0f;
-                    } else if (i == 3) { // Trái
-                        g_xeRobot.vL -= 14.0f; g_xeRobot.vR += 14.0f;
-                    } else if (i == 4) { // Phải
-                        g_xeRobot.vL += 14.0f; g_xeRobot.vR -= 14.0f;
-                    } else if (i == 5) { // Dừng
-                        g_xeRobot.vL = g_xeRobot.vR = 0.0f;
-                    } else if (i == 6) { // Xoay 2D 45 độ
-                        g_ui.soDo2DGocRad += (float)M_PI * 0.25f;
-                    } else if (i == 7) { // Lật ngang 2D
-                        g_ui.soDo2DLatNgang = !g_ui.soDo2DLatNgang;
-                    } else if (i == 8) { // Reset 2D
-                        g_ui.soDo2DPanX = 0; g_ui.soDo2DPanY = 0;
-                        g_ui.soDo2DZoom = 1.0f; g_ui.soDo2DGocRad = 0;
-                        g_ui.soDo2DLatNgang = false;
+                    if (g_ui.cheDoHienTai == CHE_DO_LINH_KIEN) {
+                        const auto& lk = g_dsLinhKien[g_ui.linhKienDangChon];
+                        if (lk.category == InspectCategory::ARM_MANIPULATOR) {
+                            if (i == 0) { // Nút GẮP / THẢ
+                                if (g_vatThe.dangBiGapTrenBan) g_vatThe.thaVatTrenBan(g_tayGap);
+                                else g_vatThe.thuGapVatTrenBan(g_tayGap);
+                            }
+                        } else if (lk.category == InspectCategory::ROTARY_MOTOR_WHEEL) {
+                            if (i == 1) { // QUAY THUẬN
+                                g_tocDoQuayMoTo = 360.0f;
+                            } else if (i == 2) { // QUAY NGHỊCH
+                                g_tocDoQuayMoTo = -360.0f;
+                            } else if (i == 5) { // DỪNG MÔ-TƠ
+                                g_tocDoQuayMoTo = 0.0f;
+                            }
+                        } else if (lk.category == InspectCategory::TOGGLE_SWITCH) {
+                            if (i == 1) { // BẬT/TẮT NGUỒN
+                                g_congTacPinBat = !g_congTacPinBat;
+                            }
+                        }
+                    } else {
+                        if (i == 0) { // Nút GẮP / THẢ
+                            if (g_vatThe.dangBiGap) g_vatThe.thaVat(g_tayGap);
+                            else g_vatThe.thuGapVat(g_tayGap);
+                        } else if (i == 1) { // Tiến
+                            g_xeRobot.vL += 18.0f; g_xeRobot.vR += 18.0f;
+                        } else if (i == 2) { // Lùi
+                            g_xeRobot.vL -= 18.0f; g_xeRobot.vR -= 18.0f;
+                        } else if (i == 3) { // Trái
+                            g_xeRobot.vL -= 14.0f; g_xeRobot.vR += 14.0f;
+                        } else if (i == 4) { // Phải
+                            g_xeRobot.vL += 14.0f; g_xeRobot.vR -= 14.0f;
+                        } else if (i == 5) { // Dừng
+                            g_xeRobot.vL = g_xeRobot.vR = 0.0f;
+                        } else if (i == 6) { // Xoay 2D 45 độ
+                            g_ui.soDo2DGocRad += (float)M_PI * 0.25f;
+                        } else if (i == 7) { // Lật ngang 2D
+                            g_ui.soDo2DLatNgang = !g_ui.soDo2DLatNgang;
+                        } else if (i == 8) { // Reset 2D
+                            g_ui.soDo2DPanX = 0; g_ui.soDo2DPanY = 0;
+                            g_ui.soDo2DZoom = 1.0f; g_ui.soDo2DGocRad = 0;
+                            g_ui.soDo2DLatNgang = false;
+                        }
                     }
                     glutPostRedisplay();
                     return;
@@ -882,18 +1154,66 @@ void mouseMotion(int x, int y) {
 
 void keyboard(unsigned char key, int x, int y) {
     switch (key) {
-        // Điều khiển xe bằng phím
-        case 'w': case 'W': g_xeRobot.vL += 18.0f; g_xeRobot.vR += 18.0f; break;
-        case 's': case 'S': g_xeRobot.vL -= 18.0f; g_xeRobot.vR -= 18.0f; break;
-        case 'a': case 'A': g_xeRobot.vL -= 14.0f; g_xeRobot.vR += 14.0f; break;
-        case 'd': case 'D': g_xeRobot.vL += 14.0f; g_xeRobot.vR -= 14.0f; break;
-        case 'x': case 'X': g_xeRobot.vL = g_xeRobot.vR = 0.0f; break;
+        // Điều khiển xe hoặc mô-tơ độc lập bằng phím
+        case 'w': case 'W':
+            if (g_ui.cheDoHienTai == CHE_DO_LINH_KIEN) {
+                if (g_dsLinhKien[g_ui.linhKienDangChon].category == InspectCategory::ROTARY_MOTOR_WHEEL) {
+                    g_tocDoQuayMoTo = 360.0f;
+                }
+            } else {
+                g_xeRobot.vL += 18.0f; g_xeRobot.vR += 18.0f;
+            }
+            break;
+        case 's': case 'S':
+            if (g_ui.cheDoHienTai == CHE_DO_LINH_KIEN) {
+                if (g_dsLinhKien[g_ui.linhKienDangChon].category == InspectCategory::ROTARY_MOTOR_WHEEL) {
+                    g_tocDoQuayMoTo = -360.0f;
+                }
+            } else {
+                g_xeRobot.vL -= 18.0f; g_xeRobot.vR -= 18.0f;
+            }
+            break;
+        case 'a': case 'A':
+            if (g_ui.cheDoHienTai != CHE_DO_LINH_KIEN) {
+                g_xeRobot.vL -= 14.0f; g_xeRobot.vR += 14.0f;
+            }
+            break;
+        case 'd': case 'D':
+            if (g_ui.cheDoHienTai != CHE_DO_LINH_KIEN) {
+                g_xeRobot.vL += 14.0f; g_xeRobot.vR -= 14.0f;
+            }
+            break;
+        case 'x': case 'X':
+            if (g_ui.cheDoHienTai == CHE_DO_LINH_KIEN) {
+                if (g_dsLinhKien[g_ui.linhKienDangChon].category == InspectCategory::ROTARY_MOTOR_WHEEL) {
+                    g_tocDoQuayMoTo = 0.0f;
+                }
+            } else {
+                g_xeRobot.vL = g_xeRobot.vR = 0.0f;
+            }
+            break;
 
         // Phím tắt đổi 4 chế độ 1..4
-        case '1': g_ui.cheDoHienTai = CHE_DO_TONG_THE; break;
-        case '2': g_ui.cheDoHienTai = CHE_DO_LINH_KIEN; g_ui.chonLinhKien(g_ui.linhKienDangChon, g_dsLinhKien); break;
-        case '3': g_ui.cheDoHienTai = CHE_DO_BEN_TRONG; break;
-        case '4': g_ui.cheDoHienTai = CHE_DO_SO_DO_2D;  break;
+        case '1':
+            g_ui.cheDoHienTai = CHE_DO_TONG_THE;
+            g_ui.camTargetMucTieu = Diem3D(g_xeRobot.x, 3.5f, g_xeRobot.z);
+            g_ui.camDistMucTieu = 34.0f;
+            g_ui.capNhatQuyenTuongTac(g_dsLinhKien);
+            break;
+        case '2':
+            g_ui.cheDoHienTai = CHE_DO_LINH_KIEN;
+            g_ui.chonLinhKien(g_ui.linhKienDangChon, g_dsLinhKien);
+            break;
+        case '3':
+            g_ui.cheDoHienTai = CHE_DO_BEN_TRONG;
+            g_ui.camTargetMucTieu = Diem3D(g_xeRobot.x, 2.5f, g_xeRobot.z);
+            g_ui.camDistMucTieu = 26.0f;
+            g_ui.capNhatQuyenTuongTac(g_dsLinhKien);
+            break;
+        case '4':
+            g_ui.cheDoHienTai = CHE_DO_SO_DO_2D;
+            g_ui.capNhatQuyenTuongTac(g_dsLinhKien);
+            break;
 
         // Phím E: Bật/Tắt bóc tách không gian (Exploded View)
         case 'e': case 'E':
@@ -902,8 +1222,16 @@ void keyboard(unsigned char key, int x, int y) {
 
         // Phím G: Gắp / Thả vật thể
         case 'g': case 'G':
-            if (g_vatThe.dangBiGap) g_vatThe.thaVat(g_tayGap);
-            else g_vatThe.thuGapVat(g_tayGap);
+            if (g_ui.cheDoHienTai == CHE_DO_LINH_KIEN) {
+                const auto& lk = g_dsLinhKien[g_ui.linhKienDangChon];
+                if (lk.category == InspectCategory::ARM_MANIPULATOR) {
+                    if (g_vatThe.dangBiGapTrenBan) g_vatThe.thaVatTrenBan(g_tayGap);
+                    else g_vatThe.thuGapVatTrenBan(g_tayGap);
+                }
+            } else {
+                if (g_vatThe.dangBiGap) g_vatThe.thaVat(g_tayGap);
+                else g_vatThe.thuGapVat(g_tayGap);
+            }
             break;
 
         case 27: // ESC

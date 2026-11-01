@@ -145,8 +145,48 @@ int main() {
     std::cout << "  - 34 day noi deu sinh duong di hop le, khong vuot qua gioi han khong gian xe.\n";
     std::cout << "  => TEST 6: PASS!\n\n";
 
+    // -------------------------------------------------------------
+    // TEST 7: KIỂM THỬ CHẾ ĐỘ 2 - PHÂN QUYỀN TƯƠNG TÁC & SUB-PART EXPLODE
+    // -------------------------------------------------------------
+    std::cout << "[TEST 7] Kiem thu Che do 2 (CAD Workbench & Phan quyen tuong tac):\n";
+    assert(dsLK[LK_ARDUINO].category == InspectCategory::STATIC_VIEW_ONLY);
+    assert(dsLK[LK_L298N].category == InspectCategory::STATIC_VIEW_ONLY);
+    assert(dsLK[LK_DONG_CO_T].category == InspectCategory::ROTARY_MOTOR_WHEEL);
+    assert(dsLK[LK_DONG_CO_P].category == InspectCategory::ROTARY_MOTOR_WHEEL);
+    assert(dsLK[LK_SERVO_DE].category == InspectCategory::ARM_MANIPULATOR);
+    assert(dsLK[LK_SERVO_KHUU].category == InspectCategory::ARM_MANIPULATOR);
+    assert(dsLK[LK_SERVO_KEP].category == InspectCategory::ARM_MANIPULATOR);
+    assert(dsLK[LK_HCSR04].category == InspectCategory::STATIC_VIEW_ONLY);
+    assert(dsLK[LK_BUCK_5V].category == InspectCategory::STATIC_VIEW_ONLY);
+    assert(dsLK[LK_PIN_18650].category == InspectCategory::TOGGLE_SWITCH);
+    assert(dsLK[LK_DOMINO].category == InspectCategory::STATIC_VIEW_ONLY);
+
+    for (int i = 1; i <= TONG_SO_LINH_KIEN; ++i) {
+        assert(dsLK[i].inspectRadius >= 8.0f && dsLK[i].inspectRadius <= 30.0f);
+        assert(dsLK[i].kichThuocBao.x > 0.0f && dsLK[i].kichThuocBao.y > 0.0f && dsLK[i].kichThuocBao.z > 0.0f);
+    }
+    std::cout << "  - 11 linh kien deu co InspectCategory, ban kinh Auto-Fit va kich thuoc bao CAD hop le.\n";
+
+    // Kiểm thử bàn thực nghiệm tay gắp 3-DOF
+    MaTran4x4 mBase, mElbow, mWrist;
+    tayGap.tinhMaTranBanThucNghiem(mBase, mElbow, mWrist, 0.0f);
+    Diem3D wristPos = mWrist.bienDoi(Diem3D(0, 0, 0));
+    std::cout << "  - Toa do co tay gap tren ban thu: (" << wristPos.x << ", " << wristPos.y << ", " << wristPos.z << ")\n";
+    assert(wristPos.y >= 0.0f);
+
+    VatTheTuongTac vatTest;
+    vatTest.viTriBanThucNghiem = Diem3D(wristPos.x, wristPos.y, wristPos.z);
+    tayGap.servoKep.gocHienTai = 20.0f; // Dong ngam de gap
+    bool gapOk = vatTest.thuGapVatTrenBan(tayGap);
+    std::cout << "  - Thu nghiem gap vat tren ban thu: " << (gapOk ? "THANH CONG" : "KHONG GAP DUOC") << "\n";
+    assert(gapOk && vatTest.dangBiGapTrenBan);
+    vatTest.thaVatTrenBan(tayGap);
+    assert(!vatTest.dangBiGapTrenBan);
+    std::cout << "  - Thu nghiem tha vat tren ban thu: THANH CONG\n";
+    std::cout << "  => TEST 7: PASS!\n\n";
+
     std::cout << "=======================================================\n";
-    std::cout << "   TAT CA 6 CA KIEM THU DEU DAT CHUAN 100% (ALL PASSED)\n";
+    std::cout << "   TAT CA 7 CA KIEM THU DEU DAT CHUAN 100% (ALL PASSED)\n";
     std::cout << "=======================================================\n";
     return 0;
 }

@@ -21,12 +21,19 @@ struct NutBamUI {
     std::string nhan;
     bool dangHover = false;
     bool dangChon  = false;
+    bool coTheTuongTac = true; // Phân quyền tương tác thông minh (Phần B Mục 2)
 
     bool kiemTraChuot(int mx, int my) const {
-        return (mx >= x0 && mx <= x1 && my >= y0 && my <= y1);
+        return coTheTuongTac && (mx >= x0 && mx <= x1 && my >= y0 && my <= y1);
     }
 
     void veKhung(MauSac mauChinh = BangMau::NUT_BINH_THUONG) const {
+        if (!coTheTuongTac) {
+            // Nút bị khóa / vô hiệu hóa: màu xám chìm
+            veHCN(x0, y0, x1, y1, MauSac(32, 36, 44));
+            veVienHCN(x0, y0, x1, y1, MauSac(48, 54, 64));
+            return;
+        }
         MauSac mauNen = dangChon ? BangMau::NUT_ACTIVE : (dangHover ? BangMau::NUT_HOVER : mauChinh);
         veHCN(x0, y0, x1, y1, mauNen);
         veVienHCN(x0, y0, x1, y1, dangChon ? BangMau::VIEN_SANG : BangMau::VIEN_PANEL);
@@ -34,9 +41,10 @@ struct NutBamUI {
 
     void veChuNhan() const {
         // Vẽ nhãn chữ ở giữa nút
-        int textX = x0 + (x1 - x0) / 2 - (int)nhan.length() * 4;
+        int textX = x0 + (x1 - x0) / 2 - (int)(nhan.length() * 3.5f);
         int textY = y0 + (y1 - y0) / 2 - 4;
-        veChu(textX, textY, nhan.c_str(), BangMau::CHU_CHINH, GLUT_BITMAP_HELVETICA_12);
+        MauSac mauChu = coTheTuongTac ? BangMau::CHU_CHINH : MauSac(85, 92, 105);
+        veChu(textX, textY, nhan.c_str(), mauChu, GLUT_BITMAP_HELVETICA_12);
     }
 };
 
@@ -46,12 +54,14 @@ struct ThanhTruotUI {
     float* pGiaTri;
     std::string nhan;
     bool dangKeo = false;
+    bool coTheTuongTac = true; // Phân quyền tương tác thông minh
 
     bool kiemTraChuot(int mx, int my) const {
-        return (mx >= x0 - 4 && mx <= x1 + 4 && my >= y0 - 6 && my <= y1 + 6);
+        return coTheTuongTac && (mx >= x0 - 4 && mx <= x1 + 4 && my >= y0 - 6 && my <= y1 + 6);
     }
 
     void capNhatTuChuot(int mx) {
+        if (!coTheTuongTac) return;
         float tyLe = (float)(mx - x0) / (float)(x1 - x0);
         tyLe = std::clamp(tyLe, 0.0f, 1.0f);
         if (pGiaTri) {
@@ -61,7 +71,13 @@ struct ThanhTruotUI {
 
     void veKhung() const {
         if (!pGiaTri) return;
-        // Rãnh trượt
+        if (!coTheTuongTac) {
+            // Rãnh trượt mờ khi bị khóa
+            veHCN(x0, y0 + 3, x1, y0 + 7, MauSac(28, 32, 40));
+            veVienHCN(x0, y0 + 3, x1, y0 + 7, MauSac(42, 48, 58));
+            return;
+        }
+        // Rãnh trượt bình thường
         veHCN(x0, y0 + 3, x1, y0 + 7, MauSac(35, 42, 52));
         veVienHCN(x0, y0 + 3, x1, y0 + 7, BangMau::VIEN_PANEL);
 
@@ -74,8 +90,12 @@ struct ThanhTruotUI {
 
     void veChuNhan() const {
         if (!pGiaTri) return;
-        // Vẽ nhãn thanh trượt phía trên
         char buf[64];
+        if (!coTheTuongTac) {
+            std::snprintf(buf, sizeof(buf), "%s: [KHOA]", nhan.c_str());
+            veChu(x0, y1 + 5, buf, MauSac(85, 92, 105), GLUT_BITMAP_HELVETICA_10);
+            return;
+        }
         std::snprintf(buf, sizeof(buf), "%s: %.1f", nhan.c_str(), *pGiaTri);
         veChu(x0, y1 + 5, buf, BangMau::CHU_PHU, GLUT_BITMAP_HELVETICA_10);
     }
@@ -254,14 +274,124 @@ struct TrinhQuanLyGiaoDien {
         cacHopKiem.push_back({1030,  8, 15, &coLapLinhKien,   "Co lap linh kien"});
     }
 
+    void capNhatQuyenTuongTac(const std::vector<LinhKien>& ds) {
+        if (cacThanhTruot.size() < 4 || cacNutDieuKhienXe.size() < 9) return;
+
+        if (cheDoHienTai == CHE_DO_TONG_THE || cheDoHienTai == CHE_DO_BEN_TRONG) {
+            // Chế độ 1 & Chế độ 3: Cho phép lái xe và điều khiển cánh tay
+            cacThanhTruot[0].nhan = "TACH ROI (EXPLODE)";
+            cacThanhTruot[0].coTheTuongTac = true;
+            cacThanhTruot[1].nhan = "SERVO DE (YAW)";
+            cacThanhTruot[1].coTheTuongTac = true;
+            cacThanhTruot[2].nhan = "SERVO KHUU (PITCH)";
+            cacThanhTruot[2].coTheTuongTac = true;
+            cacThanhTruot[3].nhan = "SERVO KEP (GRIP)";
+            cacThanhTruot[3].coTheTuongTac = true;
+
+            cacNutDieuKhienXe[0].nhan = "GAP / THA";
+            cacNutDieuKhienXe[0].coTheTuongTac = true;
+            cacNutDieuKhienXe[1].nhan = "TIEN";
+            cacNutDieuKhienXe[1].coTheTuongTac = true;
+            cacNutDieuKhienXe[2].nhan = "LUI";
+            cacNutDieuKhienXe[2].coTheTuongTac = true;
+            cacNutDieuKhienXe[3].nhan = "TRAI";
+            cacNutDieuKhienXe[3].coTheTuongTac = true;
+            cacNutDieuKhienXe[4].nhan = "PHAI";
+            cacNutDieuKhienXe[4].coTheTuongTac = true;
+            cacNutDieuKhienXe[5].nhan = "DUNG";
+            cacNutDieuKhienXe[5].coTheTuongTac = true;
+
+            cacNutDieuKhienXe[6].coTheTuongTac = false; // Xoay 2D
+            cacNutDieuKhienXe[7].coTheTuongTac = false; // Lật ngang 2D
+            cacNutDieuKhienXe[8].coTheTuongTac = false; // Reset 2D
+        }
+        else if (cheDoHienTai == CHE_DO_SO_DO_2D) {
+            // Chế độ 4: Chỉ tương tác sơ đồ 2D (Pan/Zoom/Rotate/Flip)
+            for (auto& sl : cacThanhTruot) sl.coTheTuongTac = false;
+            for (int i = 0; i <= 5; ++i) cacNutDieuKhienXe[i].coTheTuongTac = false;
+            cacNutDieuKhienXe[6].coTheTuongTac = true;
+            cacNutDieuKhienXe[7].coTheTuongTac = true;
+            cacNutDieuKhienXe[8].coTheTuongTac = true;
+        }
+        else if (cheDoHienTai == CHE_DO_LINH_KIEN) {
+            // Chế độ 2: BÀN GIA CÔNG & KIỂM THỬ 3D ĐỘC LẬP (PHẦN B MỤC 2)
+            cacThanhTruot[0].nhan = "TACH LOP CON (PARTS)";
+            cacThanhTruot[0].coTheTuongTac = true;
+
+            cacNutDieuKhienXe[6].coTheTuongTac = false;
+            cacNutDieuKhienXe[7].coTheTuongTac = false;
+            cacNutDieuKhienXe[8].coTheTuongTac = false;
+
+            if (linhKienDangChon >= 1 && linhKienDangChon < (int)ds.size()) {
+                InspectCategory cat = ds[linhKienDangChon].category;
+
+                if (cat == InspectCategory::ARM_MANIPULATOR) {
+                    // Cụm tay gắp: Mở khóa 3 Slider Servo và nút Gắp/Thả
+                    cacThanhTruot[1].nhan = "SERVO DE (YAW)";
+                    cacThanhTruot[1].coTheTuongTac = true;
+                    cacThanhTruot[2].nhan = "SERVO KHUU (PITCH)";
+                    cacThanhTruot[2].coTheTuongTac = true;
+                    cacThanhTruot[3].nhan = "SERVO KEP (GRIP)";
+                    cacThanhTruot[3].coTheTuongTac = true;
+
+                    cacNutDieuKhienXe[0].nhan = "GAP / THA";
+                    cacNutDieuKhienXe[0].coTheTuongTac = true;
+
+                    // Khóa toàn bộ nút lái xe
+                    for (int i = 1; i <= 5; ++i) cacNutDieuKhienXe[i].coTheTuongTac = false;
+                }
+                else if (cat == InspectCategory::ROTARY_MOTOR_WHEEL) {
+                    // Động cơ & Bánh xe: Khóa Slider Servo, Mở Quay thuận / nghịch / dừng
+                    cacThanhTruot[1].coTheTuongTac = false;
+                    cacThanhTruot[2].coTheTuongTac = false;
+                    cacThanhTruot[3].coTheTuongTac = false;
+
+                    cacNutDieuKhienXe[0].coTheTuongTac = false;
+
+                    cacNutDieuKhienXe[1].nhan = "QUAY THUAN";
+                    cacNutDieuKhienXe[1].coTheTuongTac = true;
+                    cacNutDieuKhienXe[2].nhan = "QUAY NGHICH";
+                    cacNutDieuKhienXe[2].coTheTuongTac = true;
+                    cacNutDieuKhienXe[3].coTheTuongTac = false;
+                    cacNutDieuKhienXe[4].coTheTuongTac = false;
+                    cacNutDieuKhienXe[5].nhan = "DUNG MO-TO";
+                    cacNutDieuKhienXe[5].coTheTuongTac = true;
+                }
+                else if (cat == InspectCategory::TOGGLE_SWITCH) {
+                    // Hộp pin & Công tắc: Mở nút Bật/Tắt công tắc nguồn
+                    cacThanhTruot[1].coTheTuongTac = false;
+                    cacThanhTruot[2].coTheTuongTac = false;
+                    cacThanhTruot[3].coTheTuongTac = false;
+
+                    cacNutDieuKhienXe[0].coTheTuongTac = false;
+                    cacNutDieuKhienXe[1].nhan = "BAT/TAT NGUON";
+                    cacNutDieuKhienXe[1].coTheTuongTac = true;
+                    for (int i = 2; i <= 5; ++i) cacNutDieuKhienXe[i].coTheTuongTac = false;
+                }
+                else {
+                    // STATIC_VIEW_ONLY: Khóa toàn bộ các nút cơ học! Chỉ xem CAD
+                    cacThanhTruot[1].coTheTuongTac = false;
+                    cacThanhTruot[2].coTheTuongTac = false;
+                    cacThanhTruot[3].coTheTuongTac = false;
+                    for (int i = 0; i <= 5; ++i) cacNutDieuKhienXe[i].coTheTuongTac = false;
+                }
+            }
+        }
+    }
+
     void chonLinhKien(int id, const std::vector<LinhKien>& ds) {
         if (id <= 0 || id >= (int)ds.size()) return;
         linhKienDangChon = id;
 
-        // Cập nhật đích Camera Fly-to
-        Diem3D posLK = ds[id].viTriLapDat.bienDoi(Diem3D(0, 0, 0));
-        camTargetMucTieu = posLK;
-        camDistMucTieu = (cheDoHienTai == CHE_DO_LINH_KIEN) ? 18.0f : 34.0f;
+        // Cập nhật đích Camera Fly-to (Phần B Mục 1.2: Auto-Fit Camera)
+        if (cheDoHienTai == CHE_DO_LINH_KIEN) {
+            camTargetMucTieu = Diem3D(0.0f, ds[id].kichThuocBao.y * 0.5f, 0.0f);
+            camDistMucTieu = ds[id].inspectRadius;
+        } else {
+            Diem3D posLK = ds[id].viTriLapDat.bienDoi(Diem3D(0, 0, 0));
+            camTargetMucTieu = posLK;
+            camDistMucTieu = 34.0f;
+        }
     }
 
     void capNhatNoiSuyCamera(float dt) {
@@ -273,6 +403,7 @@ struct TrinhQuanLyGiaoDien {
 
     // 1. Vẽ các khối hình học nền và viền (ghi vào FrameBuffer trong RAM)
     void veKhungGiaoDien(const std::vector<LinhKien>& dsLinhKien, const CungCapTayGap& arm, float kcHCSR04) {
+        capNhatQuyenTuongTac(dsLinhKien);
         // --- 1. TOP BAR ---
         veHCN(0, TOP_BAR_Y_MIN, CUA_SO_RONG, TOP_BAR_Y_MAX, BangMau::NEN_PANEL);
         veDoanThangBresenham(0, TOP_BAR_Y_MIN, CUA_SO_RONG, TOP_BAR_Y_MIN, BangMau::VIEN_PANEL);
@@ -346,6 +477,7 @@ struct TrinhQuanLyGiaoDien {
 
     // 2. Vẽ toàn bộ các nhãn chữ (Text Bitmap) qua OpenGL sau khi đẩy FrameBuffer
     void veChuGiaoDien(const std::vector<LinhKien>& dsLinhKien, const CungCapTayGap& arm, float kcHCSR04) {
+        capNhatQuyenTuongTac(dsLinhKien);
         // --- 1. TOP BAR CHỮ ---
         veChu(CUA_SO_RONG - 330, TOP_BAR_Y_MIN + 16, "VKU - DO HOA MAY TINH (CG.3 & CG.4)", BangMau::VIEN_SANG, GLUT_BITMAP_HELVETICA_12);
 
@@ -394,25 +526,33 @@ struct TrinhQuanLyGiaoDien {
                 if (start < vt.length() && vt[start] == ' ') ++start;
             }
 
-            // Thông số động theo thời gian thực
+            // Thông số động theo thời gian thực (Phân quyền thông minh)
             curY -= 8;
             veChu(RIGHT_PANEL_X_MIN + 16, curY - 14, "THONG SO HOAT DONG:", BangMau::VIEN_SANG, GLUT_BITMAP_HELVETICA_10);
             char b1[64], b2[64];
-            if (linhKienDangChon == LK_SERVO_DE) {
-                std::snprintf(b1, sizeof(b1), "Goc: %.1f deg", arm.servoDe.gocHienTai);
-                std::snprintf(b2, sizeof(b2), "Xung PWM: %d us", arm.servoDe.layDoRongXungUs());
-            } else if (linhKienDangChon == LK_SERVO_KHUU) {
-                std::snprintf(b1, sizeof(b1), "Goc: %.1f deg", arm.servoKhuu.gocHienTai);
-                std::snprintf(b2, sizeof(b2), "Xung PWM: %d us", arm.servoKhuu.layDoRongXungUs());
-            } else if (linhKienDangChon == LK_SERVO_KEP) {
-                std::snprintf(b1, sizeof(b1), "Goc: %.1f deg", arm.servoKep.gocHienTai);
-                std::snprintf(b2, sizeof(b2), "Xung PWM: %d us", arm.servoKep.layDoRongXungUs());
+            if (cheDoHienTai == CHE_DO_LINH_KIEN && lk.category == InspectCategory::STATIC_VIEW_ONLY) {
+                std::snprintf(b1, sizeof(b1), "Trang thai: [CHI XEM - LINH KIEN TINH]");
+                std::snprintf(b2, sizeof(b2), "Kich thuoc CAD: %.1fx%.1fx%.1f cm", lk.kichThuocBao.x, lk.kichThuocBao.y, lk.kichThuocBao.z);
+            } else if (lk.category == InspectCategory::ARM_MANIPULATOR) {
+                if (linhKienDangChon == LK_SERVO_DE) {
+                    std::snprintf(b1, sizeof(b1), "Goc: %.1f deg (Yaw)", arm.servoDe.gocHienTai);
+                    std::snprintf(b2, sizeof(b2), "Xung PWM: %d us", arm.servoDe.layDoRongXungUs());
+                } else if (linhKienDangChon == LK_SERVO_KHUU) {
+                    std::snprintf(b1, sizeof(b1), "Goc: %.1f deg (Pitch)", arm.servoKhuu.gocHienTai);
+                    std::snprintf(b2, sizeof(b2), "Xung PWM: %d us", arm.servoKhuu.layDoRongXungUs());
+                } else {
+                    std::snprintf(b1, sizeof(b1), "Goc: %.1f deg (Grip)", arm.servoKep.gocHienTai);
+                    std::snprintf(b2, sizeof(b2), "Trang thai: %s", (arm.servoKep.gocHienTai < 60.0f) ? "[DANG DONG KEP]" : "[DANG MO NGAM]");
+                }
+            } else if (lk.category == InspectCategory::ROTARY_MOTOR_WHEEL) {
+                std::snprintf(b1, sizeof(b1), "Dien ap PWM: 5.0 V DC (Ti so 1:48)");
+                std::snprintf(b2, sizeof(b2), "Co cau: [BANH XE & HOP SO DANG KET NOI]");
+            } else if (lk.category == InspectCategory::TOGGLE_SWITCH) {
+                std::snprintf(b1, sizeof(b1), "Nguon: 7.4 V (2S Li-ion 2600mAh)");
+                std::snprintf(b2, sizeof(b2), "Trang thai: [CAP NGUON HE THONG]");
             } else if (linhKienDangChon == LK_HCSR04) {
                 std::snprintf(b1, sizeof(b1), "Khoang cach: %.1f cm", kcHCSR04);
                 std::snprintf(b2, sizeof(b2), "Trang thai: %s", (kcHCSR04 < 18.0f) ? "[CO VAT CAN]" : "[AN TOAN]");
-            } else if (linhKienDangChon == LK_PIN_18650) {
-                std::snprintf(b1, sizeof(b1), "Dien ap: 7.65 V (2S Li-ion)");
-                std::snprintf(b2, sizeof(b2), "Dung luong: 85%% (2600 mAh)");
             } else {
                 std::snprintf(b1, sizeof(b1), "Dien ap cap: 5.0 V DC");
                 std::snprintf(b2, sizeof(b2), "Trang thai: [BINH THUONG]");
