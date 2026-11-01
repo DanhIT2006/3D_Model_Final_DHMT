@@ -26,11 +26,13 @@ struct NutBamUI {
         return (mx >= x0 && mx <= x1 && my >= y0 && my <= y1);
     }
 
-    void ve(MauSac mauChinh = BangMau::NUT_BINH_THUONG) const {
+    void veKhung(MauSac mauChinh = BangMau::NUT_BINH_THUONG) const {
         MauSac mauNen = dangChon ? BangMau::NUT_ACTIVE : (dangHover ? BangMau::NUT_HOVER : mauChinh);
         veHCN(x0, y0, x1, y1, mauNen);
         veVienHCN(x0, y0, x1, y1, dangChon ? BangMau::VIEN_SANG : BangMau::VIEN_PANEL);
+    }
 
+    void veChuNhan() const {
         // Vẽ nhãn chữ ở giữa nút
         int textX = x0 + (x1 - x0) / 2 - (int)nhan.length() * 4;
         int textY = y0 + (y1 - y0) / 2 - 4;
@@ -57,14 +59,8 @@ struct ThanhTruotUI {
         }
     }
 
-    void ve() const {
+    void veKhung() const {
         if (!pGiaTri) return;
-
-        // Vẽ nhãn thanh trượt phía trên
-        char buf[64];
-        std::snprintf(buf, sizeof(buf), "%s: %.1f", nhan.c_str(), *pGiaTri);
-        veChu(x0, y1 + 5, buf, BangMau::CHU_PHU, GLUT_BITMAP_HELVETICA_10);
-
         // Rãnh trượt
         veHCN(x0, y0 + 3, x1, y0 + 7, MauSac(35, 42, 52));
         veVienHCN(x0, y0 + 3, x1, y0 + 7, BangMau::VIEN_PANEL);
@@ -74,6 +70,14 @@ struct ThanhTruotUI {
         int thumbX = x0 + (int)(tyLe * (x1 - x0));
         veHCN(thumbX - 6, y0 - 3, thumbX + 6, y1 + 3, dangKeo ? BangMau::VIEN_SANG : BangMau::NUT_ACTIVE);
         veVienHCN(thumbX - 6, y0 - 3, thumbX + 6, y1 + 3, BangMau::CHU_CHINH);
+    }
+
+    void veChuNhan() const {
+        if (!pGiaTri) return;
+        // Vẽ nhãn thanh trượt phía trên
+        char buf[64];
+        std::snprintf(buf, sizeof(buf), "%s: %.1f", nhan.c_str(), *pGiaTri);
+        veChu(x0, y1 + 5, buf, BangMau::CHU_PHU, GLUT_BITMAP_HELVETICA_10);
     }
 };
 
@@ -91,7 +95,7 @@ struct HopKiemUI {
         if (pGiaTri) *pGiaTri = !(*pGiaTri);
     }
 
-    void ve() const {
+    void veKhung() const {
         if (!pGiaTri) return;
         veHCN(x, y, x + kichThuoc, y + kichThuoc, MauSac(25, 30, 38));
         veVienHCN(x, y, x + kichThuoc, y + kichThuoc, BangMau::VIEN_PANEL);
@@ -99,6 +103,10 @@ struct HopKiemUI {
         if (*pGiaTri) {
             veHCN(x + 3, y + 3, x + kichThuoc - 3, y + kichThuoc - 3, BangMau::VIEN_SANG);
         }
+    }
+
+    void veChuNhan() const {
+        if (!pGiaTri) return;
         veChu(x + kichThuoc + 8, y + 3, nhan.c_str(), BangMau::CHU_CHINH, GLUT_BITMAP_HELVETICA_12);
     }
 };
@@ -263,29 +271,22 @@ struct TrinhQuanLyGiaoDien {
         camDistHienTai   = camDistHienTai + (camDistMucTieu - camDistHienTai) * alpha;
     }
 
-    // Vẽ toàn bộ các thanh panel giao diện (TopBar, LeftPanel, RightPanel, BottomBar)
-    void veGiaoDien(const std::vector<LinhKien>& dsLinhKien, const CungCapTayGap& arm, float kcHCSR04) {
+    // 1. Vẽ các khối hình học nền và viền (ghi vào FrameBuffer trong RAM)
+    void veKhungGiaoDien(const std::vector<LinhKien>& dsLinhKien, const CungCapTayGap& arm, float kcHCSR04) {
         // --- 1. TOP BAR ---
         veHCN(0, TOP_BAR_Y_MIN, CUA_SO_RONG, TOP_BAR_Y_MAX, BangMau::NEN_PANEL);
         veDoanThangBresenham(0, TOP_BAR_Y_MIN, CUA_SO_RONG, TOP_BAR_Y_MIN, BangMau::VIEN_PANEL);
 
-        // Logo & Tiêu đề
-        veChu(CUA_SO_RONG - 330, TOP_BAR_Y_MIN + 16, "VKU - DO HOA MAY TINH (CG.3 & CG.4)", BangMau::VIEN_SANG, GLUT_BITMAP_HELVETICA_12);
-
-        // 4 Nút Tab chế độ
         for (size_t i = 0; i < cacTabCheDo.size(); ++i) {
             cacTabCheDo[i].dangChon = ((int)i == (int)cheDoHienTai);
-            cacTabCheDo[i].ve();
+            cacTabCheDo[i].veKhung();
         }
 
         // --- 2. LEFT PANEL (DANH SÁCH 11 LINH KIỆN) ---
         veHCN(LEFT_PANEL_X_MIN, LEFT_PANEL_Y_MIN, LEFT_PANEL_X_MAX, LEFT_PANEL_Y_MAX, BangMau::NEN_PANEL);
         veDoanThangBresenham(LEFT_PANEL_X_MAX, LEFT_PANEL_Y_MIN, LEFT_PANEL_X_MAX, LEFT_PANEL_Y_MAX, BangMau::VIEN_PANEL);
-
-        veChu(15, LEFT_PANEL_Y_MAX - 24, "DANH MUC LINH KIEN", BangMau::VIEN_SANG, GLUT_BITMAP_HELVETICA_12);
         veDoanThangBresenham(12, LEFT_PANEL_Y_MAX - 30, LEFT_PANEL_X_MAX - 12, LEFT_PANEL_Y_MAX - 30, BangMau::VIEN_PANEL);
 
-        // Danh sách 11 linh kiện
         for (int i = 1; i <= TONG_SO_LINH_KIEN; ++i) {
             int yPos = LEFT_PANEL_Y_MAX - 45 - (i - 1) * 52;
             bool dangChon = (i == linhKienDangChon);
@@ -295,13 +296,69 @@ struct TrinhQuanLyGiaoDien {
                 veVienHCN(8, yPos - 12, LEFT_PANEL_X_MAX - 8, yPos + 28, BangMau::VIEN_SANG);
             }
 
-            // Hộp kiểm ẩn/hiện linh kiện
             HopKiemUI hk;
             hk.x = 14; hk.y = yPos + 4; hk.kichThuoc = 14;
             bool hien = dsLinhKien[i].hienThi;
             hk.pGiaTri = &hien;
             hk.nhan = "";
-            hk.ve();
+            hk.veKhung();
+        }
+
+        // --- 3. RIGHT PANEL (BẢNG THÔNG TIN CHI TIẾT) ---
+        veHCN(RIGHT_PANEL_X_MIN, RIGHT_PANEL_Y_MIN, RIGHT_PANEL_X_MAX, RIGHT_PANEL_Y_MAX, BangMau::NEN_PANEL);
+        veDoanThangBresenham(RIGHT_PANEL_X_MIN, RIGHT_PANEL_Y_MIN, RIGHT_PANEL_X_MIN, RIGHT_PANEL_Y_MAX, BangMau::VIEN_PANEL);
+        veDoanThangBresenham(RIGHT_PANEL_X_MIN + 12, RIGHT_PANEL_Y_MAX - 30, RIGHT_PANEL_X_MAX - 12, RIGHT_PANEL_Y_MAX - 30, BangMau::VIEN_PANEL);
+
+        if (linhKienDangChon >= 1 && linhKienDangChon <= TONG_SO_LINH_KIEN) {
+            const auto& lk = dsLinhKien[linhKienDangChon];
+            int curY = RIGHT_PANEL_Y_MAX - 78;
+            size_t start = 0;
+            while (start < lk.vaiTro.length()) {
+                size_t len = std::min((size_t)32, lk.vaiTro.length() - start);
+                if (start + len < lk.vaiTro.length() && lk.vaiTro[start + len] != ' ') {
+                    size_t sp = lk.vaiTro.rfind(' ', start + len);
+                    if (sp != std::string::npos && sp > start) len = sp - start;
+                }
+                curY -= 16;
+                start += len;
+                if (start < lk.vaiTro.length() && lk.vaiTro[start] == ' ') ++start;
+            }
+
+            curY -= 8;
+            veHCN(RIGHT_PANEL_X_MIN + 10, curY - 60, RIGHT_PANEL_X_MAX - 10, curY + 6, MauSac(18, 22, 28));
+            veVienHCN(RIGHT_PANEL_X_MIN + 10, curY - 60, RIGHT_PANEL_X_MAX - 10, curY + 6, BangMau::VIEN_PANEL);
+        }
+
+        // --- 4. BOTTOM BAR ---
+        veHCN(BOTTOM_BAR_X_MIN, BOTTOM_BAR_Y_MIN, BOTTOM_BAR_X_MAX, BOTTOM_BAR_Y_MAX, BangMau::NEN_PANEL);
+        veDoanThangBresenham(BOTTOM_BAR_X_MIN, BOTTOM_BAR_Y_MAX, BOTTOM_BAR_X_MAX, BOTTOM_BAR_Y_MAX, BangMau::VIEN_PANEL);
+
+        for (const auto& sl : cacThanhTruot) {
+            sl.veKhung();
+        }
+        for (const auto& btn : cacNutDieuKhienXe) {
+            btn.veKhung();
+        }
+        for (const auto& hk : cacHopKiem) {
+            hk.veKhung();
+        }
+    }
+
+    // 2. Vẽ toàn bộ các nhãn chữ (Text Bitmap) qua OpenGL sau khi đẩy FrameBuffer
+    void veChuGiaoDien(const std::vector<LinhKien>& dsLinhKien, const CungCapTayGap& arm, float kcHCSR04) {
+        // --- 1. TOP BAR CHỮ ---
+        veChu(CUA_SO_RONG - 330, TOP_BAR_Y_MIN + 16, "VKU - DO HOA MAY TINH (CG.3 & CG.4)", BangMau::VIEN_SANG, GLUT_BITMAP_HELVETICA_12);
+
+        for (const auto& tab : cacTabCheDo) {
+            tab.veChuNhan();
+        }
+
+        // --- 2. LEFT PANEL CHỮ ---
+        veChu(15, LEFT_PANEL_Y_MAX - 24, "DANH MUC LINH KIEN", BangMau::VIEN_SANG, GLUT_BITMAP_HELVETICA_12);
+
+        for (int i = 1; i <= TONG_SO_LINH_KIEN; ++i) {
+            int yPos = LEFT_PANEL_Y_MAX - 45 - (i - 1) * 52;
+            bool dangChon = (i == linhKienDangChon);
 
             char buf[64];
             std::snprintf(buf, sizeof(buf), "[%02d] %s", i, dsLinhKien[i].ma.c_str());
@@ -312,12 +369,8 @@ struct TrinhQuanLyGiaoDien {
             veChu(36, yPos - 8, tenRutGon.c_str(), BangMau::CHU_PHU, GLUT_BITMAP_HELVETICA_10);
         }
 
-        // --- 3. RIGHT PANEL (BẢNG THÔNG TIN CHI TIẾT & TRA CỨU CHÂN) ---
-        veHCN(RIGHT_PANEL_X_MIN, RIGHT_PANEL_Y_MIN, RIGHT_PANEL_X_MAX, RIGHT_PANEL_Y_MAX, BangMau::NEN_PANEL);
-        veDoanThangBresenham(RIGHT_PANEL_X_MIN, RIGHT_PANEL_Y_MIN, RIGHT_PANEL_X_MIN, RIGHT_PANEL_Y_MAX, BangMau::VIEN_PANEL);
-
+        // --- 3. RIGHT PANEL CHỮ ---
         veChu(RIGHT_PANEL_X_MIN + 15, RIGHT_PANEL_Y_MAX - 24, "THONG SO LINH KIEN", BangMau::VIEN_SANG, GLUT_BITMAP_HELVETICA_12);
-        veDoanThangBresenham(RIGHT_PANEL_X_MIN + 12, RIGHT_PANEL_Y_MAX - 30, RIGHT_PANEL_X_MAX - 12, RIGHT_PANEL_Y_MAX - 30, BangMau::VIEN_PANEL);
 
         if (linhKienDangChon >= 1 && linhKienDangChon <= TONG_SO_LINH_KIEN) {
             const auto& lk = dsLinhKien[linhKienDangChon];
@@ -343,9 +396,6 @@ struct TrinhQuanLyGiaoDien {
 
             // Thông số động theo thời gian thực
             curY -= 8;
-            veHCN(RIGHT_PANEL_X_MIN + 10, curY - 60, RIGHT_PANEL_X_MAX - 10, curY + 6, MauSac(18, 22, 28));
-            veVienHCN(RIGHT_PANEL_X_MIN + 10, curY - 60, RIGHT_PANEL_X_MAX - 10, curY + 6, BangMau::VIEN_PANEL);
-
             veChu(RIGHT_PANEL_X_MIN + 16, curY - 14, "THONG SO HOAT DONG:", BangMau::VIEN_SANG, GLUT_BITMAP_HELVETICA_10);
             char b1[64], b2[64];
             if (linhKienDangChon == LK_SERVO_DE) {
@@ -386,23 +436,15 @@ struct TrinhQuanLyGiaoDien {
             }
         }
 
-        // --- 4. BOTTOM BAR (THANH ĐIỀU KHIỂN DƯỚI) ---
-        veHCN(BOTTOM_BAR_X_MIN, BOTTOM_BAR_Y_MIN, BOTTOM_BAR_X_MAX, BOTTOM_BAR_Y_MAX, BangMau::NEN_PANEL);
-        veDoanThangBresenham(BOTTOM_BAR_X_MIN, BOTTOM_BAR_Y_MAX, BOTTOM_BAR_X_MAX, BOTTOM_BAR_Y_MAX, BangMau::VIEN_PANEL);
-
-        // Vẽ các thanh trượt
+        // --- 4. BOTTOM BAR CHỮ ---
         for (const auto& sl : cacThanhTruot) {
-            sl.ve();
+            sl.veChuNhan();
         }
-
-        // Vẽ các nút điều khiển
         for (const auto& btn : cacNutDieuKhienXe) {
-            btn.ve();
+            btn.veChuNhan();
         }
-
-        // Vẽ các hộp kiểm
         for (const auto& hk : cacHopKiem) {
-            hk.ve();
+            hk.veChuNhan();
         }
     }
 };

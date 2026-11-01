@@ -305,13 +305,12 @@ void renderCanh3D(float dt) {
                 }
             }
 
-            // Vẽ chân cắm và nhãn chân nếu được bật
+            // Vẽ chân cắm nếu được bật
             if (g_ui.hienThiNhanChan) {
                 Diem3D vA = chuyenHeToaDoQuanSat(posWorldA, camTarget, thetaRad, phiRad, R_cam);
                 Diem2D sA = chieuLenManHinh(vA, D_proj, true, cx, cy);
                 if (sA.x >= wmin.x && sA.x <= wmax.x && sA.y >= wmin.y && sA.y <= wmax.y) {
                     veHinhTronDac((int)sA.x, (int)sA.y, 3, MauSac(255, 230, 80));
-                    veChu((int)sA.x + 4, (int)sA.y + 4, day.chanA.c_str(), BangMau::CHU_CHINH, GLUT_BITMAP_HELVETICA_10);
                 }
             }
         }
@@ -407,11 +406,70 @@ void renderSoDo2D() {
                 toLoangBoundaryFillStack(seedX, seedY, mauToLoang, mauVien);
             }
 
-            // Vẽ tên linh kiện
-            Diem2D tam = mat2D.bienDoi(lk.toaDo2D);
-            if (tam.x >= wmin.x && tam.x <= wmax.x && tam.y >= wmin.y && tam.y <= wmax.y) {
-                veChu((int)tam.x - 20, (int)tam.y - 4, lk.ma.c_str(), BangMau::CHU_CHINH, GLUT_BITMAP_HELVETICA_12);
-            }
+        }
+    }
+}
+
+// =========================================================================
+// HÀM VẼ NHÃN VĂN BẢN TRÊN CẢNH 3D VÀ SƠ ĐỒ 2D
+// (Thực hiện ở Pass 2 sau khi đẩy FrameBuffer để đảm bảo chữ không bị đè)
+// =========================================================================
+
+void veNhan3D() {
+    float thetaRad = g_ui.camTheta * (float)M_PI / 180.0f;
+    float phiRad   = g_ui.camPhi   * (float)M_PI / 180.0f;
+    float R_cam    = g_ui.camDistHienTai;
+    float D_proj   = 36.0f;
+    float cx = (VIEWPORT_X_MIN + VIEWPORT_X_MAX) * 0.5f;
+    float cy = (VIEWPORT_Y_MIN + VIEWPORT_Y_MAX) * 0.5f;
+
+    Diem2D wmin(VIEWPORT_X_MIN + 2, VIEWPORT_Y_MIN + 2);
+    Diem2D wmax(VIEWPORT_X_MAX - 2, VIEWPORT_Y_MAX - 2);
+
+    Diem3D camTarget = g_ui.camTargetHienTai;
+    if (g_ui.cheDoHienTai == CHE_DO_TONG_THE) {
+        camTarget = Diem3D(g_xeRobot.x, 1.2f, g_xeRobot.z);
+    }
+
+    float radCar = g_xeRobot.gocHuong * (float)M_PI / 180.0f;
+    MaTran4x4 matWorldCar = taoMaTranQuayY(radCar) * taoMaTranTinhTien(g_xeRobot.x, 0.0f, g_xeRobot.z);
+
+    for (int lkId = 1; lkId <= TONG_SO_LINH_KIEN; ++lkId) {
+        const auto& lk = g_dsLinhKien[lkId];
+        if (!lk.hienThi) continue;
+        if (g_ui.coLapLinhKien && lkId != g_ui.linhKienDangChon) continue;
+
+        MaTran4x4 matWorldLK = tinhMaTranTheGioiLinhKien(lk, matWorldCar, g_ui.tyLeTachRoi);
+        Diem3D posCenter = matWorldLK.bienDoi(Diem3D(0, 0, 0));
+        Diem3D vC = chuyenHeToaDoQuanSat(posCenter, camTarget, thetaRad, phiRad, R_cam);
+        Diem2D sC = chieuLenManHinh(vC, D_proj, true, cx, cy);
+
+        if (sC.x >= wmin.x && sC.x <= wmax.x && sC.y >= wmin.y && sC.y <= wmax.y) {
+            MauSac col = (lkId == g_ui.linhKienDangChon) ? BangMau::CANH_BAO_VANG : BangMau::CHU_CHINH;
+            veChu((int)sC.x - 14, (int)sC.y, lk.ma.c_str(), col, GLUT_BITMAP_HELVETICA_12);
+        }
+    }
+}
+
+void veNhan2D() {
+    float cx = (VIEWPORT_X_MIN + VIEWPORT_X_MAX) * 0.5f;
+    float cy = (VIEWPORT_Y_MIN + VIEWPORT_Y_MAX) * 0.5f;
+    Diem2D wmin(VIEWPORT_X_MIN + 2, VIEWPORT_Y_MIN + 2);
+    Diem2D wmax(VIEWPORT_X_MAX - 2, VIEWPORT_Y_MAX - 2);
+
+    MaTran3x3 mat2D = taoMaTranTinhTien2D(g_ui.soDo2DPanX, g_ui.soDo2DPanY)
+                    * taoMaTranQuayQuanhTam2D(cx, cy, g_ui.soDo2DGocRad)
+                    * taoMaTranTiLeQuanhTam2D(cx, cy, g_ui.soDo2DZoom, g_ui.soDo2DZoom)
+                    * taoMaTranDoiXung2D(cx, cy, g_ui.soDo2DLatNgang, g_ui.soDo2DLatDoc);
+
+    for (int i = 1; i <= TONG_SO_LINH_KIEN; ++i) {
+        const auto& lk = g_dsLinhKien[i];
+        if (!lk.hienThi) continue;
+
+        Diem2D tam = mat2D.bienDoi(lk.toaDo2D);
+        if (tam.x >= wmin.x && tam.x <= wmax.x && tam.y >= wmin.y && tam.y <= wmax.y) {
+            MauSac col = (i == g_ui.linhKienDangChon) ? BangMau::CANH_BAO_VANG : BangMau::CHU_CHINH;
+            veChu((int)tam.x - 20, (int)tam.y - 4, lk.ma.c_str(), col, GLUT_BITMAP_HELVETICA_12);
         }
     }
 }
@@ -423,7 +481,7 @@ void renderSoDo2D() {
 void display() {
     glClear(GL_COLOR_BUFFER_BIT);
 
-    // Xóa bộ đệm màu RAM
+    // BƯỚC 1: XÓA VÀ RENDER TẤT CẢ VÀO FRAMEBUFFER TRONG RAM
     xoaFrameBuffer(BangMau::NEN_CHINH);
 
     // Tính delta time
@@ -435,25 +493,46 @@ void display() {
     // Cập nhật hoạt họa camera nội suy mượt (Camera Fly-to)
     g_ui.capNhatNoiSuyCamera(dt);
 
-    // 1. Render cảnh chính ở CenterViewport
+    // Render cảnh chính ở CenterViewport
     if (g_ui.cheDoHienTai == CHE_DO_SO_DO_2D) {
         renderSoDo2D();
     } else {
         renderCanh3D(dt);
     }
 
-    // 2. Render giao diện 5 vùng (Giai đoạn 4.2)
-    // Đặt lại vùng xén toàn màn hình để vẽ Panel UI
+    // Render các khối hình học của giao diện 5 vùng (Giai đoạn 4.2)
     datVungXen(0, CUA_SO_RONG - 1, 0, CUA_SO_CAO - 1);
-
-    // Tính khoảng cách cảm biến siêu âm HC-SR04 tới khối vật thể
     Diem3D posCar(g_xeRobot.x, 0.0f, g_xeRobot.z);
     float kcHCSR04 = (posCar - g_vatThe.viTriTheGioi).doDai();
+    g_ui.veKhungGiaoDien(g_dsLinhKien, g_tayGap, kcHCSR04);
 
-    g_ui.veGiaoDien(g_dsLinhKien, g_tayGap, kcHCSR04);
-
-    // Đẩy toàn bộ FrameBuffer ra OpenGL
+    // BƯỚC 2: ĐẨY TOÀN BỘ FRAMEBUFFER RA MÀN HÌNH TẠI GỐC (0, 0)
     renderFrameBuffer();
+
+    // BƯỚC 3: VẼ TOÀN BỘ CHỮ (TEXT BITMAP) LÊN TRÊN CÙNG
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    gluOrtho2D(0, CUA_SO_RONG, 0, CUA_SO_CAO);
+
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+
+    // Vẽ nhãn chữ các Panel, Nút bấm, Slider, Checkbox
+    g_ui.veChuGiaoDien(g_dsLinhKien, g_tayGap, kcHCSR04);
+
+    // Vẽ tên linh kiện trên khung nhìn
+    if (g_ui.cheDoHienTai == CHE_DO_SO_DO_2D) {
+        veNhan2D();
+    } else if (g_ui.hienThiNhanChan) {
+        veNhan3D();
+    }
+
+    glPopMatrix();
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
 
     glutSwapBuffers();
 }

@@ -45,8 +45,24 @@ inline MauSac getPixel(int x, int y) {
 
 // Đẩy toàn bộ mảng frameBuffer ra màn hình qua OpenGL glDrawPixels
 inline void renderFrameBuffer() {
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    gluOrtho2D(0, CUA_SO_RONG, 0, CUA_SO_CAO);
+
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+
+    // BẮT BUỘC: Đặt raster position chính xác tại góc dưới trái (0, 0)
+    glRasterPos2i(0, 0);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glDrawPixels(CUA_SO_RONG, CUA_SO_CAO, GL_RGBA, GL_UNSIGNED_BYTE, g_frameBuffer);
+
+    glPopMatrix();
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
 }
 
 // =========================================================================
