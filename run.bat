@@ -1,16 +1,19 @@
 @echo off
-echo =========================================================================
-echo   DO HOA MAY TINH (CG.3 va CG.4) - DAI HOC CNTT VA TT VIET - HAN (VKU)
-echo   De tai: Mo phong 3D va So do dau noi 2D Xe Robot Tay Gap Arduino
-echo   (11 Linh kien - 34 Day noi)
-echo =========================================================================
-echo Dang kiem tra va bien dich main.cpp voi MinGW g++ (-O2)...
+cd /d "%~dp0"
 
-g++ main.cpp -O2 -o mo_phong_xe_robot_3d.exe -lfreeglut -lopengl32 -lglu32
-if %ERRORLEVEL% equ 0 (
-    echo [THANH CONG] Bien dich hoan tat! Dang khoi chay chuong trinh...
-    mo_phong_xe_robot_3d.exe
+echo =======================================================================
+echo   KHOI CHAY DIGITAL TWIN 3D - XE ROBOT GAP DO VAT (OPENGL/C++)
+echo =======================================================================
+
+if not exist "%~dp0XeDieuKhien3D.exe" (
+    echo [Canh bao] Chua tim thay XeDieuKhien3D.exe. Dang tien hanh bien dich...
+    call "%~dp0build.bat"
+)
+
+if exist "%~dp0XeDieuKhien3D.exe" (
+    echo [Thanh cong] Dang mo cua so mo phong 3D...
+    start "" /D "%~dp0" "%~dp0XeDieuKhien3D.exe"
 ) else (
-    echo [LOI] Bien dich that bai! Vui long kiem tra MinGW g++ va thu vien FreeGLUT.
+    echo [Loi] Khong the khoi chay do chua bien dich thanh cong!
     pause
 )
