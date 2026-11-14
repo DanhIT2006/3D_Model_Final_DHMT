@@ -190,6 +190,10 @@ void HardwareComponent::renderWorkbench(bool wireframeMode) {
     // Đặt linh kiện cách mặt bàn 0.1cm
     glTranslatef(0.0f, 0.1f, 0.0f);
 
+    // Kích hoạt Polygon Offset để chống Z-fighting tuyệt đối giữa các lớp hình học
+    glEnable(GL_POLYGON_OFFSET_FILL);
+    glPolygonOffset(1.0f, 1.0f);
+
     // 1. Vẽ bo mạch chủ (Base Board)
     if (wireframeMode) {
         mesh.drawWireframe(Vec3(0.0f, 0.8f, 0.4f), 1.2f);
@@ -198,72 +202,63 @@ void HardwareComponent::renderWorkbench(bool wireframeMode) {
         mesh.drawWireframe(Vec3(0.1f, 0.4f, 0.2f), 1.0f);
     }
 
-    // 2. Vẽ tất cả linh kiện nhỏ (SubComponents)
-    for (size_t i = 0; i < subComponents.size(); ++i) {
-        auto& sub = subComponents[i];
-        glPushMatrix();
-        glTranslatef(sub.localPos.x, sub.localPos.y, sub.localPos.z);
-
-        if (wireframeMode) {
-            sub.mesh.drawWireframe(sub.isSelected ? Vec3(1.0f, 0.85f, 0.0f) : sub.color, sub.isSelected ? 2.5f : 1.0f);
-        } else {
-            sub.mesh.drawSolid(true);
-            if (sub.isSelected) {
-                // Viền vàng nổi bật khi được chọn
-                sub.mesh.drawWireframe(Vec3(1.0f, 0.9f, 0.0f), 2.5f);
-            }
-        }
-        glPopMatrix();
-
-        // 3. Nếu đang được chọn: vẽ khung hộp bao định vị phát sáng (Bounding Box Glow)
-        if (sub.isSelected) {
-            glDisable(GL_LIGHTING);
-            glPushMatrix();
-            glTranslatef(sub.localPos.x, sub.localPos.y, sub.localPos.z);
-            glColor3f(1.0f, 0.85f, 0.1f);
-            glLineWidth(2.0f);
-
-            // Hộp bao dây nét đứt xung quanh linh kiện
-            float hx = sub.size.x * 0.5f + 0.12f;
-            float hy = sub.size.y * 0.5f + 0.12f;
-            float hz = sub.size.z * 0.5f + 0.12f;
-
-            glBegin(GL_LINE_LOOP);
-            glVertex3f(-hx, -hy, -hz); glVertex3f(hx, -hy, -hz);
-            glVertex3f(hx, hy, -hz);   glVertex3f(-hx, hy, -hz);
-            glEnd();
-
-            glBegin(GL_LINE_LOOP);
-            glVertex3f(-hx, -hy, hz);  glVertex3f(hx, -hy, hz);
-            glVertex3f(hx, hy, hz);    glVertex3f(-hx, hy, hz);
-            glEnd();
-
-            glBegin(GL_LINES);
-            glVertex3f(-hx, -hy, -hz); glVertex3f(-hx, -hy, hz);
-            glVertex3f(hx, -hy, -hz);  glVertex3f(hx, -hy, hz);
-            glVertex3f(hx, hy, -hz);   glVertex3f(hx, hy, hz);
-            glVertex3f(-hx, hy, -hz);  glVertex3f(-hx, hy, hz);
-            glEnd();
-
-            // Mũi tên chỉ thị thẳng đứng từ trên trỏ xuống linh kiện
-            glBegin(GL_LINES);
-            glVertex3f(0.0f, hy + 1.2f, 0.0f);
-            glVertex3f(0.0f, hy + 0.2f, 0.0f);
-            glVertex3f(0.0f, hy + 0.2f, 0.0f);
-            glVertex3f(-0.15f, hy + 0.45f, 0.0f);
-            glVertex3f(0.0f, hy + 0.2f, 0.0f);
-            glVertex3f(0.15f, hy + 0.45f, 0.0f);
-            glEnd();
-
-            glLineWidth(1.0f);
-            glEnable(GL_LIGHTING);
-            glPopMatrix();
-        }
+    // 2. Kết xuất chân pin thực tế và toàn bộ linh kiện 3D chi tiết (Heatsink, IC, tụ điện, USB, Domino...)
+    if (wireframeMode) {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        renderPinsAndDetails();
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    } else {
+        renderPinsAndDetails();
     }
 
-    // 4. Kết xuất chân pin thực tế và linh kiện nổi (Tản nhiệt nhôm, tụ nhôm, IC socket...)
-    renderPinsAndDetails();
+    // 3. Khung bao định vị phát sáng (Bounding Box Glow) và mũi tên chỉ thị cho linh kiện con đang chọn
+    SubComponent* selectedSub = getSelectedSubComponent();
+    if (selectedSub) {
+        glDisable(GL_LIGHTING);
+        glPushMatrix();
+        glTranslatef(selectedSub->localPos.x, selectedSub->localPos.y, selectedSub->localPos.z);
+        glColor3f(1.0f, 0.85f, 0.1f);
+        glLineWidth(2.2f);
 
+        // Hộp bao dây phát sáng xung quanh linh kiện
+        float hx = selectedSub->size.x * 0.5f + 0.10f;
+        float hy = selectedSub->size.y * 0.5f + 0.10f;
+        float hz = selectedSub->size.z * 0.5f + 0.10f;
+
+        glBegin(GL_LINE_LOOP);
+        glVertex3f(-hx, -hy, -hz); glVertex3f(hx, -hy, -hz);
+        glVertex3f(hx, hy, -hz);   glVertex3f(-hx, hy, -hz);
+        glEnd();
+
+        glBegin(GL_LINE_LOOP);
+        glVertex3f(-hx, -hy, hz);  glVertex3f(hx, -hy, hz);
+        glVertex3f(hx, hy, hz);    glVertex3f(-hx, hy, hz);
+        glEnd();
+
+        glBegin(GL_LINES);
+        glVertex3f(-hx, -hy, -hz); glVertex3f(-hx, -hy, hz);
+        glVertex3f(hx, -hy, -hz);  glVertex3f(hx, -hy, hz);
+        glVertex3f(hx, hy, -hz);   glVertex3f(hx, hy, hz);
+        glVertex3f(-hx, hy, -hz);  glVertex3f(-hx, hy, hz);
+        glEnd();
+
+        // Mũi tên chỉ thị thẳng đứng từ trên trỏ xuống linh kiện
+        glColor3f(1.0f, 0.95f, 0.2f);
+        glBegin(GL_LINES);
+        glVertex3f(0.0f, hy + 1.2f, 0.0f);
+        glVertex3f(0.0f, hy + 0.15f, 0.0f);
+        glVertex3f(0.0f, hy + 0.15f, 0.0f);
+        glVertex3f(-0.15f, hy + 0.40f, 0.0f);
+        glVertex3f(0.0f, hy + 0.15f, 0.0f);
+        glVertex3f(0.15f, hy + 0.40f, 0.0f);
+        glEnd();
+
+        glLineWidth(1.0f);
+        glEnable(GL_LIGHTING);
+        glPopMatrix();
+    }
+
+    glDisable(GL_POLYGON_OFFSET_FILL);
     glPopMatrix();
 }
 

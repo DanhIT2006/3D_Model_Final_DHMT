@@ -40,19 +40,19 @@ ArduinoUnoComp::ArduinoUnoComp()
 void ArduinoUnoComp::initSubComponents() {
     subComponents.clear();
 
-    // 1. Vi dieu khien ATmega328P
+    // 1. Vi dieu khien ATmega328P DIP-28
     SubComponent atmega;
     atmega.id = "ARD_MCU_328P";
     atmega.name = "Vi Dieu Khien Chinh ATmega328P-PU (DIP-28)";
     atmega.category = "Dieu khien trung tam";
     atmega.rating = "CPU 8-bit AVR RISC 16MHz / 32KB Flash / 2KB SRAM / Socket DIP-28";
-    atmega.roleDesc = "Bo nao trung tam cua he thong xe robot: Nap va thuc thi firmware C++, xu ly thuat toan tu hanh do duong, tinh toan dong hoc 3 servo tay gap, phat xung PWM dieu toc 2 dong co va tinh toan khoang cach tu cam bien sieu am.";
+    atmega.roleDesc = "Bo nao trung tam cua he thong xe robot: Nap va thuc thi firmware C++, xu ly thuat toan tu hanh do duong, tinh toan dong hoc 3 servo tay gap, phat xung PWM dieu toc 4 dong co va tinh toan khoang cach tu cam bien sieu am.";
     atmega.liveStatusText = "Tan so Clock: 16MHz | Chu ky lenh: 62.5ns | Flash: 32KB";
-    atmega.localPos = Vec3(0.9f, 0.42f, 0.5f);
-    atmega.size = Vec3(3.6f, 0.55f, 0.95f);
-    atmega.color = Vec3(0.08f, 0.08f, 0.08f);
+    atmega.localPos = Vec3(0.95f, 0.10f + 0.21f, 0.85f);
+    atmega.size = Vec3(3.50f, 0.42f, 0.75f);
+    atmega.color = Vec3(0.15f, 0.16f, 0.18f);
     atmega.shape = SubShapeType::BOX_SMD;
-    atmega.mesh = Mesh3D::createBox(3.6f, 0.55f, 0.95f, atmega.color);
+    atmega.mesh = Mesh3D::createBox(3.50f, 0.42f, 0.75f, atmega.color);
     addSubComponent(atmega);
 
     // 2. Nut nhan Reset
@@ -63,13 +63,13 @@ void ArduinoUnoComp::initSubComponents() {
     btnRst.rating = "Push Button 6x6mm 4-pin tiep diem dong / Active LOW";
     btnRst.roleDesc = "Khi nhan, chan RESET cua ATmega328P bi keo xuong muc LOW (0V), dua CPU tro ve dia chi 0x0000 cua bo nho Flash, khoi dong lai toan bo firmware xe robot, dung dong co va dua 3 Servo ve vi tri chuan.";
     btnRst.liveStatusText = "Chan RESET: 5.0V (HIGH - Dang hoat dong binh thuong)";
-    btnRst.localPos = Vec3(-2.8f, 0.45f, -1.8f);
-    btnRst.size = Vec3(0.7f, 0.55f, 0.7f);
+    btnRst.localPos = Vec3(-2.85f, 0.10f + 0.22f, -2.10f);
+    btnRst.size = Vec3(0.60f, 0.45f, 0.60f);
     btnRst.color = Vec3(0.85f, 0.2f, 0.1f);
     btnRst.shape = SubShapeType::PUSH_BUTTON;
     btnRst.isInteractive = true;
     btnRst.actionName = "NHAN RESET ARDUINO";
-    btnRst.mesh = Mesh3D::createBox(0.7f, 0.55f, 0.7f, btnRst.color);
+    btnRst.mesh = Mesh3D::createBox(0.60f, 0.45f, 0.60f, btnRst.color);
     addSubComponent(btnRst);
 
     // 3. Cong USB Type-B & ATmega16U2
@@ -80,11 +80,11 @@ void ArduinoUnoComp::initSubComponents() {
     usbPort.rating = "USB 2.0 Full-Speed 12Mbps / Vo kim loai Niken / Chip ATmega16U2";
     usbPort.roleDesc = "Ket noi voi may tinh de nap firmware vao bo nho Flash qua Bootloader Optiboot, dong thoi giao tiep UART Serial truyen nhan du lieu dieu khien giua PC va Arduino.";
     usbPort.liveStatusText = "Giao tiep: UART 115200 baud | Nguon USB: 5.0V VBUS";
-    usbPort.localPos = Vec3(-2.6f, 0.7f, -0.9f);
-    usbPort.size = Vec3(1.4f, 1.15f, 1.25f);
-    usbPort.color = Vec3(0.75f, 0.78f, 0.82f);
+    usbPort.localPos = Vec3(-2.85f, 0.10f + 0.55f, -0.95f);
+    usbPort.size = Vec3(1.60f, 1.10f, 1.20f);
+    usbPort.color = Vec3(0.78f, 0.80f, 0.84f);
     usbPort.shape = SubShapeType::BOX_SMD;
-    usbPort.mesh = Mesh3D::createBox(1.4f, 1.15f, 1.25f, usbPort.color);
+    usbPort.mesh = Mesh3D::createBox(1.60f, 1.10f, 1.20f, usbPort.color);
     addSubComponent(usbPort);
 
     // 4. Jack nguon ngoai DC Barrel
@@ -95,26 +95,26 @@ void ArduinoUnoComp::initSubComponents() {
     dcJack.rating = "Duong kinh 5.5mm ngoai / 2.1mm trong / Dien ap khuyen nghi 7-12V";
     dcJack.roleDesc = "Dau tiep nhan nguon dien DC ngoai tu pack pin 7.4V tren xe robot, dan dien vao mach on ap tuyen tinh LDO tren bo de tao nguon 5V nuoi he thong.";
     dcJack.liveStatusText = "Nguon vao VIN: 7.4V tu Pin Li-ion 18650";
-    dcJack.localPos = Vec3(-2.6f, 0.65f, 1.6f);
-    dcJack.size = Vec3(1.5f, 1.05f, 1.0f);
+    dcJack.localPos = Vec3(-2.80f, 0.10f + 0.55f, 1.55f);
+    dcJack.size = Vec3(1.45f, 1.10f, 0.90f);
     dcJack.color = Vec3(0.12f, 0.12f, 0.12f);
     dcJack.shape = SubShapeType::BOX_SMD;
-    dcJack.mesh = Mesh3D::createBox(1.5f, 1.05f, 1.0f, dcJack.color);
+    dcJack.mesh = Mesh3D::createBox(1.45f, 1.10f, 0.90f, dcJack.color);
     addSubComponent(dcJack);
 
     // 5. IC On ap 5V LDO AMS1117 & Cap tu loc 47uF
     SubComponent regLdo;
     regLdo.id = "ARD_VREG_5V";
-    regLdo.name = "IC On Ap Tuyến Tính 5V LDO & Cap Tu Loc 47uF";
+    regLdo.name = "IC On Ap Tuyen Tinh 5V LDO & Cap Tu Loc 47uF";
     regLdo.category = "On ap nguon 5V";
-    regLdo.rating = "AMS1117-5.0 / Vin 6.5-12V / Vout 5.0V / 2x Tu 47uF 16V";
+    regLdo.rating = "AMS1117-5.0 / Vin 6.5-12V / Vout 5.0V / 2x Tu 47uF 16V tach roi";
     regLdo.roleDesc = "Ha ap tu 7.4V cua pack pin (qua jack DC hoac Vin) xuong muc 5.0V sieu phang on dinh de nuoi vi dieu khien ATmega328P va cac cam bien ngoai vi.";
     regLdo.liveStatusText = "Dien ap ra: 5.00V (On dinh tuyet doi, do gon < 15mV)";
-    regLdo.localPos = Vec3(-1.2f, 0.32f, 0.9f);
-    regLdo.size = Vec3(0.75f, 0.35f, 0.55f);
-    regLdo.color = Vec3(0.2f, 0.2f, 0.22f);
+    regLdo.localPos = Vec3(-2.45f, 0.10f + 0.09f, 0.35f);
+    regLdo.size = Vec3(0.65f, 0.18f, 0.40f);
+    regLdo.color = Vec3(0.18f, 0.18f, 0.20f);
     regLdo.shape = SubShapeType::BOX_SMD;
-    regLdo.mesh = Mesh3D::createBox(0.75f, 0.35f, 0.55f, regLdo.color);
+    regLdo.mesh = Mesh3D::createBox(0.65f, 0.18f, 0.40f, regLdo.color);
     addSubComponent(regLdo);
 
     // 6. Thach anh dao dong 16MHz
@@ -122,31 +122,31 @@ void ArduinoUnoComp::initSubComponents() {
     crystal.id = "ARD_CRYSTAL";
     crystal.name = "Thach Anh Dao Dong 16MHz (16.000 MHz Crystal)";
     crystal.category = "Dinh thoi xung nhip";
-    crystal.rating = "Tan so 16.000 MHz / Do lech +/- 20ppm / Vo kim loai elip";
+    crystal.rating = "Tan so 16.000 MHz / Do lech +/- 20ppm / Vo kim loai elip HC-49S";
     crystal.roleDesc = "Cung cap xung nhip clock ngoai cuc ky on dinh cho CPU ATmega328P (moi chu ky may = 62.5ns), dam bao do chinh xac tuyet doi cho bo dinh thoi Timer, xung PWM dieu toc va toc do truyen thong Baud rate.";
     crystal.liveStatusText = "Tan so dao dong: 16.000.000 Hz | Chu ky Clock: 62.5 ns";
-    crystal.localPos = Vec3(-0.4f, 0.35f, -0.2f);
-    crystal.size = Vec3(1.1f, 0.4f, 0.45f);
+    crystal.localPos = Vec3(-1.15f, 0.10f + 0.16f, 0.20f);
+    crystal.size = Vec3(1.05f, 0.32f, 0.45f);
     crystal.color = Vec3(0.85f, 0.85f, 0.88f);
     crystal.shape = SubShapeType::CRYSTAL_OVAL;
-    crystal.mesh = Mesh3D::createBox(1.1f, 0.4f, 0.45f, crystal.color);
+    crystal.mesh = Mesh3D::createBox(1.05f, 0.32f, 0.45f, crystal.color);
     addSubComponent(crystal);
 
-    // 7. Bo den LED chi bao (ON, L D13, TX, RX)
+    // 7. Bo 4 den LED SMD chi bao (ON, L D13, TX, RX)
     SubComponent ledArd;
     ledArd.id = "ARD_LEDS";
-    ledArd.name = "Cum Den LED Chi Bao (ON, L - Pin 13, TX, RX)";
+    ledArd.name = "Cum 4 Den LED SMD Chi Bao (ON, L - Pin 13, TX, RX)";
     ledArd.category = "Chi bao trang thai";
-    ledArd.rating = "4x SMD LED 0805 mau xanh la, vang cam, do";
-    ledArd.roleDesc = "LED 'ON' sang xanh khi bo mach co nguon 5V. LED 'L' noi chan D13, cho phep test logic nhap nhay. LED 'TX/RX' nhap nhay khi dang truyen nhan du lieu qua cong COM.";
+    ledArd.rating = "4x SMD LED 0805 mau xanh la, vang, cam";
+    ledArd.roleDesc = "LED ON sang xanh khi co nguon. LED L noi chan D13 test logic. LED TX/RX nhap nhay khi truyen nhan du lieu qua cong USB.";
     ledArd.liveStatusText = "LED ON: Sang xanh | LED D13: San sang test toggle";
-    ledArd.localPos = Vec3(0.2f, 0.28f, -1.25f);
-    ledArd.size = Vec3(0.45f, 0.22f, 0.45f);
-    ledArd.color = Vec3(0.2f, 1.0f, 0.3f);
+    ledArd.localPos = Vec3(-0.65f, 0.10f + 0.08f, -1.15f);
+    ledArd.size = Vec3(1.20f, 0.25f, 1.20f);
+    ledArd.color = Vec3(0.95f, 0.85f, 0.1f);
     ledArd.shape = SubShapeType::LED_INDICATOR;
     ledArd.isInteractive = true;
     ledArd.actionName = "TEST BAT / TAT LED D13";
-    ledArd.mesh = Mesh3D::createBox(0.45f, 0.22f, 0.45f, ledArd.color);
+    ledArd.mesh = Mesh3D::createBox(1.20f, 0.25f, 1.20f, ledArd.color);
     addSubComponent(ledArd);
 
     // 8. Hang chan Digital PWM D0-D13 & Analog/Power
@@ -154,19 +154,18 @@ void ArduinoUnoComp::initSubComponents() {
     hdrDig.id = "ARD_HEADERS";
     hdrDig.name = "Hang Chan Cam Digital (0-13) & Power/Analog";
     hdrDig.category = "Dau noi chan I/O";
-    hdrDig.rating = "Header nu 2.54mm ma vang / 14 chân Digital + 6 chân Analog";
-    hdrDig.roleDesc = "Noi day truc tiep toi cam bien sieu am HC-SR04 (Trig/Echo), module cau H L298N (PWM ENA/ENB, IN1-IN4) va 3 tin hieu Servo MG996R canh tay gap.";
+    hdrDig.rating = "Header nu 2.54mm mau den / 14 Digital + 6 Analog + 8 Power";
+    hdrDig.roleDesc = "Noi day toi cam bien sieu am HC-SR04 (D2/D3), module L298N (PWM D5/D6, IN1-IN4) va 3 Servo MG996R (D9/D10/D11).";
     hdrDig.liveStatusText = "PWM D5/D6 -> L298N; D9/D10/D11 -> 3x Servo; D2/D3 -> HC-SR04";
-    hdrDig.localPos = Vec3(0.8f, 0.48f, -2.25f);
-    hdrDig.size = Vec3(4.8f, 0.75f, 0.45f);
+    hdrDig.localPos = Vec3(0.0f, 0.10f + 0.425f, 0.0f);
+    hdrDig.size = Vec3(6.0f, 0.85f, 5.0f);
     hdrDig.color = Vec3(0.12f, 0.12f, 0.12f);
     hdrDig.shape = SubShapeType::BOX_SMD;
-    hdrDig.mesh = Mesh3D::createBox(4.8f, 0.75f, 0.45f, hdrDig.color);
+    hdrDig.mesh = Mesh3D::createBox(6.0f, 0.85f, 5.0f, hdrDig.color);
     addSubComponent(hdrDig);
 
     selectSubComponentByIndex(0);
 }
-
 void ArduinoUnoComp::onSubComponentAction(const std::string& subId) {
     if (subId == "ARD_RESET_BTN" || subId == "BTN_RESET") {
         resetAutoSequence();
@@ -315,167 +314,238 @@ void ArduinoUnoComp::onElectricalUpdate() {
 void ArduinoUnoComp::renderPinsAndDetails() {
     HardwareComponent::renderPinsAndDetails();
 
-    // 1. Vi dieu khien ATmega328P DIP-28 kem 28 chan kim loai va khe dinh huong
+    // 0. 4 Lo bat oc vien vang o 4 goc PCB
+    glColor3f(0.85f, 0.75f, 0.2f);
+    for (float hx : {-2.85f, 3.05f}) {
+        for (float hz : {-2.10f, 2.10f}) {
+            float rx = hx;
+            if (hx < 0 && hz > 0) rx = -1.25f; // Lo bat oc gan jack DC lui vao trong
+            glPushMatrix();
+            glTranslatef(rx, 0.10f, hz);
+            glRotatef(-90.0f, 1, 0, 0);
+            glutSolidCylinder(0.18f, 0.02f, 12, 1);
+            glPopMatrix();
+        }
+    }
+
+    // 1. Vi dieu khien ATmega328P DIP-28 tai (+0.95f, 0.10f, +0.85f)
     glPushMatrix();
-    glTranslatef(0.9f, 0.42f, 0.5f);
+    glTranslatef(0.95f, 0.10f, 0.85f);
     // De cam socket IC DIP-28 mau den
     glColor3f(0.08f, 0.08f, 0.08f);
     glPushMatrix();
-    glScalef(3.6f, 0.55f, 0.95f);
+    glTranslatef(0.0f, 0.12f, 0.0f);
+    glScalef(3.50f, 0.24f, 0.75f);
     glutSolidCube(1.0f);
     glPopMatrix();
-    // Vach khuyet ban nguyet dinh huong Pin 1 o dau chip (-X)
-    glColor3f(0.35f, 0.35f, 0.35f);
+    // Than chip ATmega328P
+    glColor3f(0.15f, 0.16f, 0.18f);
     glPushMatrix();
-    glTranslatef(-1.75f, 0.28f, 0.0f);
-    glScalef(0.12f, 0.05f, 0.45f);
+    glTranslatef(0.0f, 0.30f, 0.0f);
+    glScalef(3.40f, 0.20f, 0.70f);
+    glutSolidCube(1.0f);
+    glPopMatrix();
+    // Khe khuyet ban nguyet dinh huong Pin 1 o dau chip (-X)
+    glColor3f(0.05f, 0.05f, 0.05f);
+    glPushMatrix();
+    glTranslatef(-1.70f, 0.35f, 0.0f);
+    glScalef(0.12f, 0.12f, 0.25f);
     glutSolidCube(1.0f);
     glPopMatrix();
     // 28 Chan kim loai ma bac hai ben suon
     glColor3f(0.85f, 0.88f, 0.92f);
     for (int p = 0; p < 14; ++p) {
-        float px = -1.5f + p * 0.23f;
+        float px = -1.45f + p * 0.223f;
         glPushMatrix();
-        glTranslatef(px, -0.1f, -0.52f);
-        glScalef(0.08f, 0.45f, 0.12f);
+        glTranslatef(px, 0.15f, -0.42f);
+        glScalef(0.06f, 0.30f, 0.10f);
         glutSolidCube(1.0f);
         glPopMatrix();
 
         glPushMatrix();
-        glTranslatef(px, -0.1f, 0.52f);
-        glScalef(0.08f, 0.45f, 0.12f);
+        glTranslatef(px, 0.15f, 0.42f);
+        glScalef(0.06f, 0.30f, 0.10f);
         glutSolidCube(1.0f);
         glPopMatrix();
     }
     glPopMatrix();
 
-    // 2. Cong USB Type-B kim loai ma Niken chong nhieu
+    // 2. Cong USB Type-B kim loai tai mep trai-tren (-2.85f, 0.10f, -0.95f)
     glPushMatrix();
-    glTranslatef(-2.6f, 0.7f, -0.9f);
+    glTranslatef(-2.85f, 0.10f + 0.55f, -0.95f);
     glColor3f(0.78f, 0.80f, 0.84f);
     glPushMatrix();
-    glScalef(1.4f, 1.15f, 1.25f);
+    glScalef(1.60f, 1.10f, 1.20f);
     glutSolidCube(1.0f);
     glPopMatrix();
-    // Khe cam USB mau den ben trong
-    glColor3f(0.12f, 0.12f, 0.15f);
-    glTranslatef(-0.71f, 0.0f, 0.0f);
-    glScalef(0.05f, 0.75f, 0.85f);
+    // Hoc cam USB mau den ben trong quay sang mep trai (-X)
+    glColor3f(0.10f, 0.10f, 0.12f);
+    glPushMatrix();
+    glTranslatef(-0.76f, 0.0f, 0.0f);
+    glScalef(0.15f, 0.65f, 0.75f);
+    glutSolidCube(1.0f);
+    glPopMatrix();
+    // Luoi chan tiep xuc ma vang ben trong
+    glColor3f(0.95f, 0.82f, 0.2f);
+    glPushMatrix();
+    glTranslatef(-0.72f, -0.10f, 0.0f);
+    glScalef(0.08f, 0.08f, 0.45f);
+    glutSolidCube(1.0f);
+    glPopMatrix();
+    glPopMatrix();
+
+    // Chip cau noi USB ATmega16U2 tai (-1.45f, 0.10f, -0.75f)
+    glPushMatrix();
+    glTranslatef(-1.45f, 0.10f + 0.06f, -0.75f);
+    glColor3f(0.15f, 0.15f, 0.18f);
+    glScalef(0.55f, 0.12f, 0.55f);
     glutSolidCube(1.0f);
     glPopMatrix();
 
-    // 3. Jack nguon ngoai DC Barrel Jack 2.1mm
+    // 3. Jack nguon tron DC Barrel tai mep trai-duoi (-2.80f, 0.10f, +1.55f)
     glPushMatrix();
-    glTranslatef(-2.6f, 0.65f, 1.6f);
+    glTranslatef(-2.80f, 0.10f + 0.55f, 1.55f);
     glColor3f(0.12f, 0.12f, 0.14f);
     glPushMatrix();
-    glScalef(1.5f, 1.05f, 1.0f);
+    glScalef(1.45f, 1.10f, 0.90f);
     glutSolidCube(1.0f);
     glPopMatrix();
-    // Lo cam tron + Kim tiep xuc giua ma vang
+    // Lo cam nguon tron quay sang trai (-X)
     glColor3f(0.05f, 0.05f, 0.05f);
-    glTranslatef(-0.76f, 0.0f, 0.0f);
+    glPushMatrix();
+    glTranslatef(-0.73f, 0.0f, 0.0f);
     glRotatef(90.0f, 0, 1, 0);
-    glutSolidCylinder(0.35f, 0.05f, 12, 1);
-    glColor3f(0.85f, 0.75f, 0.2f);
-    glutSolidCylinder(0.1f, 0.35f, 8, 1);
+    glutSolidCylinder(0.35f, 0.15f, 14, 1);
+    // Chan kim cot dong o tam
+    glColor3f(0.92f, 0.78f, 0.25f);
+    glutSolidCylinder(0.09f, 0.25f, 8, 1);
+    glPopMatrix();
     glPopMatrix();
 
-    // 4. IC On ap 5V LDO AMS1117-5.0 SOT-223
+    // 4. IC On ap AMS1117-5.0 tai (-2.45f, 0.10f, +0.35f)
     glPushMatrix();
-    glTranslatef(-1.2f, 0.32f, 0.9f);
+    glTranslatef(-2.45f, 0.10f + 0.09f, 0.35f);
     glColor3f(0.18f, 0.18f, 0.20f);
     glPushMatrix();
-    glScalef(0.75f, 0.3f, 0.55f);
+    glScalef(0.65f, 0.18f, 0.40f);
     glutSolidCube(1.0f);
     glPopMatrix();
-    // Tab dong tan nhiet ma thiec
-    glColor3f(0.75f, 0.78f, 0.82f);
-    glTranslatef(0.0f, 0.05f, 0.32f);
-    glScalef(0.55f, 0.1f, 0.18f);
+    // La tan nhiet SOT-223
+    glColor3f(0.85f, 0.88f, 0.92f);
+    glPushMatrix();
+    glTranslatef(-0.35f, 0.0f, 0.0f);
+    glScalef(0.12f, 0.05f, 0.28f);
     glutSolidCube(1.0f);
+    glPopMatrix();
     glPopMatrix();
 
-    // 5. Cap tu hoa SMD nhom bac
-    for (float z : {1.2f, 1.7f}) {
+    // 2 Tu hoa SMD loc nguon TACH ROI NHAU tai (-1.45f, +1.55f) va (-0.75f, +1.55f)
+    for (float cx : {-1.45f, -0.75f}) {
         glPushMatrix();
-        glTranslatef(-0.35f, 0.45f, z);
-        glColor3f(0.82f, 0.85f, 0.88f);
+        glTranslatef(cx, 0.10f, 1.55f);
         glRotatef(-90.0f, 1, 0, 0);
-        glutSolidCylinder(0.32f, 0.65f, 12, 2);
+        // Than tru nhom bac
+        glColor3f(0.82f, 0.85f, 0.88f);
+        glutSolidCylinder(0.28f, 0.50f, 14, 2);
+        // Nap tren
+        glTranslatef(0.0f, 0.0f, 0.50f);
+        glColor3f(0.88f, 0.90f, 0.94f);
+        glutSolidCylinder(0.275f, 0.05f, 14, 1);
+        glPopMatrix();
+        // De vuong den duoi chan
+        glPushMatrix();
+        glTranslatef(cx, 0.10f + 0.03f, 1.55f);
+        glColor3f(0.12f, 0.12f, 0.14f);
+        glScalef(0.60f, 0.06f, 0.60f);
+        glutSolidCube(1.0f);
         glPopMatrix();
     }
 
-    // 6. Thach anh dao dong 16.000 MHz vo kim loai HC-49
+    // 5. Thach anh dao dong 16MHz HC-49S kim loai noi bat tai (-1.15f, 0.10f, +0.20f)
     glPushMatrix();
-    glTranslatef(-0.4f, 0.35f, -0.2f);
-    glColor3f(0.85f, 0.88f, 0.92f);
-    glScalef(1.1f, 0.4f, 0.45f);
+    glTranslatef(-1.15f, 0.10f + 0.16f, 0.20f);
+    glColor3f(0.86f, 0.88f, 0.92f);
+    glPushMatrix();
+    glScalef(1.05f, 0.32f, 0.45f);
     glutSolidCube(1.0f);
     glPopMatrix();
+    // 2 Dau bo cong HC-49S
+    for (float ex : {-0.52f, 0.52f}) {
+        glPushMatrix();
+        glTranslatef(ex, 0.0f, 0.0f);
+        glRotatef(90.0f, 0, 1, 0);
+        glutSolidCylinder(0.22f, 0.05f, 12, 1);
+        glPopMatrix();
+    }
+    glPopMatrix();
 
-    // 7. Nut nhan Reset phan cung vien bac nut do
+    // 6. Nut nhan Reset phan cung tai (-2.85f, 0.10f, -2.10f)
     glPushMatrix();
-    glTranslatef(-2.8f, 0.42f, -1.8f);
+    glTranslatef(-2.85f, 0.10f, -2.10f);
+    // De vuong kim loai
     glColor3f(0.75f, 0.78f, 0.82f);
     glPushMatrix();
-    glScalef(0.7f, 0.35f, 0.7f);
+    glTranslatef(0.0f, 0.12f, 0.0f);
+    glScalef(0.60f, 0.24f, 0.60f);
     glutSolidCube(1.0f);
     glPopMatrix();
-    glColor3f(0.85f, 0.2f, 0.1f);
-    glTranslatef(0.0f, 0.22f, 0.0f);
+    // Nut tron mau do nhan o tam
+    glColor3f(0.88f, 0.20f, 0.15f);
+    glPushMatrix();
+    glTranslatef(0.0f, 0.24f, 0.0f);
     glRotatef(-90.0f, 1, 0, 0);
-    glutSolidCylinder(0.22f, 0.2f, 10, 1);
+    glutSolidCylinder(0.18f, 0.18f, 12, 1);
+    glPopMatrix();
     glPopMatrix();
 
-    // 8. Hang socket nu cam chan (Female Header Strips) 2 mep bo mach
-    glColor3f(0.12f, 0.12f, 0.14f);
-    // Mep tren: Digital Pins D0-D13
+    // 7. Cum 4 den LED SMD phat sang (ON, L, TX, RX) - KHONG DUNG QUA CAU XANH TO!
+    // LED ON (Nguon - Xanh la): (+1.85f, -0.55f)
     glPushMatrix();
-    glTranslatef(0.8f, 0.48f, -2.25f);
-    glScalef(4.8f, 0.75f, 0.45f);
-    glutSolidCube(1.0f);
-    glPopMatrix();
-
-    // Mep duoi: Power Header & Analog Header
-    glPushMatrix();
-    glTranslatef(-0.45f, 0.48f, 2.25f);
-    glScalef(2.2f, 0.75f, 0.45f);
-    glutSolidCube(1.0f);
-    glPopMatrix();
-
-    glPushMatrix();
-    glTranslatef(1.85f, 0.48f, 2.25f);
-    glScalef(1.8f, 0.75f, 0.45f);
-    glutSolidCube(1.0f);
-    glPopMatrix();
-
-    // 9. Bo den LED chi thi (ON mau xanh, D13 mau cam)
-    glPushMatrix();
-    glTranslatef(0.2f, 0.28f, -1.25f);
+    glTranslatef(1.85f, 0.10f + 0.06f, -0.55f);
     glColor3f(isPowered ? 0.2f : 0.05f, isPowered ? 1.0f : 0.2f, isPowered ? 0.3f : 0.05f);
-    glutSolidCube(0.25f);
-    glTranslatef(0.35f, 0.0f, 0.0f);
-    glColor3f(1.0f, 0.6f, 0.1f);
-    glutSolidCube(0.25f);
+    glScalef(0.25f, 0.12f, 0.15f);
+    glutSolidCube(1.0f);
     glPopMatrix();
-}
 
-// ===================== HC-SR04 =====================
-UltrasonicComp::UltrasonicComp()
-    : HardwareComponent("HCSR04", "Cam Bien Sieu Am HC-SR04", "Cam Bien") {
-    cadSize = Vec3(4.5f, 2.0f, 1.8f);
-    nominalVoltage = 5.0f;
+    // LED L (Pin 13 - Vang): (-0.65f, -1.55f)
+    bool ledLOn = (autoSeqStep % 2 == 1);
+    glPushMatrix();
+    glTranslatef(-0.65f, 0.10f + 0.06f, -1.55f);
+    glColor3f(ledLOn ? 1.0f : 0.2f, ledLOn ? 0.85f : 0.15f, 0.05f);
+    glScalef(0.25f, 0.12f, 0.15f);
+    glutSolidCube(1.0f);
+    glPopMatrix();
 
-    // PCB xanh dương + 2 mắt trụ bạc
-    mesh = Mesh3D::createSensorEyes(cadSize.x, cadSize.y, cadSize.z, Vec3(0.08f, 0.28f, 0.75f), Vec3(0.85f, 0.85f, 0.88f));
+    // LED TX (Cam): (-0.65f, -1.05f)
+    glPushMatrix();
+    glTranslatef(-0.65f, 0.10f + 0.06f, -1.05f);
+    glColor3f(0.85f, 0.45f, 0.05f);
+    glScalef(0.25f, 0.12f, 0.15f);
+    glutSolidCube(1.0f);
+    glPopMatrix();
 
-    addPin("VCC",  PinType::POWER_5V,  Vec3(-1.2f, -0.6f, -0.8f));
-    addPin("TRIG", PinType::DIGITAL_IO,Vec3(-0.4f, -0.6f, -0.8f));
-    addPin("ECHO", PinType::DIGITAL_IO,Vec3( 0.4f, -0.6f, -0.8f), true);
-    addPin("GND",  PinType::POWER_GND, Vec3( 1.2f, -0.6f, -0.8f));
+    // LED RX (Cam): (-0.65f, -0.75f)
+    glPushMatrix();
+    glTranslatef(-0.65f, 0.10f + 0.06f, -0.75f);
+    glColor3f(0.85f, 0.45f, 0.05f);
+    glScalef(0.25f, 0.12f, 0.15f);
+    glutSolidCube(1.0f);
+    glPopMatrix();
 
-    initSubComponents();
+    // 8. Hang header nu mau den (Digital High, Digital Low, Power, Analog)
+    glColor3f(0.12f, 0.12f, 0.14f);
+    // Day Digital canh tren (z = -2.40f)
+    glPushMatrix();
+    glTranslatef(0.85f, 0.10f + 0.425f, -2.40f);
+    glScalef(4.80f, 0.85f, 0.35f);
+    glutSolidCube(1.0f);
+    glPopMatrix();
+    // Day Power & Analog canh duoi (z = +2.40f)
+    glPushMatrix();
+    glTranslatef(0.65f, 0.10f + 0.425f, +2.40f);
+    glScalef(4.40f, 0.85f, 0.35f);
+    glutSolidCube(1.0f);
+    glPopMatrix();
 }
 
 void UltrasonicComp::initSubComponents() {

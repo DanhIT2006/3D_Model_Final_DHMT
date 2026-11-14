@@ -438,9 +438,9 @@ void HudDashboard::renderWorkbenchHUD(int screenW, int screenH, RobotCarScene& s
 
     // 3. Card phía dưới bên phải: Bảng phân tích kỹ thuật
     int cardX = 360;
-    int cardY = 20;
+    int cardY = 15;
     int cardW = screenW - 380;
-    int cardH = 210;
+    int cardH = 155;
 
     Raster2D::fillRect(cardX, cardY, cardW, cardH, Vec3(0.06f, 0.08f, 0.12f));
     Raster2D::drawLineBresenham(cardX, cardY + cardH, cardX + cardW, cardY + cardH, Vec3(0.1f, 0.7f, 0.95f));
@@ -454,76 +454,63 @@ void HudDashboard::renderWorkbenchHUD(int screenW, int screenH, RobotCarScene& s
         Vec3 subWorldPos = sub->localPos + Vec3(0.0f, 0.1f, 0.0f);
         int sx = 0, sy = 0;
         if (project3DToScreen(subWorldPos, sx, sy)) {
-            // A. Điểm ngắm định vị (Target Reticle)
-            Raster2D::drawCircleMidpoint(sx, sy, 9, Vec3(1.0f, 0.85f, 0.15f));
-            Raster2D::drawCircleMidpoint(sx, sy, 4, Vec3(1.0f, 0.45f, 0.1f));
+            // A. Điểm ngắm tâm định vị (Target Reticle)
+            Raster2D::drawCircleMidpoint(sx, sy, 8, Vec3(1.0f, 0.85f, 0.15f));
+            Raster2D::drawCircleMidpoint(sx, sy, 3, Vec3(1.0f, 0.45f, 0.1f));
 
-            Raster2D::drawLineBresenham(sx - 15, sy, sx - 10, sy, Vec3(1.0f, 0.85f, 0.15f));
-            Raster2D::drawLineBresenham(sx + 10, sy, sx + 15, sy, Vec3(1.0f, 0.85f, 0.15f));
-            Raster2D::drawLineBresenham(sx, sy - 15, sx, sy - 10, Vec3(1.0f, 0.85f, 0.15f));
-            Raster2D::drawLineBresenham(sx, sy + 10, sx, sy + 15, Vec3(1.0f, 0.85f, 0.15f));
+            Raster2D::drawLineBresenham(sx - 14, sy, sx - 8, sy, Vec3(1.0f, 0.85f, 0.15f));
+            Raster2D::drawLineBresenham(sx + 8, sy, sx + 14, sy, Vec3(1.0f, 0.85f, 0.15f));
+            Raster2D::drawLineBresenham(sx, sy - 14, sx, sy - 8, Vec3(1.0f, 0.85f, 0.15f));
+            Raster2D::drawLineBresenham(sx, sy + 8, sx, sy + 14, Vec3(1.0f, 0.85f, 0.15f));
 
-            // B. Đường dẫn Callout (Callout Leader Line với góc gập chữ L thẩm mỹ kỹ thuật)
-            int midX = (sx < cardX) ? (sx + 50) : (sx - 50);
-            int midY = sy + 30;
-            int endX = cardX;
-            int endY = cardY + cardH - 28;
+            // B. Đường dẫn Callout dạng Gấp khúc kỹ thuật 2 đoạn (Elbow Callout)
+            int topBoxY = cardY + cardH;
+            int elbowX = std::max(cardX + 45, std::min(sx, cardX + cardW - 45));
+            int elbowY = topBoxY + 24;
 
             Rect2D screenRect = {0, 0, screenW, screenH};
 
-            int x0 = sx, y0 = sy, x1 = midX, y1 = midY;
+            // Đoạn 1: Từ tâm phần tử 3D (sx, sy) kéo chéo tới điểm gãy (elbowX, elbowY)
+            int x0 = sx, y0 = sy, x1 = elbowX, y1 = elbowY;
             if (Clipper2D::clipLineCohenSutherland(x0, y0, x1, y1, screenRect)) {
-                Raster2D::drawLineBresenham(x0, y0, x1, y1, Vec3(1.0f, 0.75f, 0.2f));
+                Raster2D::drawLineBresenham(x0, y0, x1, y1, Vec3(1.0f, 0.78f, 0.2f));
             }
 
-            int x2 = midX, y2 = midY, x3 = endX, y3 = endY;
+            // Đoạn 2: Từ điểm gãy (elbowX, elbowY) kẻ thẳng đứng xuống chạm đúng mép trên hộp tại (elbowX, topBoxY)
+            int x2 = elbowX, y2 = elbowY, x3 = elbowX, y3 = topBoxY;
             if (Clipper2D::clipLineCohenSutherland(x2, y2, x3, y3, screenRect)) {
                 Raster2D::drawLineBresenham(x2, y2, x3, y3, Vec3(0.0f, 0.85f, 1.0f));
             }
 
-            // Điểm chốt khớp nối (Knot)
-            Raster2D::drawCircleMidpoint(midX, midY, 3, Vec3(1.0f, 0.85f, 0.2f));
-            FontRenderer::drawText2DWithShadow(midX + 6, midY + 2, sub->id, Vec3(1.0f, 0.92f, 0.3f), FontRenderer::SMALL);
+            // Điểm chốt khớp nối (Knot) và điểm tiếp xúc trên mép hộp
+            Raster2D::drawCircleMidpoint(elbowX, elbowY, 3, Vec3(1.0f, 0.85f, 0.2f));
+            Raster2D::drawCircleMidpoint(elbowX, topBoxY, 3, Vec3(0.0f, 0.85f, 1.0f));
+            FontRenderer::drawText2DWithShadow(elbowX + 6, elbowY - 2, sub->id, Vec3(1.0f, 0.92f, 0.3f), FontRenderer::SMALL);
         }
 
         // === 5. Bảng thông số chi tiết của phần tử con ===
         std::string catText = sub->category.empty() ? "Linh kien dien tu" : sub->category;
-        FontRenderer::drawText2DWithShadow(cardX + 20, cardY + cardH - 24, "CHI TIET PHAN TU: " + sub->name, Vec3(1.0f, 0.88f, 0.15f), FontRenderer::NORMAL);
-        FontRenderer::drawText2D(cardX + 20, cardY + cardH - 44, "Nhom chuc nang: " + catText + " | Ma: " + sub->id, Vec3(0.72f, 0.82f, 0.95f), FontRenderer::SMALL);
-        FontRenderer::drawText2D(cardX + 20, cardY + cardH - 62, "Thong so ky thuat / Tri so: " + sub->rating, Vec3(0.92f, 0.95f, 1.0f), FontRenderer::SMALL);
-        FontRenderer::drawText2D(cardX + 20, cardY + cardH - 80, "Tac dung & Nguyen ly trong he thong:", Vec3(0.2f, 0.85f, 1.0f), FontRenderer::SMALL);
-
-        // Hiển thị phần mô tả nguyên lý nhiều dòng
-        int maxChars = (cardW - 40) / 7;
-        std::string desc = sub->roleDesc;
-        int lineIdx = 0;
-        while (!desc.empty() && lineIdx < 3) {
-            std::string line = desc.substr(0, maxChars);
-            if (line.length() == (size_t)maxChars) {
-                size_t lastSpace = line.find_last_of(" ");
-                if (lastSpace != std::string::npos) {
-                    line = line.substr(0, lastSpace);
-                }
-            }
-            FontRenderer::drawText2D(cardX + 35, cardY + cardH - 98 - lineIdx * 16, line, Vec3(0.85f, 0.88f, 0.92f), FontRenderer::SMALL);
-            if (line.length() >= desc.length()) break;
-            desc = desc.substr(line.length() + 1);
-            lineIdx++;
+        FontRenderer::drawText2DWithShadow(cardX + 18, cardY + cardH - 22, "CHI TIET PHAN TU: " + sub->name, Vec3(1.0f, 0.88f, 0.15f), FontRenderer::NORMAL);
+        FontRenderer::drawText2D(cardX + 18, cardY + cardH - 40, "Nhom: " + catText + " | Ma: " + sub->id + " | Tri so: " + sub->rating, Vec3(0.75f, 0.85f, 0.95f), FontRenderer::SMALL);
+        FontRenderer::drawText2D(cardX + 18, cardY + cardH - 58, "Tac dung: " + sub->roleDesc.substr(0, (cardW - 40) / 7), Vec3(0.85f, 0.88f, 0.92f), FontRenderer::SMALL);
+        if (sub->roleDesc.length() > (size_t)((cardW - 40) / 7)) {
+            std::string line2 = sub->roleDesc.substr((cardW - 40) / 7, (cardW - 40) / 7);
+            FontRenderer::drawText2D(cardX + 18, cardY + cardH - 74, line2, Vec3(0.85f, 0.88f, 0.92f), FontRenderer::SMALL);
         }
 
         // Dòng giám sát thời gian thực
-        std::string liveStr = sub->liveStatusText.empty() ? ("Trang thai: Dang hoat dong on dinh (5.0V)") : sub->liveStatusText;
-        FontRenderer::drawText2DWithShadow(cardX + 20, cardY + 54, "[GIAM SAT THOI GIAN THUC]: " + liveStr, Vec3(0.2f, 1.0f, 0.4f), FontRenderer::SMALL);
+        std::string liveStr = sub->liveStatusText.empty() ? ("Dang hoat dong binh thuong (5.0V)") : sub->liveStatusText;
+        FontRenderer::drawText2DWithShadow(cardX + 18, cardY + 48, "[GIAM SAT]: " + liveStr, Vec3(0.2f, 1.0f, 0.4f), FontRenderer::SMALL);
 
         // Nút bấm tương tác vật lý nếu phần tử hỗ trợ (Nhấn Reset, Rút/Cắm Jumper, Vặn biến trở...)
         if (sub->isInteractive) {
             std::string actLabel = sub->actionName.empty() ? "TUONG TAC [ENTER]" : (sub->actionName + " [ENTER]");
-            buttons.push_back({cardX + 20, cardY + 12, 280, 32, actLabel, 101});
+            buttons.push_back({cardX + 18, cardY + 12, 270, 28, actLabel, 101});
         }
 
         // Nút chuyển phần tử Trước / Sau
-        buttons.push_back({cardX + cardW - 250, cardY + 12, 115, 32, "TRUOC [ [ ]", 102});
-        buttons.push_back({cardX + cardW - 125, cardY + 12, 115, 32, "TIEP [ ] ]", 103});
+        buttons.push_back({cardX + cardW - 230, cardY + 12, 105, 28, "TRUOC [ [ ]", 102});
+        buttons.push_back({cardX + cardW - 115, cardY + 12, 105, 28, "TIEP [ ] ]", 103});
     }
 
     // Vẽ tất cả các nút trong chế độ Workbench

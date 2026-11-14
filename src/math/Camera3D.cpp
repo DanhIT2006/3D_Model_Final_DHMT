@@ -46,8 +46,8 @@ void Camera3D::enterWorkbenchMode() {
 
     isWorkbench = true;
     mode = ViewMode::PERSPECTIVE_ORBIT;
-    target = Vec3(0.0f, 0.5f, 0.0f);
-    radius = 13.0f;
+    target = Vec3(0.0f, 0.65f, 0.0f);
+    radius = 13.5f;
     theta = 0.785f;
     phi = 0.55f;
 }

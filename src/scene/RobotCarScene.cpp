@@ -22,18 +22,18 @@ void RobotCarScene::initScene() {
     chassisFloor1 = new SceneNode("FLOOR_1", "San Khung Gam Tang 1");
     chassisFloor1->localPos = Vec3(0.0f, 0.0f, 0.0f);
     // Tam mica den bong cat laser cao cap 16.5 x 0.35 x 25.0 cm
-    chassisFloor1->mesh = Mesh3D::createBox(16.5f, 0.35f, 25.0f, Vec3(0.08f, 0.09f, 0.12f));
+    chassisFloor1->mesh = Mesh3D::createBox(16.5f, 0.35f, 25.0f, Vec3(0.14f, 0.16f, 0.22f));
     carRoot->addChild(chassisFloor1);
 
     // 2b. Thanh xe bao ve hai ben suon (Chassis Side Guard Panels / Fenders)
     chassisSideLeft = new SceneNode("SIDE_L", "Thanh Xe Ben Trai");
     chassisSideLeft->localPos = Vec3(-7.4f, 3.0f, 0.0f);
-    chassisSideLeft->mesh = Mesh3D::createBox(0.3f, 5.6f, 18.0f, Vec3(0.12f, 0.15f, 0.20f));
+    chassisSideLeft->mesh = Mesh3D::createBox(0.35f, 5.6f, 18.0f, Vec3(0.18f, 0.22f, 0.28f));
     chassisFloor1->addChild(chassisSideLeft);
 
     chassisSideRight = new SceneNode("SIDE_R", "Thanh Xe Ben Phai");
     chassisSideRight->localPos = Vec3(7.4f, 3.0f, 0.0f);
-    chassisSideRight->mesh = Mesh3D::createBox(0.3f, 5.6f, 18.0f, Vec3(0.12f, 0.15f, 0.20f));
+    chassisSideRight->mesh = Mesh3D::createBox(0.35f, 5.6f, 18.0f, Vec3(0.18f, 0.22f, 0.28f));
     chassisFloor1->addChild(chassisSideRight);
 
     // 2c. Thanh can truoc & can sau xe (Front & Rear Impact Bumpers)
