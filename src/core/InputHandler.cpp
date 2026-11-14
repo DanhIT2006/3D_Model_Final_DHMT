@@ -53,8 +53,38 @@ void InputHandler::onKeyDown(unsigned char key, int x, int y, RobotCarScene& sce
             if (scene.compBuck) scene.compBuck->adjustVoltage(-0.2f);
             break;
 
-        case ' ': // Phanh dừng
-            if (scene.compArd) {
+        case 'i':
+        case 'I':
+            if (scene.isWorkbenchMode) {
+                if (scene.inspectedComponent) {
+                    SubComponent* sub = scene.inspectedComponent->getSelectedSubComponent();
+                    if (sub && sub->isInteractive) {
+                        scene.inspectedComponent->onSubComponentAction(sub->id);
+                    }
+                }
+            } else {
+                HardwareComponent* targetComp = scene.selectedComponent;
+                if (!targetComp) {
+                    targetComp = scene.compL298N ? (HardwareComponent*)scene.compL298N : (HardwareComponent*)scene.compArd;
+                    if (targetComp) {
+                        scene.selectedComponent = targetComp;
+                        targetComp->isSelected = true;
+                    }
+                }
+                if (targetComp) {
+                    scene.enterWorkbench(targetComp);
+                    camera.enterWorkbenchMode();
+                }
+            }
+            break;
+
+        case ' ': // Phanh dừng hoặc Tương tác linh kiện
+            if (scene.isWorkbenchMode && scene.inspectedComponent) {
+                SubComponent* sub = scene.inspectedComponent->getSelectedSubComponent();
+                if (sub && sub->isInteractive) {
+                    scene.inspectedComponent->onSubComponentAction(sub->id);
+                }
+            } else if (scene.compArd) {
                 scene.compArd->motorSpeedL = scene.compArd->motorSpeedR = 0;
                 scene.compArd->motorDirL = scene.compArd->motorDirR = 0;
             }
@@ -100,6 +130,9 @@ void InputHandler::onKeyDown(unsigned char key, int x, int y, RobotCarScene& sce
                 if (sub && sub->isInteractive) {
                     scene.inspectedComponent->onSubComponentAction(sub->id);
                 }
+            } else if (scene.selectedComponent) {
+                scene.enterWorkbench(scene.selectedComponent);
+                camera.enterWorkbenchMode();
             }
             break;
 
@@ -128,6 +161,11 @@ void InputHandler::onSpecialKeyUp(int key, int x, int y) {
 }
 
 void InputHandler::updateContinuousInput(float dt, RobotCarScene& scene) {
+    // Đóng băng chuyển động khi đang ở chế độ soi chi tiết bo mạch (Workbench)
+    if (scene.isWorkbenchMode) {
+        return;
+    }
+
     if (!scene.compArd || scene.compArd->controlMode != RobotControlMode::MANUAL) {
         return;
     }

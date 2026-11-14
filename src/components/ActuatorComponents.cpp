@@ -254,185 +254,153 @@ L298NDriverComp::L298NDriverComp()
 void L298NDriverComp::initSubComponents() {
     subComponents.clear();
 
-    // 1. Tan nhiet nhom xe ranh
+    // 1. IC Cau H L298N & Tan nhiet nhom xe ranh
     SubComponent heatsink;
-    heatsink.id = "HEATSINK";
-    heatsink.name = "Tan nhiet nhom xe ranh (Aluminium Heatsink)";
-    heatsink.rating = "Nhom Anodized den - 6 ranh thoat nhiet";
-    heatsink.roleDesc = "Giai phong luong nhiet lon sinh ra tu 2 mach cau H ben trong IC L298N khi dong co hoat dong mang tai hoac bam xung PWM tan so cao, chong qua nhiet tu ngat.";
+    heatsink.id = "L298N_IC_HS";
+    heatsink.name = "IC Cau H L298N & Tan Nhiet Nhom";
+    heatsink.category = "Cong suat & Dao chieu";
+    heatsink.rating = "Multiwatt15 / 46V max / 2A moi kenh / Nhom Anodized 6 ranh";
+    heatsink.roleDesc = "Chua 2 mach cau H cong suat (Dual Full-Bridge) dieu khien toc do PWM va dao chieu 2 dong co DC. Tan nhiet nhom giup giai phong luong nhiet lon sinh ra tu cac transistor BJT cong suat khi dong co mang tai nang.";
+    heatsink.liveStatusText = "Dien ap dong luc: 7.4V | Nhiet do: 42°C (Binh thuong)";
     heatsink.localPos = Vec3(0.0f, 1.25f, -1.05f);
     heatsink.size = Vec3(2.8f, 2.1f, 0.9f);
     heatsink.color = Vec3(0.18f, 0.18f, 0.20f);
+    heatsink.shape = SubShapeType::HEATSINK_VERTICAL;
     heatsink.mesh = Mesh3D::createBox(2.8f, 2.1f, 0.9f, heatsink.color);
     addSubComponent(heatsink);
 
-    // 2. IC Cong suat L298N
-    SubComponent icL298n;
-    icL298n.id = "IC_L298N";
-    icL298n.name = "IC Cong suat cau H kep L298N";
-    icL298n.rating = "Multiwatt15 / 46V max / 2A dinh muc moi kenh";
-    icL298n.roleDesc = "Trai tim mach dong luc: Nhan tin hieu logic 5V tu Arduino Uno va khuếch dai cong suat (7.4V, toi da 2A) dieu khien chieu quay tien/lui va toc do PWM cho 2 dong co DC banh xe.";
-    icL298n.localPos = Vec3(0.0f, 0.85f, -0.55f);
-    icL298n.size = Vec3(2.2f, 1.3f, 0.3f);
-    icL298n.color = Vec3(0.08f, 0.08f, 0.08f);
-    icL298n.mesh = Mesh3D::createBox(2.2f, 1.3f, 0.3f, icL298n.color);
-    addSubComponent(icL298n);
-
-    // 3. Tu hoa loc nguon VCC C1
+    // 2. Tu hoa loc nguon dong luc VCC C1
     SubComponent capVcc;
-    capVcc.id = "CAP_VCC";
-    capVcc.name = "Tu hoa loc nguon VCC C1 (220uF 35V)";
-    capVcc.rating = "220 uF - 35V / Chiu nhiet 105 do C";
-    capVcc.roleDesc = "San phang gơn song dien ap tu pin 7.4V. Triet tieu hien tuong sut ap tuc thoi khi dong co DC khoi dong hoac dao chieu (Inrush current), tranh gay reset vi dieu khien.";
+    capVcc.id = "L298N_CAP_HV";
+    capVcc.name = "Tu Hoa Loc Nguon Dong Luc 220uF/35V";
+    capVcc.category = "Loc nguon dau vao";
+    capVcc.rating = "220 uF - 35V / Chiu nhiet 105°C / Nap nhom co ranh chong no";
+    capVcc.roleDesc = "Nam tren duong nguon dong luc VCC (7.4V), tich luy va bu dong tuc thoi khi 2 dong co DC khoi dong (de-pa) hoac dao chieu dot ngot, ngan ngua sut ap nguon he thong.";
+    capVcc.liveStatusText = "Dien ap nap: 7.4V DC | Trang thai: San phang tot";
     capVcc.localPos = Vec3(-0.45f, 0.65f, 0.15f);
     capVcc.size = Vec3(0.7f, 1.1f, 0.7f);
-    capVcc.color = Vec3(0.12f, 0.12f, 0.15f);
+    capVcc.color = Vec3(0.85f, 0.85f, 0.88f);
+    capVcc.shape = SubShapeType::CYLINDER_CAP;
     capVcc.mesh = Mesh3D::createCylinder(0.35f, 1.1f, 12, capVcc.color);
     addSubComponent(capVcc);
 
-    // 4. Tu hoa loc nguon 5V C2
+    // 3. Tu hoa loc nguon logic 5V C2
     SubComponent cap5v;
-    cap5v.id = "CAP_5V";
-    cap5v.name = "Tu hoa loc nguon logic C2 (220uF 35V)";
-    cap5v.rating = "220 uF - 35V / Loc dien ap logic 5V";
-    cap5v.roleDesc = "On dinh dien ap 5V ngõ ra cua IC 78M05, giu cho muc logic cua cac cong AND/OR ben trong IC L298N luon chuan xac, chong nhieu cao tan tu cuon day dong co.";
+    cap5v.id = "L298N_CAP_LV";
+    cap5v.name = "Tu Hoa Loc Nguon Logic 220uF/35V";
+    cap5v.category = "Loc nguon 5V";
+    cap5v.rating = "220 uF - 35V / Loc song hai logic";
+    cap5v.roleDesc = "Loc phang nhieu cao tan o dau ra cua IC on ap 78M05, bao ve cac cong logic noi bo ben trong IC L298N khong bi nhieu xung tu cuon day dong co.";
+    cap5v.liveStatusText = "Dien ap logic: 5.0V DC | Trang thai: On dinh";
     cap5v.localPos = Vec3(0.55f, 0.65f, 0.45f);
     cap5v.size = Vec3(0.7f, 1.1f, 0.7f);
-    cap5v.color = Vec3(0.12f, 0.12f, 0.15f);
+    cap5v.color = Vec3(0.85f, 0.85f, 0.88f);
+    cap5v.shape = SubShapeType::CYLINDER_CAP;
     cap5v.mesh = Mesh3D::createCylinder(0.35f, 1.1f, 12, cap5v.color);
     addSubComponent(cap5v);
 
-    // 5. IC On ap 78M05
+    // 4. IC On ap tuyen tinh 78M05
     SubComponent reg7805;
-    reg7805.id = "REG_78M05";
-    reg7805.name = "IC On ap tuyen tinh 78M05 (5V Regulator)";
-    reg7805.rating = "Vin max 35V / Vout 5.0V / Iout 500mA / TO-252";
-    reg7805.roleDesc = "Ha ap truc tiep tu nguon Pin VCC (7.4V) xuong 5.0V on dinh de nuoi mach logic L298N va co the cap nguon 5V phu ra ngoai qua chan 5V.";
+    reg7805.id = "L298N_78M05";
+    reg7805.name = "IC On Ap Tuyen Tinh 78M05 (5V Logic)";
+    reg7805.category = "On ap nguon logic";
+    reg7805.rating = "Vin 7-35V / Vout 5.0V / Iout 500mA / Goi TO-252";
+    reg7805.roleDesc = "Ha ap truc tiep tu nguon pin 7.4V xuong 5.0V on dinh de nuoi mach logic dieu khien noi bo cua IC L298N.";
+    reg7805.liveStatusText = "V_In: 7.4V -> V_Out: 5.0V | Hieu suat: Hoat dong tot";
     reg7805.localPos = Vec3(0.55f, 0.32f, -0.15f);
     reg7805.size = Vec3(0.65f, 0.3f, 0.6f);
     reg7805.color = Vec3(0.2f, 0.2f, 0.22f);
+    reg7805.shape = SubShapeType::BOX_SMD;
     reg7805.mesh = Mesh3D::createBox(0.65f, 0.3f, 0.6f, reg7805.color);
     addSubComponent(reg7805);
 
-    // 6. Jumper chon nguon 5V Enable
+    // 5. Jumper kich hoat on ap 5V Enable
     SubComponent jmp5v;
-    jmp5v.id = "JUMPER_5V";
-    jmp5v.name = "Jumper chon nguon 5V Enable (5V Regulator Jumper)";
-    jmp5v.rating = "Header 2-pin 2.54mm kem cap shunt mau den";
-    jmp5v.roleDesc = "KHI CAM: Cho phep IC 78M05 lay nguon tu VCC tao 5V logic. KHI RUT (khi pin > 12V): Ngat 78M05 de tranh chay IC; khi do bat buoc phai cap nguon 5V ngoai vao coc 5V.";
+    jmp5v.id = "L298N_JMP_5V";
+    jmp5v.name = "Jumper Kich Hoat On Ap 5V (5V Enable)";
+    jmp5v.category = "Cau hinh nguon logic";
+    jmp5v.rating = "Header 2-pin 2.54mm kem cap shunt vang/den";
+    jmp5v.roleDesc = "KHI CAM: dung IC 78M05 tren mach tu ha ap 7.4V xuong 5V nuoi logic. KHI RUT: ngat 78M05, mat nguon logic 5V noi bo, bat buoc phai cap 5V tu ngoai (neu khong cap thi xe dung ngay)!";
+    jmp5v.liveStatusText = "Trang thai: DANG CAM (Logic 5V noi bo BAT - Xe san sang chay)";
     jmp5v.localPos = Vec3(-0.45f, 0.42f, 0.85f);
     jmp5v.size = Vec3(0.45f, 0.55f, 0.35f);
-    jmp5v.color = Vec3(0.1f, 0.6f, 0.9f);
+    jmp5v.color = Vec3(0.95f, 0.85f, 0.1f);
+    jmp5v.shape = SubShapeType::JUMPER_CAP;
     jmp5v.isInteractive = true;
+    jmp5v.isActiveState = true;
     jmp5v.state = true;
-    jmp5v.actionName = "THAO / CAM JUMPER 5V";
+    jmp5v.actionName = "RUT / CAM JUMPER 5V";
     jmp5v.mesh = Mesh3D::createBox(0.45f, 0.55f, 0.35f, jmp5v.color);
     addSubComponent(jmp5v);
 
-    // 7. Dan 4 Diode bao ve Motor A
-    SubComponent dioA;
-    dioA.id = "FLYBACK_DIODES_L";
-    dioA.name = "Dan 4 Diode bao ve Motor A (Flyback D1-D4)";
-    dioA.rating = "4x 1N4007 / Fast Recovery Shottky / 1A";
-    dioA.roleDesc = "Dau song song nguoc voi cuon cam Dong co Trai (Motor A). Tieu tan suc dien dong tu cam nguoc (Back-EMF) khi ngat xung PWM, chong danh thung transistor cong suat.";
-    dioA.localPos = Vec3(-1.75f, 0.28f, -0.4f);
-    dioA.size = Vec3(0.35f, 0.25f, 1.5f);
-    dioA.color = Vec3(0.1f, 0.1f, 0.1f);
-    dioA.mesh = Mesh3D::createBox(0.35f, 0.25f, 1.5f, dioA.color);
-    addSubComponent(dioA);
+    // 6. Cum 8 Diode xung bao ve Flyback D1-D8
+    SubComponent dio;
+    dio.id = "L298N_DIODES";
+    dio.name = "Cum 8 Diode Xung Bao Ve (Flyback D1 - D8)";
+    dio.category = "Bao ve chong dong nguoc";
+    dio.rating = "8x Diode chinh luu xung nhanh / Fast Recovery Shottky";
+    dio.roleDesc = "Dau song song nguoc voi cac cuon day dong co DC. Triet tieu suc dien dong cam ung nguoc (Back-EMF) cuc lon sinh ra khi ngat xung PWM hoac dao chieu dot ngot, bao ve transistor trong IC L298N.";
+    dio.liveStatusText = "8x Diode xung | Bao ve: San sang dap xung Back-EMF";
+    dio.localPos = Vec3(0.0f, 0.28f, -0.4f);
+    dio.size = Vec3(3.6f, 0.25f, 1.4f);
+    dio.color = Vec3(0.1f, 0.1f, 0.12f);
+    dio.shape = SubShapeType::BOX_SMD;
+    dio.mesh = Mesh3D::createBox(3.6f, 0.25f, 1.4f, dio.color);
+    addSubComponent(dio);
 
-    // 8. Dan 4 Diode bao ve Motor B
-    SubComponent dioB;
-    dioB.id = "FLYBACK_DIODES_R";
-    dioB.name = "Dan 4 Diode bao ve Motor B (Flyback D5-D8)";
-    dioB.rating = "4x 1N4007 / Fast Recovery Shottky / 1A";
-    dioB.roleDesc = "Dau song song nguoc voi cuon cam Dong co Phai (Motor B). Ngan chan xung dien ap nguoc hang chuc volt dot ngot phong nguoc ve nguon.";
-    dioB.localPos = Vec3(1.75f, 0.28f, -0.4f);
-    dioB.size = Vec3(0.35f, 0.25f, 1.5f);
-    dioB.color = Vec3(0.1f, 0.1f, 0.1f);
-    dioB.mesh = Mesh3D::createBox(0.35f, 0.25f, 1.5f, dioB.color);
-    addSubComponent(dioB);
+    // 7. Domino nguon va dong co
+    SubComponent term;
+    term.id = "L298N_PWR_TERM";
+    term.name = "Tram Domino Nguon (VCC, GND, 5V) & Dong Co (OUT1-4)";
+    term.category = "Dau noi day nguon & dong luc";
+    term.rating = "3x Khoi van vit 5.08mm mau xanh duong chiu dong 15A";
+    term.roleDesc = "Cong VCC nhan 7.4V tu Pin qua cong tac; GND noi dat chung; 5V cap/nhan logic; OUT1-OUT2 cap nguon dong co trai; OUT3-OUT4 cap nguon dong co phai.";
+    term.liveStatusText = "Ket noi: VCC 7.4V, OUT1..OUT4 noi 4 cum TT Motor";
+    term.localPos = Vec3(0.0f, 0.52f, 1.1f);
+    term.size = Vec3(3.8f, 0.85f, 1.1f);
+    term.color = Vec3(0.1f, 0.38f, 0.85f);
+    term.shape = SubShapeType::BOX_SMD;
+    term.mesh = Mesh3D::createBox(3.8f, 0.85f, 1.1f, term.color);
+    addSubComponent(term);
 
-    // 9. Coc dau nguon 3-pin Screw Terminal
-    SubComponent termPwr;
-    termPwr.id = "TERMINAL_PWR";
-    termPwr.name = "Coc dau nguon 3-pin Screw Terminal (VCC, GND, 5V)";
-    termPwr.rating = "Khoi van vit 5.08mm mau xanh duong / Dong 15A";
-    termPwr.roleDesc = "Chan VCC nhan 7.4V tu Pin qua cong tac; chan GND noi dat chung toan xe; chan 5V cap nguon logic hoac nhan 5V phu tuy thuoc vao Jumper 5V Enable.";
-    termPwr.localPos = Vec3(-0.6f, 0.52f, 1.6f);
-    termPwr.size = Vec3(1.6f, 0.85f, 0.85f);
-    termPwr.color = Vec3(0.1f, 0.35f, 0.85f);
-    termPwr.mesh = Mesh3D::createBox(1.6f, 0.85f, 0.85f, termPwr.color);
-    addSubComponent(termPwr);
-
-    // 10. Coc ra Dong co A
-    SubComponent termMotA;
-    termMotA.id = "TERMINAL_MOTA";
-    termMotA.name = "Coc ra Dong co A (OUT1, OUT2 - Motor A)";
-    termMotA.rating = "Khoi van vit 2-pin 5.08mm mau xanh duong";
-    termMotA.roleDesc = "Dau ra noi truc tiep voi 2 cuc cua Dong co DC giam toc Banh Trai (MOT_L). Dien ap dao cuc (-7.4V den +7.4V) cho phep banh quay tien/lui.";
-    termMotA.localPos = Vec3(-1.65f, 0.52f, 0.6f);
-    termMotA.size = Vec3(0.85f, 0.85f, 1.1f);
-    termMotA.color = Vec3(0.1f, 0.35f, 0.85f);
-    termMotA.mesh = Mesh3D::createBox(0.85f, 0.85f, 1.1f, termMotA.color);
-    addSubComponent(termMotA);
-
-    // 11. Coc ra Dong co B
-    SubComponent termMotB;
-    termMotB.id = "TERMINAL_MOTB";
-    termMotB.name = "Coc ra Dong co B (OUT3, OUT4 - Motor B)";
-    termMotB.rating = "Khoi van vit 2-pin 5.08mm mau xanh duong";
-    termMotB.roleDesc = "Dau ra noi truc tiep voi 2 cuc cua Dong co DC giam toc Banh Phai (MOT_R). Dong dien duoc bam xung PWM de dieu khien van toc goc.";
-    termMotB.localPos = Vec3(1.65f, 0.52f, 0.6f);
-    termMotB.size = Vec3(0.85f, 0.85f, 1.1f);
-    termMotB.color = Vec3(0.1f, 0.35f, 0.85f);
-    termMotB.mesh = Mesh3D::createBox(0.85f, 0.85f, 1.1f, termMotB.color);
-    addSubComponent(termMotB);
-
-    // 12. Hang chan tin hieu Logic
+    // 8. Hang chan tin hieu Logic
     SubComponent hdrLogic;
-    hdrLogic.id = "HEADER_LOGIC";
-    hdrLogic.name = "Hang chan tin hieu Logic (ENA, IN1, IN2, IN3, IN4, ENB)";
+    hdrLogic.id = "L298N_CTRL_HDR";
+    hdrLogic.name = "Hang Chan Dieu Khien (ENA, IN1-IN4, ENB)";
+    hdrLogic.category = "Giao tiep vi dieu khien";
     hdrLogic.rating = "6-pin Header duc 2.54mm ma vang / Logic TTL 5V";
     hdrLogic.roleDesc = "Nhan tin hieu tu Arduino: ENA/ENB nhan xung PWM de dieu toc xe; IN1/IN2 quy dinh chieu quay banh trai; IN3/IN4 quy dinh chieu quay banh phai.";
+    hdrLogic.liveStatusText = "Tin hieu: PWM ENA/ENB tu Arduino D5, D6; Logic IN1..IN4 tu D4, D7, D8, D12";
     hdrLogic.localPos = Vec3(0.8f, 0.38f, 1.6f);
     hdrLogic.size = Vec3(1.5f, 0.55f, 0.35f);
     hdrLogic.color = Vec3(0.85f, 0.75f, 0.2f);
+    hdrLogic.shape = SubShapeType::BOX_SMD;
     hdrLogic.mesh = Mesh3D::createBox(1.5f, 0.55f, 0.35f, hdrLogic.color);
     addSubComponent(hdrLogic);
 
-    // 13. LED bao nguon Logic
-    SubComponent ledPwr;
-    ledPwr.id = "LED_PWR";
-    ledPwr.name = "LED bao nguon Logic (Power LED Indicator)";
-    ledPwr.rating = "SMD LED 0805 mau do / Dong tieu thu 10mA";
-    ledPwr.roleDesc = "Phat sang mau do de xac nhan mach logic L298N dang duoc cap nguon 5V on dinh va san sang nhan lenh dieu khien tu vi dieu khien.";
-    ledPwr.localPos = Vec3(0.05f, 0.28f, 0.65f);
-    ledPwr.size = Vec3(0.25f, 0.2f, 0.25f);
-    ledPwr.color = Vec3(1.0f, 0.2f, 0.2f);
-    ledPwr.mesh = Mesh3D::createBox(0.25f, 0.2f, 0.25f, ledPwr.color);
-    addSubComponent(ledPwr);
-
-    // Mac dinh chon linh kien dau tien (Tan nhiet)
     selectSubComponentByIndex(0);
 }
 
 void L298NDriverComp::onSubComponentAction(const std::string& subId) {
-    if (subId == "JUMPER_5V") {
+    if (subId == "L298N_JMP_5V" || subId == "JUMPER_5V") {
         jumper5VEnabled = !jumper5VEnabled;
         SubComponent* sub = getSelectedSubComponent();
         if (sub) {
+            sub->isActiveState = jumper5VEnabled;
             sub->state = jumper5VEnabled;
             if (jumper5VEnabled) {
+                sub->liveStatusText = "Trang thai: DANG CAM (Logic 5V noi bo BAT - Xe san sang chay)";
                 sub->rating = "Trang thai: DANG CAM (Enable 78M05 ON)";
-                sub->roleDesc = "Jumper DANG CAM: Kich hoat IC on ap 78M05 noi bo tao nguon 5V tu Pin VCC (7.4V) de nuoi mach logic L298N. Chan 5V co the cap nguon 5V ra ngoai.";
-                sub->color = Vec3(0.1f, 0.6f, 0.9f);
+                sub->roleDesc = "Jumper DANG CAM: Kich hoat IC on ap 78M05 noi bo tao nguon 5V tu Pin VCC (7.4V) de nuoi mach logic L298N. Xe hoat dong binh thuong!";
+                sub->color = Vec3(0.95f, 0.85f, 0.1f);
             } else {
+                sub->liveStatusText = "Trang thai: DA RUT (MAT NGUON LOGIC 5V! Xe dung ngay)";
                 sub->rating = "Trang thai: DA RUT (Disable 78M05 OFF)";
-                sub->roleDesc = "Jumper DA RUT: Ngat IC on ap 78M05. Che do nay bat buoc khi pin > 12V de bao ve 78M05 khong bi chay. Can cap nguon 5V ngoai vao coc 5V!";
+                sub->roleDesc = "Jumper DA RUT: Ngat IC on ap 78M05. Mach L298N bi mat nguon logic 5V noi bo, toan bo dong co ngat dien va xe dung ngay lap tuc!";
                 sub->color = Vec3(0.4f, 0.4f, 0.4f);
             }
         }
+        onElectricalUpdate();
     }
 }
 
@@ -443,7 +411,13 @@ void L298NDriverComp::onElectricalUpdate() {
     float v12 = p12v ? p12v->voltage : 0.0f;
     float v5  = p5v  ? p5v->voltage  : 0.0f;
 
-    // Cáº§n cáº£ nguá»“n Ä‘á»™ng lá»±c 12V (7.4V) vÃ  5V logic tá»« Arduino
+    // Neu Jumper 5V Enable duoc cam, IC 78M05 tu cap 5V logic tu nguon 7.4V (v12)
+    if (jumper5VEnabled && v12 >= 6.0f) {
+        v5 = 5.0f;
+        if (p5v) p5v->voltage = 5.0f;
+    }
+
+    // Can ca nguon dong luc (v12 >= 6.0V) va 5V logic (v5 >= 4.5V)
     isPowered = (v12 >= 6.0f && v5 >= 4.5f);
 
     if (isPowered) {

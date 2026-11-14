@@ -1,4 +1,5 @@
 #pragma once
+#include <GL/freeglut.h>
 #include "scene/RobotCarScene.h"
 #include "math/Camera3D.h"
 #include "graphics2d/Raster2D.h"
@@ -41,4 +42,12 @@ private:
 
     // Chế độ quan sát vi mô linh kiện
     void renderWorkbenchHUD(int screenW, int screenH, RobotCarScene& scene, const Camera3D& camera);
+
+    // Lưu ma trận 3D phục vụ phép chiếu 3D sang 2D (gluProject) vẽ Callout Line
+    double lastModelView[16];
+    double lastProjection[16];
+    int    lastViewport[4];
+
+    // Chiếu tọa độ 3D thành tọa độ pixel 2D trên màn hình HUD
+    bool project3DToScreen(const Vec3& pos3D, int& outScreenX, int& outScreenY) const;
 };

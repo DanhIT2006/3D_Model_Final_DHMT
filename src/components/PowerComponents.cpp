@@ -27,36 +27,44 @@ void BatterySwitchComp::initSubComponents() {
 
     SubComponent c1;
     c1.id = "CELL_1";
-    c1.name = "Cell Pin Li-ion 18650 so 1";
+    c1.name = "Cell Pin Li-ion 18650 So 1";
+    c1.category = "Nguon dien hoa hoc";
     c1.rating = "3.7V - 2600mAh / Dong xa 20A";
     c1.roleDesc = "Cung cap nang luong hoa hoc chuyen doi thanh dien nang. Mac noi tiep voi Cell 2 tao dien ap tong 7.4V.";
+    c1.liveStatusText = "Dien ap cell: 3.7V | Dung luong: 2600mAh";
     c1.localPos = Vec3(0.8f, 0.2f, -1.0f);
     c1.size = Vec3(5.6f, 1.8f, 1.8f);
     c1.color = Vec3(0.1f, 0.4f, 0.85f);
+    c1.shape = SubShapeType::CYLINDER_CAP;
     c1.mesh = Mesh3D::createBox(5.6f, 1.8f, 1.8f, c1.color);
     addSubComponent(c1);
 
     SubComponent c2;
     c2.id = "CELL_2";
-    c2.name = "Cell Pin Li-ion 18650 so 2";
+    c2.name = "Cell Pin Li-ion 18650 So 2";
+    c2.category = "Nguon dien hoa hoc";
     c2.rating = "3.7V - 2600mAh / Dong xa 20A";
-    c2.roleDesc = "Cell pin thu hai mac noi tiep. Cung cap dong dien tai lon cho 2 dong co DC va 3 servo tay gap.";
+    c2.roleDesc = "Cell pin thu hai mac noi tiep. Cung cap dong dien tai lon cho 4 dong co DC va 3 servo tay gap.";
+    c2.liveStatusText = "Dien ap cell: 3.7V | Tong dien ap pack: 7.4V";
     c2.localPos = Vec3(0.8f, 0.2f, 1.0f);
     c2.size = Vec3(5.6f, 1.8f, 1.8f);
     c2.color = Vec3(0.1f, 0.4f, 0.85f);
+    c2.shape = SubShapeType::CYLINDER_CAP;
     c2.mesh = Mesh3D::createBox(5.6f, 1.8f, 1.8f, c2.color);
     addSubComponent(c2);
 
     SubComponent sw;
     sw.id = "ROCKER_SWITCH";
-    sw.name = "Cong tac bap benh KCD1 On/Off";
-    sw.rating = "6A 250VAC / 10A 12VDC / Mau do den";
+    sw.name = "Cong Tac Bap Benh KCD1 On/Off";
+    sw.category = "Dong ngat an toan";
+    sw.rating = "10A 12VDC / Tiep diem dong hop kim";
     sw.roleDesc = "Dong ngat co hoc cuc duong (+) cua pack pin. Dam bao an toan tuyet doi, ngat toan bo dien nang khi bao tri hoac khong van hanh xe.";
+    sw.liveStatusText = switchOn ? "Trang thai: DANG BAT (ON - 7.4V cap toan he thong)" : "Trang thai: DANG TAT (OFF - Ngat dien toan xe)";
     sw.localPos = Vec3(-2.2f, 0.6f, 0.0f);
     sw.size = Vec3(1.5f, 1.2f, 1.2f);
-    sw.color = Vec3(0.85f, 0.15f, 0.1f);
+    sw.color = switchOn ? Vec3(0.2f, 0.8f, 0.3f) : Vec3(0.85f, 0.15f, 0.1f);
+    sw.shape = SubShapeType::PUSH_BUTTON;
     sw.isInteractive = true;
-    sw.state = switchOn;
     sw.actionName = "BAT / TAT NGUON PIN";
     sw.mesh = Mesh3D::createBox(1.5f, 1.2f, 1.2f, sw.color);
     addSubComponent(sw);
@@ -69,13 +77,11 @@ void BatterySwitchComp::onSubComponentAction(const std::string& subId) {
         toggleSwitch();
         SubComponent* sub = getSelectedSubComponent();
         if (sub) {
-            sub->state = switchOn;
-            sub->rating = switchOn ? "Trang thai: DANG BAT (ON - 7.4V)" : "Trang thai: DA TAT (OFF - 0V)";
-            sub->color = switchOn ? Vec3(0.85f, 0.15f, 0.1f) : Vec3(0.35f, 0.35f, 0.35f);
+            sub->liveStatusText = switchOn ? "Trang thai: DANG BAT (ON - 7.4V cap toan he thong)" : "Trang thai: DANG TAT (OFF - Ngat dien toan xe)";
+            sub->color = switchOn ? Vec3(0.2f, 0.8f, 0.3f) : Vec3(0.85f, 0.15f, 0.1f);
         }
     }
 }
-
 void BatterySwitchComp::toggleSwitch() {
     switchOn = !switchOn;
     onElectricalUpdate();
@@ -217,71 +223,80 @@ BuckLM2596Comp::BuckLM2596Comp()
 void BuckLM2596Comp::initSubComponents() {
     subComponents.clear();
 
+    // 1. IC Chuyen mach ha ap Buck LM2596S-ADJ
     SubComponent ic;
-    ic.id = "IC_LM2596";
-    ic.name = "IC Chuyen mach giam ap Buck LM2596S-ADJ";
-    ic.rating = "Tan so 150kHz / Dong tai dinh muc 3A / TO-263";
-    ic.roleDesc = "Chuyen doi dong dien bang co che bam xung PWM tan so cao 150kHz, ha tu 7.4V xuong 5.0V voi hieu suat vuot troi tren 90%, khong bi toa nhiet nhu on ap tuyen tinh.";
+    ic.id = "BUCK_IC_2596";
+    ic.name = "IC Nguon Xung LM2596S-ADJ";
+    ic.category = "Chuyen mach ha ap";
+    ic.rating = "Tan so 150kHz / Dong dinh muc 3A / Goi TO-263";
+    ic.roleDesc = "Chuyen doi dien ap bang phuong phap bam xung PWM tan so cao 150kHz, ha tu 7.4V xuong 5.0V voi hieu suat vuot troi tren 90%, cung cap dong tai lon toi 3A cho 3 Servo MG996R.";
+    ic.liveStatusText = "Tan so PWM: 150 kHz | Dong tai chiu dung: 3.0A Max";
     ic.localPos = Vec3(-0.6f, 0.45f, -0.4f);
     ic.size = Vec3(1.1f, 0.45f, 0.9f);
     ic.color = Vec3(0.15f, 0.15f, 0.18f);
+    ic.shape = SubShapeType::BOX_SMD;
     ic.mesh = Mesh3D::createBox(1.1f, 0.45f, 0.9f, ic.color);
     addSubComponent(ic);
 
+    // 2. Cuon cam xuyen loi Ferit 33uH-100uH
     SubComponent inductor;
-    inductor.id = "TOROID_INDUCTOR";
-    inductor.name = "Cuon cam xuyen loi Ferit 100uH";
-    inductor.rating = "100 uH / 3A / Quan day dong boc men cach dien";
-    inductor.roleDesc = "Linh kien cot loi cua mach Buck: Tich luy nang luong tu truong trong nua chu ky dong van, va xa nang luong duy tri dong dien phang min cho 3 dong co Servo khi van ngat.";
+    inductor.id = "BUCK_INDUCTOR";
+    inductor.name = "Cuon Cam Loi Xuyen Ferit (Toroid 33uH)";
+    inductor.category = "Tich tru & loc nang luong";
+    inductor.rating = "33 uH / Chiu dong 3A / Quan day dong men cach dien";
+    inductor.roleDesc = "Linh kien cot loi cua mach Buck: Tich luy nang luong tu truong trong nua chu ky dong van, va giai phong nang luong duy tri dong dien DC phang min cho 3 Servo khi van ngat.";
+    inductor.liveStatusText = "Do tu cam: 33 uH | Tu truong Ferrite: On dinh";
     inductor.localPos = Vec3(0.7f, 0.6f, -0.3f);
     inductor.size = Vec3(1.1f, 0.8f, 1.1f);
     inductor.color = Vec3(0.7f, 0.35f, 0.1f);
+    inductor.shape = SubShapeType::CYLINDER_CAP;
     inductor.mesh = Mesh3D::createCylinder(0.5f, 0.8f, 14, inductor.color);
     addSubComponent(inductor);
 
+    // 3. Bien tro vi chinh da vong W103 (Potentiometer)
     SubComponent trimpot;
-    trimpot.id = "TRIMPOT_10K";
-    trimpot.name = "Chiet ap vi chinh da vong 10k (Trimpot 3296W)";
-    trimpot.rating = "10 kOhm / 25 vong quay vi chinh do nhay cao";
-    trimpot.roleDesc = "Tinh chinh cau phan ap phan hoi (Feedback Pin 4) de thay doi ti so chu ky xung PWM, giup dieu chinh chinh xac dien ap ra o muc 5.0V ly tuong nuoi Servo.";
+    trimpot.id = "BUCK_POT_W103";
+    trimpot.name = "Bien Tro Vi Chinh Da Vong (Trimpot W103)";
+    trimpot.category = "Chinh ap dau ra";
+    trimpot.rating = "10 kOhm / 25 vong quay / Vit dong vi chinh";
+    trimpot.roleDesc = "Thay doi dien tro cau phan ap phan hoi vao chan Feedback (Pin 4) de dieu chinh dien ap ra. Khi van xuong < 4.5V, 3 Servo MG996R bao thieu ap va ngung quay ngay!";
+    trimpot.liveStatusText = "Dien ap ra hien tai: 5.0V (Du ap nuoi 3 Servo)";
     trimpot.localPos = Vec3(-0.6f, 0.65f, 0.45f);
     trimpot.size = Vec3(0.85f, 0.85f, 0.5f);
     trimpot.color = Vec3(0.1f, 0.35f, 0.75f);
+    trimpot.shape = SubShapeType::PUSH_BUTTON;
     trimpot.isInteractive = true;
-    trimpot.actionName = "CHINH TRIET AP (+0.2V)";
+    trimpot.actionName = "VAN BIEN TRO (3.6V <-> 5.0V <-> 5.5V)";
     trimpot.mesh = Mesh3D::createBox(0.85f, 0.85f, 0.5f, trimpot.color);
     addSubComponent(trimpot);
 
+    // 4. Cap tu hoa SMD loc nguon In / Out
     SubComponent capIn;
-    capIn.id = "CAP_IN";
-    capIn.name = "Tu hoa dau vao 220uF 50V";
-    capIn.rating = "220 uF - 50V / Loc song hai dau vao";
-    capIn.roleDesc = "Loc nhieu dien ap nguon 7.4V cap vao mach Buck, triet tieu song hai tan so cao do van MOSFET dong ngat 150kHz sinh ra.";
+    capIn.id = "BUCK_CAPS";
+    capIn.name = "Cap Tu Hoa Loc Nguon Vao/Ra (220uF 35V)";
+    capIn.category = "Loc phang song hai";
+    capIn.rating = "2x 220uF - 35V / Low-ESR nhom bac";
+    capIn.roleDesc = "Tu dau vao loc nhieu xung 7.4V tu Pin; tu dau ra ket hop cuon cam tao bo loc LC ha thap do gon song xuong duoi 30mV giup Servo quay em, khong rung giat.";
+    capIn.liveStatusText = "Vao: 7.4V DC | Ra: 5.0V DC | Do gon song: < 25mV";
     capIn.localPos = Vec3(-1.4f, 0.65f, 0.0f);
     capIn.size = Vec3(0.7f, 1.0f, 0.7f);
-    capIn.color = Vec3(0.12f, 0.12f, 0.15f);
+    capIn.color = Vec3(0.85f, 0.85f, 0.88f);
+    capIn.shape = SubShapeType::CYLINDER_CAP;
     capIn.mesh = Mesh3D::createCylinder(0.35f, 1.0f, 12, capIn.color);
     addSubComponent(capIn);
 
-    SubComponent capOut;
-    capOut.id = "CAP_OUT";
-    capOut.name = "Tu hoa dau ra 220uF 35V";
-    capOut.rating = "220 uF - 35V / San phang dien ap ra";
-    capOut.roleDesc = "Ket hop voi cuon cam tao thanh mach loc thong thap LC, giu do gon song dien ap ra duoi 30mV de 3 servo MG996R hoat dong em ai, khong bi rung giat.";
-    capOut.localPos = Vec3(1.5f, 0.65f, 0.0f);
-    capOut.size = Vec3(0.7f, 1.0f, 0.7f);
-    capOut.color = Vec3(0.12f, 0.12f, 0.15f);
-    capOut.mesh = Mesh3D::createCylinder(0.35f, 1.0f, 12, capOut.color);
-    addSubComponent(capOut);
-
+    // 5. Diode Shottky SS34
     SubComponent ss34;
-    ss34.id = "DIODE_SS34";
-    ss34.name = "Diode Shottky phuc hoi nhanh SS34";
+    ss34.id = "BUCK_SS34";
+    ss34.name = "Diode Shottky SS34 (Freewheeling Diode)";
+    ss34.category = "Xa dong cuon cam";
     ss34.rating = "3A / 40V / Thoi gian phuc hoi cuc nhanh < 10ns";
-    ss34.roleDesc = "Cung cap duong xap dong tiep tuc cho cuon cam khi IC LM2596 ngat (Freewheeling Diode), bao ve IC khoi bi dien ap nguoc danh thung.";
+    ss34.roleDesc = "Cung cap duong xa dong tiep tuc cho cuon cam khi IC LM2596 ngat (Freewheeling Diode), bao ve IC khoi bi dien ap nguoc danh thung.";
+    ss34.liveStatusText = "Diode Shottky 3A | Dong xa: Hoat dong";
     ss34.localPos = Vec3(0.1f, 0.28f, -0.4f);
     ss34.size = Vec3(0.45f, 0.25f, 0.45f);
     ss34.color = Vec3(0.1f, 0.1f, 0.1f);
+    ss34.shape = SubShapeType::BOX_SMD;
     ss34.mesh = Mesh3D::createBox(0.45f, 0.25f, 0.45f, ss34.color);
     addSubComponent(ss34);
 
@@ -289,15 +304,29 @@ void BuckLM2596Comp::initSubComponents() {
 }
 
 void BuckLM2596Comp::onSubComponentAction(const std::string& subId) {
-    if (subId == "TRIMPOT_10K") {
-        adjustVoltage(0.2f);
-        if (targetOutVoltage > 5.8f) targetOutVoltage = 4.2f;
+    if (subId == "BUCK_POT_W103" || subId == "TRIMPOT_10K") {
+        // Vặn biến trở xoay vòng: 5.0V -> 5.5V -> 3.6V (Thiếu áp!) -> 4.8V -> 5.0V
+        if (targetOutVoltage == 5.0f) {
+            targetOutVoltage = 5.5f;
+        } else if (targetOutVoltage == 5.5f) {
+            targetOutVoltage = 3.6f; // Thiếu áp: Servo ngừng quay!
+        } else if (targetOutVoltage == 3.6f) {
+            targetOutVoltage = 4.8f;
+        } else {
+            targetOutVoltage = 5.0f;
+        }
         onElectricalUpdate();
+
         SubComponent* sub = getSelectedSubComponent();
         if (sub) {
             std::ostringstream ss;
-            ss << "V_Out tinh chinh: " << std::fixed << std::setprecision(1) << actualOutVoltage << "V";
-            sub->rating = ss.str();
+            ss << "V_Out: " << std::fixed << std::setprecision(1) << actualOutVoltage << "V";
+            sub->rating = ss.str() + " (Chinh boi bien tro W103)";
+            if (actualOutVoltage < 4.5f) {
+                sub->liveStatusText = "CANH BAO: Dien ap ra " + ss.str() + " < 4.5V -> 3 SERVO NGUNG QUAY!";
+            } else {
+                sub->liveStatusText = "Dien ap ra: " + ss.str() + " -> 3 SERVO HOAT DONG TOT";
+            }
         }
     }
 }

@@ -16,7 +16,26 @@ void HudDashboard::update(float dt) {
     }
 }
 
+bool HudDashboard::project3DToScreen(const Vec3& pos3D, int& outScreenX, int& outScreenY) const {
+    GLdouble sx, sy, sz;
+    if (gluProject((GLdouble)pos3D.x, (GLdouble)pos3D.y, (GLdouble)pos3D.z,
+                   lastModelView, lastProjection, lastViewport,
+                   &sx, &sy, &sz) == GL_TRUE) {
+        if (sz >= 0.0 && sz <= 1.0) {
+            outScreenX = (int)std::round(sx);
+            outScreenY = (int)std::round(sy);
+            return true;
+        }
+    }
+    return false;
+}
+
 void HudDashboard::render(int screenW, int screenH, const RobotCarScene& scene, const Camera3D& camera, float fps) {
+    // Lưu lại ma trận chiếu phối cảnh 3D hiện tại để thực hiện phép chiếu 3D sang 2D (gluProject)
+    glGetDoublev(GL_MODELVIEW_MATRIX, lastModelView);
+    glGetDoublev(GL_PROJECTION_MATRIX, lastProjection);
+    glGetIntegerv(GL_VIEWPORT, lastViewport);
+
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
@@ -224,7 +243,7 @@ void HudDashboard::renderComponentInspector(int x, int y, int w, int h, const Ro
 
     // Nút tương tác nhanh riêng cho linh kiện
     if (!comp->subComponents.empty()) {
-        buttons.push_back({x + 15, y + 48, 210, 26, "QUAN SAT CHI TIET [Q]", 99});
+        buttons.push_back({x + 15, y + 48, 260, 28, "QUAN SAT CHI TIET [Phim I / Q / Enter]", 99});
     }
 
     if (comp->code == "BAT_SW") {
@@ -377,14 +396,14 @@ void HudDashboard::renderWorkbenchHUD(int screenW, int screenH, RobotCarScene& s
     Raster2D::fillRect(0, screenH - 52, screenW, 52, Vec3(0.07f, 0.09f, 0.13f));
     Raster2D::drawLineBresenham(0, screenH - 53, screenW, screenH - 53, Vec3(0.0f, 0.65f, 0.95f));
 
-    std::string titleStr = "CHE DO QUAN SAT VI MO: " + comp->name + " [" + comp->code + "]";
+    std::string titleStr = "CHE DO CO LAP LINH KIEN: " + comp->name + " [" + comp->code + "]";
     FontRenderer::drawText2DWithShadow(25, screenH - 26, titleStr, Vec3(0.0f, 0.9f, 1.0f), FontRenderer::NORMAL);
-    FontRenderer::drawText2D(25, screenH - 45, "Chuot trai: Xoay 3D | Chuot phai: Pan | Cuon chuot: Zoom | Click truc tiep vao tu/chip hoac danh muc ben trai", Vec3(0.72f, 0.76f, 0.82f), FontRenderer::SMALL);
+    FontRenderer::drawText2D(25, screenH - 45, "Chuot trai: Xoay 3D | Chuot phai: Pan | Cuon: Zoom (6-25cm) | Click chi tiet hoac danh muc ben trai", Vec3(0.72f, 0.76f, 0.82f), FontRenderer::SMALL);
 
     // Nút quay lại ở góc trên phải
-    buttons.push_back({screenW - 225, screenH - 44, 210, 32, "QUAY LAI XE ROBOT [ESC]", 100});
+    buttons.push_back({screenW - 235, screenH - 44, 220, 32, "QUAY LAI XE ROBOT [ESC]", 100});
 
-    // 2. Bảng bên trái: Danh mục linh kiện nhỏ (Sub-components list)
+    // 2. Bảng bên trái: Danh mục linh kiện con (Sub-components list)
     int listW = 320;
     int listH = screenH - 120;
     int listX = 20;
@@ -421,7 +440,7 @@ void HudDashboard::renderWorkbenchHUD(int screenW, int screenH, RobotCarScene& s
     int cardX = 360;
     int cardY = 20;
     int cardW = screenW - 380;
-    int cardH = 200;
+    int cardH = 210;
 
     Raster2D::fillRect(cardX, cardY, cardW, cardH, Vec3(0.06f, 0.08f, 0.12f));
     Raster2D::drawLineBresenham(cardX, cardY + cardH, cardX + cardW, cardY + cardH, Vec3(0.1f, 0.7f, 0.95f));
@@ -431,37 +450,92 @@ void HudDashboard::renderWorkbenchHUD(int screenW, int screenH, RobotCarScene& s
 
     SubComponent* sub = comp->getSelectedSubComponent();
     if (sub) {
-        FontRenderer::drawText2DWithShadow(cardX + 20, cardY + cardH - 26, "CHI TIET LINH KIEN: " + sub->name, Vec3(1.0f, 0.85f, 0.1f), FontRenderer::NORMAL);
-        FontRenderer::drawText2D(cardX + 20, cardY + cardH - 48, "Thong so ky thuat / Tri so: " + sub->rating, Vec3(0.9f, 0.95f, 1.0f), FontRenderer::SMALL);
-        FontRenderer::drawText2D(cardX + 20, cardY + cardH - 68, "Tac dung & Nguyen ly trong he thong:", Vec3(0.2f, 0.85f, 1.0f), FontRenderer::SMALL);
+        // === 4. THUẬT TOÁN ĐỒ HỌA CALLOUT LINE (3D -> 2D Projection + Bresenham Line + Cohen-Sutherland Clip) ===
+        Vec3 subWorldPos = sub->localPos + Vec3(0.0f, 0.1f, 0.0f);
+        int sx = 0, sy = 0;
+        if (project3DToScreen(subWorldPos, sx, sy)) {
+            // A. Điểm ngắm định vị (Target Reticle)
+            Raster2D::drawCircleMidpoint(sx, sy, 9, Vec3(1.0f, 0.85f, 0.15f));
+            Raster2D::drawCircleMidpoint(sx, sy, 4, Vec3(1.0f, 0.45f, 0.1f));
 
-        int maxChars = (cardW - 40) / 7;
-        if (maxChars < 60) maxChars = 60;
-        drawWrappedText(cardX + 20, cardY + cardH - 88, maxChars, 18, sub->roleDesc, Vec3(0.85f, 0.88f, 0.92f));
+            Raster2D::drawLineBresenham(sx - 15, sy, sx - 10, sy, Vec3(1.0f, 0.85f, 0.15f));
+            Raster2D::drawLineBresenham(sx + 10, sy, sx + 15, sy, Vec3(1.0f, 0.85f, 0.15f));
+            Raster2D::drawLineBresenham(sx, sy - 15, sx, sy - 10, Vec3(1.0f, 0.85f, 0.15f));
+            Raster2D::drawLineBresenham(sx, sy + 10, sx, sy + 15, Vec3(1.0f, 0.85f, 0.15f));
 
-        if (sub->isInteractive) {
-            buttons.push_back({cardX + 20, cardY + 16, 230, 30, sub->actionName, 101});
+            // B. Đường dẫn Callout (Callout Leader Line với góc gập chữ L thẩm mỹ kỹ thuật)
+            int midX = (sx < cardX) ? (sx + 50) : (sx - 50);
+            int midY = sy + 30;
+            int endX = cardX;
+            int endY = cardY + cardH - 28;
+
+            Rect2D screenRect = {0, 0, screenW, screenH};
+
+            int x0 = sx, y0 = sy, x1 = midX, y1 = midY;
+            if (Clipper2D::clipLineCohenSutherland(x0, y0, x1, y1, screenRect)) {
+                Raster2D::drawLineBresenham(x0, y0, x1, y1, Vec3(1.0f, 0.75f, 0.2f));
+            }
+
+            int x2 = midX, y2 = midY, x3 = endX, y3 = endY;
+            if (Clipper2D::clipLineCohenSutherland(x2, y2, x3, y3, screenRect)) {
+                Raster2D::drawLineBresenham(x2, y2, x3, y3, Vec3(0.0f, 0.85f, 1.0f));
+            }
+
+            // Điểm chốt khớp nối (Knot)
+            Raster2D::drawCircleMidpoint(midX, midY, 3, Vec3(1.0f, 0.85f, 0.2f));
+            FontRenderer::drawText2DWithShadow(midX + 6, midY + 2, sub->id, Vec3(1.0f, 0.92f, 0.3f), FontRenderer::SMALL);
         }
 
-        buttons.push_back({cardX + (sub->isInteractive ? 265 : 20), cardY + 16, 110, 30, "< TRUOC [", 102});
-        buttons.push_back({cardX + (sub->isInteractive ? 385 : 140), cardY + 16, 110, 30, "TIEP > ]", 103});
+        // === 5. Bảng thông số chi tiết của phần tử con ===
+        std::string catText = sub->category.empty() ? "Linh kien dien tu" : sub->category;
+        FontRenderer::drawText2DWithShadow(cardX + 20, cardY + cardH - 24, "CHI TIET PHAN TU: " + sub->name, Vec3(1.0f, 0.88f, 0.15f), FontRenderer::NORMAL);
+        FontRenderer::drawText2D(cardX + 20, cardY + cardH - 44, "Nhom chuc nang: " + catText + " | Ma: " + sub->id, Vec3(0.72f, 0.82f, 0.95f), FontRenderer::SMALL);
+        FontRenderer::drawText2D(cardX + 20, cardY + cardH - 62, "Thong so ky thuat / Tri so: " + sub->rating, Vec3(0.92f, 0.95f, 1.0f), FontRenderer::SMALL);
+        FontRenderer::drawText2D(cardX + 20, cardY + cardH - 80, "Tac dung & Nguyen ly trong he thong:", Vec3(0.2f, 0.85f, 1.0f), FontRenderer::SMALL);
 
-        buttons.push_back({cardX + cardW - 190, cardY + 16, 175, 30, "QUAY LAI XE [ESC]", 100});
+        // Hiển thị phần mô tả nguyên lý nhiều dòng
+        int maxChars = (cardW - 40) / 7;
+        std::string desc = sub->roleDesc;
+        int lineIdx = 0;
+        while (!desc.empty() && lineIdx < 3) {
+            std::string line = desc.substr(0, maxChars);
+            if (line.length() == (size_t)maxChars) {
+                size_t lastSpace = line.find_last_of(" ");
+                if (lastSpace != std::string::npos) {
+                    line = line.substr(0, lastSpace);
+                }
+            }
+            FontRenderer::drawText2D(cardX + 35, cardY + cardH - 98 - lineIdx * 16, line, Vec3(0.85f, 0.88f, 0.92f), FontRenderer::SMALL);
+            if (line.length() >= desc.length()) break;
+            desc = desc.substr(line.length() + 1);
+            lineIdx++;
+        }
+
+        // Dòng giám sát thời gian thực
+        std::string liveStr = sub->liveStatusText.empty() ? ("Trang thai: Dang hoat dong on dinh (5.0V)") : sub->liveStatusText;
+        FontRenderer::drawText2DWithShadow(cardX + 20, cardY + 54, "[GIAM SAT THOI GIAN THUC]: " + liveStr, Vec3(0.2f, 1.0f, 0.4f), FontRenderer::SMALL);
+
+        // Nút bấm tương tác vật lý nếu phần tử hỗ trợ (Nhấn Reset, Rút/Cắm Jumper, Vặn biến trở...)
+        if (sub->isInteractive) {
+            std::string actLabel = sub->actionName.empty() ? "TUONG TAC [ENTER]" : (sub->actionName + " [ENTER]");
+            buttons.push_back({cardX + 20, cardY + 12, 280, 32, actLabel, 101});
+        }
+
+        // Nút chuyển phần tử Trước / Sau
+        buttons.push_back({cardX + cardW - 250, cardY + 12, 115, 32, "TRUOC [ [ ]", 102});
+        buttons.push_back({cardX + cardW - 125, cardY + 12, 115, 32, "TIEP [ ] ]", 103});
     }
 
-    // Vẽ toàn bộ nút bấm
+    // Vẽ tất cả các nút trong chế độ Workbench
     for (const auto& btn : buttons) {
-        if (btn.actionId >= 200 && btn.actionId < 300) continue; // Đã vẽ ở danh sách
-        Vec3 btnCol = (btn.actionId == 100) ? Vec3(0.5f, 0.15f, 0.15f) :
-                      (btn.actionId == 101) ? Vec3(0.1f, 0.45f, 0.35f) :
-                      (btn.actionId == 99)  ? Vec3(0.08f, 0.35f, 0.55f) :
-                                              Vec3(0.14f, 0.20f, 0.30f);
+        if (btn.actionId < 100) continue;
+        Vec3 btnCol = (btn.actionId == 100) ? Vec3(0.6f, 0.15f, 0.15f) :
+                      (btn.actionId == 101) ? Vec3(0.12f, 0.55f, 0.35f) : Vec3(0.15f, 0.28f, 0.42f);
         Raster2D::fillRect(btn.x, btn.y, btn.w, btn.h, btnCol);
         Raster2D::drawLineBresenham(btn.x, btn.y, btn.x + btn.w, btn.y, Vec3(0.3f, 0.6f, 0.9f));
         FontRenderer::drawText2DWithShadow(btn.x + 10, btn.y + 8, btn.label, Vec3(1, 1, 1), FontRenderer::SMALL);
     }
 }
-
 bool HudDashboard::onMouseClick(int mouseX, int mouseY, RobotCarScene& scene, Camera3D& camera) {
     for (const auto& btn : buttons) {
         if (mouseX >= btn.x && mouseX <= btn.x + btn.w &&

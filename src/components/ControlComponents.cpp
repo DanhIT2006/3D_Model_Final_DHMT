@@ -42,160 +42,155 @@ void ArduinoUnoComp::initSubComponents() {
 
     // 1. Vi dieu khien ATmega328P
     SubComponent atmega;
-    atmega.id = "ATMEGA328P";
-    atmega.name = "Vi dieu khien ATmega328P (Microcontroller IC DIP-28)";
-    atmega.rating = "CPU 8-bit AVR RISC 16MHz / 32KB Flash / 2KB SRAM / DIP-28";
+    atmega.id = "ARD_MCU_328P";
+    atmega.name = "Vi Dieu Khien Chinh ATmega328P-PU (DIP-28)";
+    atmega.category = "Dieu khien trung tam";
+    atmega.rating = "CPU 8-bit AVR RISC 16MHz / 32KB Flash / 2KB SRAM / Socket DIP-28";
     atmega.roleDesc = "Bo nao trung tam cua he thong xe robot: Nap va thuc thi firmware C++, xu ly thuat toan tu hanh do duong, tinh toan dong hoc 3 servo tay gap, phat xung PWM dieu toc 2 dong co va tinh toan khoang cach tu cam bien sieu am.";
+    atmega.liveStatusText = "Tan so Clock: 16MHz | Chu ky lenh: 62.5ns | Flash: 32KB";
     atmega.localPos = Vec3(0.9f, 0.42f, 0.5f);
     atmega.size = Vec3(3.6f, 0.55f, 0.95f);
     atmega.color = Vec3(0.08f, 0.08f, 0.08f);
+    atmega.shape = SubShapeType::BOX_SMD;
     atmega.mesh = Mesh3D::createBox(3.6f, 0.55f, 0.95f, atmega.color);
     addSubComponent(atmega);
 
     // 2. Nut nhan Reset
     SubComponent btnRst;
-    btnRst.id = "BTN_RESET";
-    btnRst.name = "Nut nhan Reset phan cung (Tactile Reset Button)";
+    btnRst.id = "ARD_RESET_BTN";
+    btnRst.name = "Nut Nhan Reset Phan Cung (Tactile Reset Button)";
+    btnRst.category = "Dieu khien khoi dong";
     btnRst.rating = "Push Button 6x6mm 4-pin tiep diem dong / Active LOW";
-    btnRst.roleDesc = "Khi nhan, chan RESET cua ATmega328P bi keo xuong muc LOW (0V), dua CPU tro ve dia chi 0x0000 cua bo nho Flash, khoi dong lai toan bo firmware xe robot ma khong can tat nguon.";
+    btnRst.roleDesc = "Khi nhan, chan RESET cua ATmega328P bi keo xuong muc LOW (0V), dua CPU tro ve dia chi 0x0000 cua bo nho Flash, khoi dong lai toan bo firmware xe robot, dung dong co va dua 3 Servo ve vi tri chuan.";
+    btnRst.liveStatusText = "Chan RESET: 5.0V (HIGH - Dang hoat dong binh thuong)";
     btnRst.localPos = Vec3(-2.8f, 0.45f, -1.8f);
     btnRst.size = Vec3(0.7f, 0.55f, 0.7f);
     btnRst.color = Vec3(0.85f, 0.2f, 0.1f);
+    btnRst.shape = SubShapeType::PUSH_BUTTON;
     btnRst.isInteractive = true;
     btnRst.actionName = "NHAN RESET ARDUINO";
     btnRst.mesh = Mesh3D::createBox(0.7f, 0.55f, 0.7f, btnRst.color);
     addSubComponent(btnRst);
 
-    // 3. Cong USB Type-B
+    // 3. Cong USB Type-B & ATmega16U2
     SubComponent usbPort;
-    usbPort.id = "USB_PORT";
-    usbPort.name = "Cong giao tiep USB Type-B (USB Programming & Serial Port)";
-    usbPort.rating = "Chuan USB 2.0 Full-Speed 12Mbps / Vo kim loai ma Niken";
-    usbPort.roleDesc = "Ket noi voi may tinh de nap chuong trinh firmware vao bo nho Flash cua vi dieu khien qua Bootloader Optiboot, truyen du lieu Serial Monitor va co the cap nguon 5VDC thu nghiem.";
+    usbPort.id = "ARD_USB_16U2";
+    usbPort.name = "Cong USB Type-B & Chip Cau Noi ATmega16U2";
+    usbPort.category = "Giao tiep & Nap code";
+    usbPort.rating = "USB 2.0 Full-Speed 12Mbps / Vo kim loai Niken / Chip ATmega16U2";
+    usbPort.roleDesc = "Ket noi voi may tinh de nap firmware vao bo nho Flash qua Bootloader Optiboot, dong thoi giao tiep UART Serial truyen nhan du lieu dieu khien giua PC va Arduino.";
+    usbPort.liveStatusText = "Giao tiep: UART 115200 baud | Nguon USB: 5.0V VBUS";
     usbPort.localPos = Vec3(-2.6f, 0.7f, -0.9f);
     usbPort.size = Vec3(1.4f, 1.15f, 1.25f);
     usbPort.color = Vec3(0.75f, 0.78f, 0.82f);
+    usbPort.shape = SubShapeType::BOX_SMD;
     usbPort.mesh = Mesh3D::createBox(1.4f, 1.15f, 1.25f, usbPort.color);
     addSubComponent(usbPort);
 
     // 4. Jack nguon ngoai DC Barrel
     SubComponent dcJack;
-    dcJack.id = "DC_JACK";
-    dcJack.name = "Jack nguon ngoai DC Barrel Jack (2.1mm Center Positive)";
+    dcJack.id = "ARD_DC_JACK";
+    dcJack.name = "Jack Nguon Ngoai DC Barrel (2.1mm Center Positive)";
+    dcJack.category = "Cap nguon ngoai";
     dcJack.rating = "Duong kinh 5.5mm ngoai / 2.1mm trong / Dien ap khuyen nghi 7-12V";
     dcJack.roleDesc = "Dau tiep nhan nguon dien DC ngoai tu pack pin 7.4V tren xe robot, dan dien vao mach on ap tuyen tinh LDO tren bo de tao nguon 5V nuoi he thong.";
+    dcJack.liveStatusText = "Nguon vao VIN: 7.4V tu Pin Li-ion 18650";
     dcJack.localPos = Vec3(-2.6f, 0.65f, 1.6f);
     dcJack.size = Vec3(1.5f, 1.05f, 1.0f);
     dcJack.color = Vec3(0.12f, 0.12f, 0.12f);
+    dcJack.shape = SubShapeType::BOX_SMD;
     dcJack.mesh = Mesh3D::createBox(1.5f, 1.05f, 1.0f, dcJack.color);
     addSubComponent(dcJack);
 
-    // 5. IC On ap 5V LDO AMS1117
+    // 5. IC On ap 5V LDO AMS1117 & Cap tu loc 47uF
     SubComponent regLdo;
-    regLdo.id = "REG_LDO_5V";
-    regLdo.name = "IC On ap tuyen tinh 5V LDO (AMS1117-5.0)";
-    regLdo.rating = "Dien ap vao 6.5V - 12V / Ra chuan 5.0V / Dong 1A / SOT-223";
+    regLdo.id = "ARD_VREG_5V";
+    regLdo.name = "IC On Ap Tuyến Tính 5V LDO & Cap Tu Loc 47uF";
+    regLdo.category = "On ap nguon 5V";
+    regLdo.rating = "AMS1117-5.0 / Vin 6.5-12V / Vout 5.0V / 2x Tu 47uF 16V";
     regLdo.roleDesc = "Ha ap tu 7.4V cua pack pin (qua jack DC hoac Vin) xuong muc 5.0V sieu phang on dinh de nuoi vi dieu khien ATmega328P va cac cam bien ngoai vi.";
+    regLdo.liveStatusText = "Dien ap ra: 5.00V (On dinh tuyet doi, do gon < 15mV)";
     regLdo.localPos = Vec3(-1.2f, 0.32f, 0.9f);
     regLdo.size = Vec3(0.75f, 0.35f, 0.55f);
     regLdo.color = Vec3(0.2f, 0.2f, 0.22f);
+    regLdo.shape = SubShapeType::BOX_SMD;
     regLdo.mesh = Mesh3D::createBox(0.75f, 0.35f, 0.55f, regLdo.color);
     addSubComponent(regLdo);
 
-    // 6. Cap tu hoa SMD loc nguon
-    SubComponent capArd;
-    capArd.id = "CAP_ARD";
-    capArd.name = "Cap tu hoa SMD loc nguon (Input 47uF & Output 100uF 16V)";
-    capArd.rating = "47 uF & 100 uF / 16V / Tieu chuan SMD nhom bac";
-    capArd.roleDesc = "Loc nhieu gơn song o hai dau vao va ra cua IC on ap AMS1117, ngan chan hien tuong dao dong tu kich va sut ap gay reset vi dieu khien.";
-    capArd.localPos = Vec3(-0.35f, 0.5f, 1.5f);
-    capArd.size = Vec3(0.65f, 0.75f, 0.65f);
-    capArd.color = Vec3(0.82f, 0.82f, 0.86f);
-    capArd.mesh = Mesh3D::createCylinder(0.32f, 0.75f, 12, capArd.color);
-    addSubComponent(capArd);
-
-    // 7. Thach anh dao dong 16MHz
+    // 6. Thach anh dao dong 16MHz
     SubComponent crystal;
-    crystal.id = "CRYSTAL_16MHZ";
-    crystal.name = "Thach anh dao dong 16MHz (16.000 MHz Crystal Oscillator)";
-    crystal.rating = "Tan so 16.000 MHz / Do lech +/- 20ppm / Vo kim loai HC-49S";
+    crystal.id = "ARD_CRYSTAL";
+    crystal.name = "Thach Anh Dao Dong 16MHz (16.000 MHz Crystal)";
+    crystal.category = "Dinh thoi xung nhip";
+    crystal.rating = "Tan so 16.000 MHz / Do lech +/- 20ppm / Vo kim loai elip";
     crystal.roleDesc = "Cung cap xung nhip clock ngoai cuc ky on dinh cho CPU ATmega328P (moi chu ky may = 62.5ns), dam bao do chinh xac tuyet doi cho bo dinh thoi Timer, xung PWM dieu toc va toc do truyen thong Baud rate.";
+    crystal.liveStatusText = "Tan so dao dong: 16.000.000 Hz | Chu ky Clock: 62.5 ns";
     crystal.localPos = Vec3(-0.4f, 0.35f, -0.2f);
     crystal.size = Vec3(1.1f, 0.4f, 0.45f);
     crystal.color = Vec3(0.85f, 0.85f, 0.88f);
+    crystal.shape = SubShapeType::CRYSTAL_OVAL;
     crystal.mesh = Mesh3D::createBox(1.1f, 0.4f, 0.45f, crystal.color);
     addSubComponent(crystal);
 
-    // 8. Hang socket Digital Pins D0-D13
-    SubComponent hdrDig;
-    hdrDig.id = "HEADER_DIGITAL";
-    hdrDig.name = "Hang socket chan xuat nhap so (Digital Pins D0 - D13, GND, AREF)";
-    hdrDig.rating = "Socket nu 10-pin & 8-pin 2.54mm / 6 kenh PWM phan giai 8-bit";
-    hdrDig.roleDesc = "Giao tiep voi cac module ngoai vi: D5, D6 xuat xung PWM dieu toc L298N; D4, D7 xuat tin hieu chieu quay; D9, D10, D11 xuat xung PWM goc cho 3 Servo; D2, D3 giao tiep cam bien sieu am.";
-    hdrDig.localPos = Vec3(0.8f, 0.48f, -2.25f);
-    hdrDig.size = Vec3(4.8f, 0.75f, 0.45f);
-    hdrDig.color = Vec3(0.12f, 0.12f, 0.12f);
-    hdrDig.mesh = Mesh3D::createBox(4.8f, 0.75f, 0.45f, hdrDig.color);
-    addSubComponent(hdrDig);
-
-    // 9. Hang socket Analog Pins A0-A5
-    SubComponent hdrAna;
-    hdrAna.id = "HEADER_ANALOG";
-    hdrAna.name = "Hang socket chan ngo vao tuong tu (Analog Pins A0 - A5)";
-    hdrAna.rating = "Socket nu 6-pin 2.54mm / Bo bien doi ADC 10-bit (0-1023)";
-    hdrAna.roleDesc = "Doc dien ap tuong tu tu 0V den 5V tu cac cam bien mo rong, bien tro hoac do dien ap giam sat nguon pin cua xe.";
-    hdrAna.localPos = Vec3(1.85f, 0.48f, 2.25f);
-    hdrAna.size = Vec3(1.8f, 0.75f, 0.45f);
-    hdrAna.color = Vec3(0.12f, 0.12f, 0.12f);
-    hdrAna.mesh = Mesh3D::createBox(1.8f, 0.75f, 0.45f, hdrAna.color);
-    addSubComponent(hdrAna);
-
-    // 10. Hang socket Power Header
-    SubComponent hdrPwr;
-    hdrPwr.id = "HEADER_POWER";
-    hdrPwr.name = "Hang socket chan cap nguon he thong (Power Header - Vin, 5V, 3.3V, GND)";
-    hdrPwr.rating = "Socket nu 8-pin 2.54mm";
-    hdrPwr.roleDesc = "Xuat nguon 5V va 3.3V on dinh cap cho cam bien sieu am HC-SR04; chan GND noi dat chung; chan Vin nhan dien ap truc tiep tu pin.";
-    hdrPwr.localPos = Vec3(-0.45f, 0.48f, 2.25f);
-    hdrPwr.size = Vec3(2.2f, 0.75f, 0.45f);
-    hdrPwr.color = Vec3(0.12f, 0.12f, 0.12f);
-    hdrPwr.mesh = Mesh3D::createBox(2.2f, 0.75f, 0.45f, hdrPwr.color);
-    addSubComponent(hdrPwr);
-
-    // 11. IC Giao tiep ATmega16U2
-    SubComponent atmega16u2;
-    atmega16u2.id = "ATMEGA16U2";
-    atmega16u2.name = "IC Giao tiep USB-UART (ATmega16U2 Microcontroller)";
-    atmega16u2.rating = "CPU 8-bit AVR / Goi QFN-32 / Firmware USB-CDC";
-    atmega16u2.roleDesc = "Cau noi truyen thong: Nhan goi tin USB tu cong COM cua may tinh, giai ma va chuyen thanh tin hieu UART (TX/RX) truyen vao ATmega328P de nap chuong trinh.";
-    atmega16u2.localPos = Vec3(-1.25f, 0.28f, -0.6f);
-    atmega16u2.size = Vec3(0.65f, 0.25f, 0.65f);
-    atmega16u2.color = Vec3(0.1f, 0.1f, 0.12f);
-    atmega16u2.mesh = Mesh3D::createBox(0.65f, 0.25f, 0.65f, atmega16u2.color);
-    addSubComponent(atmega16u2);
-
-    // 12. Bo den LED chi bao
+    // 7. Bo den LED chi bao (ON, L D13, TX, RX)
     SubComponent ledArd;
-    ledArd.id = "LED_ARD";
-    ledArd.name = "Bo den LED chi bao (Power LED 'ON' & Status LED 'L' D13)";
-    ledArd.rating = "2x SMD LED 0805 mau xanh la va vang cam";
-    ledArd.roleDesc = "LED 'ON' bao nguon 5V dang cap vao board. LED 'L' noi voi chan D13, dung de kiem tra hoat dong nhap nhay logic hoac canh bao trang thai tu hanh.";
+    ledArd.id = "ARD_LEDS";
+    ledArd.name = "Cum Den LED Chi Bao (ON, L - Pin 13, TX, RX)";
+    ledArd.category = "Chi bao trang thai";
+    ledArd.rating = "4x SMD LED 0805 mau xanh la, vang cam, do";
+    ledArd.roleDesc = "LED 'ON' sang xanh khi bo mach co nguon 5V. LED 'L' noi chan D13, cho phep test logic nhap nhay. LED 'TX/RX' nhap nhay khi dang truyen nhan du lieu qua cong COM.";
+    ledArd.liveStatusText = "LED ON: Sang xanh | LED D13: San sang test toggle";
     ledArd.localPos = Vec3(0.2f, 0.28f, -1.25f);
     ledArd.size = Vec3(0.45f, 0.22f, 0.45f);
     ledArd.color = Vec3(0.2f, 1.0f, 0.3f);
+    ledArd.shape = SubShapeType::LED_INDICATOR;
+    ledArd.isInteractive = true;
+    ledArd.actionName = "TEST BAT / TAT LED D13";
     ledArd.mesh = Mesh3D::createBox(0.45f, 0.22f, 0.45f, ledArd.color);
     addSubComponent(ledArd);
 
-    // Mac dinh chon chip vi dieu khien
+    // 8. Hang chan Digital PWM D0-D13 & Analog/Power
+    SubComponent hdrDig;
+    hdrDig.id = "ARD_HEADERS";
+    hdrDig.name = "Hang Chan Cam Digital (0-13) & Power/Analog";
+    hdrDig.category = "Dau noi chan I/O";
+    hdrDig.rating = "Header nu 2.54mm ma vang / 14 chân Digital + 6 chân Analog";
+    hdrDig.roleDesc = "Noi day truc tiep toi cam bien sieu am HC-SR04 (Trig/Echo), module cau H L298N (PWM ENA/ENB, IN1-IN4) va 3 tin hieu Servo MG996R canh tay gap.";
+    hdrDig.liveStatusText = "PWM D5/D6 -> L298N; D9/D10/D11 -> 3x Servo; D2/D3 -> HC-SR04";
+    hdrDig.localPos = Vec3(0.8f, 0.48f, -2.25f);
+    hdrDig.size = Vec3(4.8f, 0.75f, 0.45f);
+    hdrDig.color = Vec3(0.12f, 0.12f, 0.12f);
+    hdrDig.shape = SubShapeType::BOX_SMD;
+    hdrDig.mesh = Mesh3D::createBox(4.8f, 0.75f, 0.45f, hdrDig.color);
+    addSubComponent(hdrDig);
+
     selectSubComponentByIndex(0);
 }
 
 void ArduinoUnoComp::onSubComponentAction(const std::string& subId) {
-    if (subId == "BTN_RESET") {
+    if (subId == "ARD_RESET_BTN" || subId == "BTN_RESET") {
         resetAutoSequence();
+        motorSpeedL = motorSpeedR = 0;
+        motorDirL = motorDirR = 0;
+        baseAngleDeg = 90.0f;
+        elbowAngleDeg = 90.0f;
+        gripAngleDeg = 45.0f;
         SubComponent* sub = getSelectedSubComponent();
         if (sub) {
-            sub->rating = "DA RESET THANH CONG! (Reload 0x0000 Flash)";
+            sub->liveStatusText = "DA RESET VE 0x0000! (3 Servo ve vi tri goc, dong co dung)";
+            sub->rating = "DA RESET VE 0x0000 (Active LOW 0V)";
+        }
+    } else if (subId == "ARD_LEDS" || subId == "LED_ARD") {
+        SubComponent* sub = getSelectedSubComponent();
+        if (sub) {
+            sub->isActiveState = !sub->isActiveState;
+            if (sub->isActiveState) {
+                sub->liveStatusText = "LED D13: DANG BAT (Logic HIGH - 5.0V)";
+                sub->color = Vec3(1.0f, 0.85f, 0.1f);
+            } else {
+                sub->liveStatusText = "LED D13: DANG TAT (Logic LOW - 0.0V)";
+                sub->color = Vec3(0.2f, 0.2f, 0.25f);
+            }
         }
     }
 }

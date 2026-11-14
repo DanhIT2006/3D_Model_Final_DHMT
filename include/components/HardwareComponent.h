@@ -4,23 +4,37 @@
 #include <string>
 #include <vector>
 
+enum class SubShapeType {
+    BOX_SMD,            // IC dán, Domino, Header, Diode
+    CYLINDER_CAP,       // Tụ hóa hình trụ đứng (220uF, 47uF)
+    HEATSINK_VERTICAL,  // Tản nhiệt nhôm đen của L298N
+    CRYSTAL_OVAL,       // Thạch anh 16MHz hình elip dẹt
+    JUMPER_CAP,         // Chốt cắm Jumper 5V (có thể rút/cắm)
+    PUSH_BUTTON,        // Nút nhấn Reset hoặc biến trở tinh chỉnh
+    LED_INDICATOR       // Đèn LED phát sáng trên mạch
+};
+
 /**
  * @brief Cấu trúc biểu diễn một linh kiện vi mô / thiết bị nhỏ trên bo mạch
  * (Tụ điện, IC vi điều khiển, IC ổn áp, tản nhiệt, jumper, diode, nút nhấn, cổng cắm...)
  */
 struct SubComponent {
-    std::string id;            // Mã định danh: "IC_L298N", "CAP_VCC", "JUMPER_5V", "ATMEGA328P"...
-    std::string name;          // Tên linh kiện: "IC Cong suat L298N", "Tu hoa loc nguon 220uF 35V"...
-    std::string rating;        // Thông số / Trị số kỹ thuật: "220uF - 35V", "DIP-28 16MHz"...
-    std::string roleDesc;      // Tác dụng & nguyên lý hoạt động trong mạch
-    Vec3 localPos;             // Tọa độ tương đối so với tâm bo mạch (cm)
-    Vec3 size;                 // Kích thước khối bao W x H x D (cm)
-    Vec3 color;                // Màu sắc hiển thị
-    bool isInteractive = false;// Có thể click tương tác (Tháo/cắm, Nhấn, Xoay)
-    bool state = false;        // Trạng thái (Bật/Tắt, Cắm/Rút...)
-    std::string actionName;    // Tên nhãn hành động tương tác: "THAO/CAM JUMPER", "RESET"...
-    Mesh3D mesh;               // Mô hình hình học 3D của linh kiện nhỏ
-    bool isSelected = false;   // Trạng thái được chọn
+    std::string id;              // Mã định danh: "L298N_IC_HS", "L298N_JMP_5V", "ARD_RESET_BTN"...
+    std::string name;            // Tên linh kiện: "IC Cau H L298N", "Tu hoa loc nguon 220uF"...
+    std::string category;        // Nhóm chức năng: "Cong suat", "Loc nguon", "Dieu khien"...
+    std::string rating;          // Thông số / Trị số kỹ thuật: "220uF - 35V", "DIP-28 16MHz"...
+    std::string roleDesc;        // Tác dụng & nguyên lý hoạt động trong mạch
+    std::string liveStatusText;  // Trạng thái giám sát thời gian thực
+    Vec3 localPos;               // Tọa độ tương đối so với tâm bo mạch (cm)
+    Vec3 size;                   // Kích thước khối bao W x H x D (cm)
+    Vec3 color;                  // Màu sắc hiển thị
+    SubShapeType shape = SubShapeType::BOX_SMD;
+    bool isInteractive = false;  // Có thể click tương tác (Tháo/cắm, Nhấn, Xoay)
+    bool isActiveState = true;   // Trạng thái vật lý logic (Cắm/Rút, Bật/Tắt)
+    bool state = false;          // Trạng thái phụ tương thích ngược
+    std::string actionName;      // Tên nhãn hành động tương tác: "RUT/CAM JUMPER 5V", "NHAN RESET"...
+    Mesh3D mesh;                 // Mô hình hình học 3D của linh kiện nhỏ
+    bool isSelected = false;     // Trạng thái được chọn
 };
 
 /**

@@ -261,6 +261,9 @@ void HardwareComponent::renderWorkbench(bool wireframeMode) {
         }
     }
 
+    // 4. Kết xuất chân pin thực tế và linh kiện nổi (Tản nhiệt nhôm, tụ nhôm, IC socket...)
+    renderPinsAndDetails();
+
     glPopMatrix();
 }
 
