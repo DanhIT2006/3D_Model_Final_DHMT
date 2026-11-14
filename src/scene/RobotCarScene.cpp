@@ -13,35 +13,71 @@ RobotCarScene::~RobotCarScene() {
 }
 
 void RobotCarScene::initScene() {
-    // 1. Nút gốc xe tại tâm sàn Tầng 1
-    carRoot = new SceneNode("CAR_ROOT", "Xe Robot Gắp Đồ Vật");
+    // 1. Nut goc xe tai tam san Tang 1
+    carRoot = new SceneNode("CAR_ROOT", "Xe Robot Gap Do Vat 4WD");
     carPosition = Vec3(0.0f, 0.0f, 0.0f);
     carYawRad = 0.0f;
 
-    // 2. Sàn Tầng 1 (Chassis Floor 1)
+    // 2. San Tang 1 (Chassis Floor 1)
     chassisFloor1 = new SceneNode("FLOOR_1", "San Khung Gam Tang 1");
     chassisFloor1->localPos = Vec3(0.0f, 0.0f, 0.0f);
-    // Tấm mica đen bóng kích thước 16 x 0.4 x 24 cm
-    chassisFloor1->mesh = Mesh3D::createBox(16.0f, 0.4f, 24.0f, Vec3(0.12f, 0.12f, 0.14f));
+    // Tam mica den bong cat laser cao cap 16.5 x 0.35 x 25.0 cm
+    chassisFloor1->mesh = Mesh3D::createBox(16.5f, 0.35f, 25.0f, Vec3(0.08f, 0.09f, 0.12f));
     carRoot->addChild(chassisFloor1);
 
-    // 4 Cột trụ đồng kết nối Tầng 1 lên Tầng 2 (cao 6.0 cm, đường kính 0.5 cm)
+    // 2b. Thanh xe bao ve hai ben suon (Chassis Side Guard Panels / Fenders)
+    chassisSideLeft = new SceneNode("SIDE_L", "Thanh Xe Ben Trai");
+    chassisSideLeft->localPos = Vec3(-7.4f, 3.0f, 0.0f);
+    chassisSideLeft->mesh = Mesh3D::createBox(0.3f, 5.6f, 18.0f, Vec3(0.12f, 0.15f, 0.20f));
+    chassisFloor1->addChild(chassisSideLeft);
+
+    chassisSideRight = new SceneNode("SIDE_R", "Thanh Xe Ben Phai");
+    chassisSideRight->localPos = Vec3(7.4f, 3.0f, 0.0f);
+    chassisSideRight->mesh = Mesh3D::createBox(0.3f, 5.6f, 18.0f, Vec3(0.12f, 0.15f, 0.20f));
+    chassisFloor1->addChild(chassisSideRight);
+
+    // 2c. Thanh can truoc & can sau xe (Front & Rear Impact Bumpers)
+    frontBumper = new SceneNode("BUMP_F", "Thanh Can Truoc AGV");
+    frontBumper->localPos = Vec3(0.0f, 0.2f, 12.8f);
+    frontBumper->mesh = Mesh3D::createBox(14.0f, 0.7f, 1.2f, Vec3(0.20f, 0.22f, 0.26f));
+    chassisFloor1->addChild(frontBumper);
+
+    rearBumper = new SceneNode("BUMP_R", "Thanh Can Sau AGV");
+    rearBumper->localPos = Vec3(0.0f, 0.2f, -12.4f);
+    rearBumper->mesh = Mesh3D::createBox(14.0f, 0.7f, 1.2f, Vec3(0.20f, 0.22f, 0.26f));
+    chassisFloor1->addChild(rearBumper);
+
+    // 4 Cot tru dong luc giac ket noi Tang 1 len Tang 2 (cao 6.0 cm)
     for (float x : {-6.5f, 6.5f}) {
         for (float z : {-9.5f, 9.5f}) {
-            SceneNode* pillar = new SceneNode("PILLAR", "Tru Dong Tang 1-2");
+            SceneNode* pillar = new SceneNode("PILLAR", "Tru Dong Luc Giac Tang 1-2");
             pillar->localPos = Vec3(x, 3.0f, z);
-            pillar->mesh = Mesh3D::createCylinder(0.3f, 6.0f, 8, Vec3(0.85f, 0.72f, 0.25f));
+            pillar->mesh = Mesh3D::createCylinder(0.32f, 6.0f, 6, Vec3(0.85f, 0.72f, 0.25f));
             chassisFloor1->addChild(pillar);
         }
     }
 
-    // Bánh xe đa hướng mắt trâu (Caster Wheel) đặt dưới mũi xe Tầng 1
-    SceneNode* caster = new SceneNode("CASTER", "Banh Mat Trau Dan Huong");
-    caster->localPos = Vec3(0.0f, -1.8f, 9.5f);
-    caster->mesh = Mesh3D::createCylinder(0.8f, 1.2f, 12, Vec3(0.75f, 0.75f, 0.8f));
-    chassisFloor1->addChild(caster);
+    // 3. He thong 4 Dong co DC giam toc TT Motor & 4 Banh xe cao su (4WD Chassis)
+    compMotFL = new DCMotorComp("MOT_FL", "Dong Co Truoc Trai", true);
+    compMotFL->localPos = Vec3(-7.8f, -1.0f, 5.0f);
+    chassisFloor1->addChild(compMotFL);
 
-    // 3. Khởi tạo và lắp ráp các linh kiện trên Tầng 1
+    compMotRL = new DCMotorComp("MOT_RL", "Dong Co Sau Trai", true);
+    compMotRL->localPos = Vec3(-7.8f, -1.0f, -5.0f);
+    chassisFloor1->addChild(compMotRL);
+
+    compMotFR = new DCMotorComp("MOT_FR", "Dong Co Truoc Phai", false);
+    compMotFR->localPos = Vec3(7.8f, -1.0f, 5.0f);
+    chassisFloor1->addChild(compMotFR);
+
+    compMotRR = new DCMotorComp("MOT_RR", "Dong Co Sau Phai", false);
+    compMotRR->localPos = Vec3(7.8f, -1.0f, -5.0f);
+    chassisFloor1->addChild(compMotRR);
+
+    compMotL = compMotFL;
+    compMotR = compMotFR;
+
+    // Khoi tao cac linh kien tren Tang 1
     compDomino = new DominoBusComp();
     compDomino->localPos = Vec3(0.0f, 0.75f, 0.0f);
     chassisFloor1->addChild(compDomino);
@@ -54,21 +90,12 @@ void RobotCarScene::initScene() {
     compBuck->localPos = Vec3(3.0f, 0.7f, -7.0f);
     chassisFloor1->addChild(compBuck);
 
-    // Bo cam bien sieu am o mui xe theo yeu cau, thay the bang truc tru nang va tay gap
     compHcsr04 = nullptr;
-
-    compMotL = new DCMotorComp(true);
-    compMotL->localPos = Vec3(-8.0f, -1.0f, -4.0f);
-    chassisFloor1->addChild(compMotL);
-
-    compMotR = new DCMotorComp(false);
-    compMotR->localPos = Vec3(8.0f, -1.0f, -4.0f);
-    chassisFloor1->addChild(compMotR);
 
     // 4. San Tang 2 (Chassis Floor 2) cach Tang 1 delta Y = 6.0 cm
     chassisFloor2 = new SceneNode("FLOOR_2", "San Khung Gam Tang 2");
     chassisFloor2->localPos = Vec3(0.0f, 6.0f, 0.0f);
-    chassisFloor2->mesh = Mesh3D::createBox(16.0f, 0.4f, 24.0f, Vec3(0.12f, 0.12f, 0.14f));
+    chassisFloor2->mesh = Mesh3D::createBox(15.0f, 0.35f, 23.0f, Vec3(0.08f, 0.09f, 0.12f));
     carRoot->addChild(chassisFloor2);
 
     // 5. Khoi tao va lap rap linh kien tren Tang 2
@@ -81,25 +108,21 @@ void RobotCarScene::initScene() {
     chassisFloor2->addChild(compBatSw);
 
     // 6. Co cau nang ha thang dung va tay gap AGV (Linear Elevator Gripper)
-    // Lap ngay tai mui xe Tang 1 (Z = 11.5cm) thay the vi tri cu cua cam bien sieu am
     compSrvBase = new ServoMG996RComp("SRV_BASE", "Tru Ray Dan Huong AGV", ServoJointType::BASE_YAW);
     compSrvBase->localPos = Vec3(0.0f, 0.0f, 11.5f);
     chassisFloor1->addChild(compSrvBase);
 
-    // SRV_ELBOW: Ban truot nang ha thang dung (Vertical Elevator Carriage) truot doc truc Y
     compSrvElbow = new ServoMG996RComp("SRV_ELBOW", "Ban Truot Nang Ha (Linear Lift)", ServoJointType::LINEAR_LIFT);
     compSrvElbow->localPos = Vec3(0.0f, 1.5f, 0.0f);
     compSrvBase->addChild(compSrvElbow);
 
-    // SRV_GRIP: Cum ngam kep gap doi gan o mat truoc ban truot
     compSrvGrip = new ServoMG996RComp("SRV_GRIP", "Cum Ngam Kep Gap Do Vat", ServoJointType::GRIPPER);
     compSrvGrip->localPos = Vec3(0.0f, 0.0f, 1.4f);
     compSrvElbow->addChild(compSrvGrip);
 
-    // 7. Khoi vat the mau can gap (Hop qua/khoi kim loai mau cam noi bat)
+    // 7. Khoi vat the mau can gap
     targetObject = new SceneNode("TARGET_OBJ", "Vat The Can Gap");
     targetObject->localPos = initialObjectPos;
-    // Khoi hop kich thuoc 3.2 x 3.0 x 3.2 cm
     targetObject->mesh = Mesh3D::createBox(3.2f, 3.0f, 3.2f, Vec3(0.95f, 0.35f, 0.1f));
 
     // 8. Dang ky toan bo cac linh kien vao bo giai mach dien CircuitSimulator
@@ -108,8 +131,10 @@ void RobotCarScene::initScene() {
     circuit.registerComponent(compBuck);
     circuit.registerComponent(compArd);
     circuit.registerComponent(compL298N);
-    circuit.registerComponent(compMotL);
-    circuit.registerComponent(compMotR);
+    circuit.registerComponent(compMotFL);
+    circuit.registerComponent(compMotRL);
+    circuit.registerComponent(compMotFR);
+    circuit.registerComponent(compMotRR);
     circuit.registerComponent(compSrvBase);
     circuit.registerComponent(compSrvElbow);
     circuit.registerComponent(compSrvGrip);
@@ -118,25 +143,35 @@ void RobotCarScene::initScene() {
 }
 
 void RobotCarScene::updateDifferentialDrive(float dt) {
-    if (!compMotL || !compMotR) return;
+    if (!compMotFL || !compMotFR) return;
 
-    // Vận tốc tiếp tuyến 2 bánh xe (cm/s)
-    float vL = compMotL->linearSpeedCmS;
-    float vR = compMotR->linearSpeedCmS;
+    // Van toc tiep tuyen 2 banh truoc (cm/s)
+    float vL = compMotFL->linearSpeedCmS;
+    float vR = compMotFR->linearSpeedCmS;
 
-    // Công thức động học vi sai (Differential Drive Kinematics)
-    // Vận tốc dài trung bình xe
+    // Cong thuc dong hoc vi sai (Differential Drive Kinematics)
     float v = (vR + vL) * 0.5f;
-    // Vận tốc góc quay thân xe quanh trục thẳng đứng
     float omega = (vR - vL) / wheelbaseWidth;
 
     carYawRad += omega * dt;
 
-    // Hướng chuyển động mũi xe theo trục Z cục bộ
     carPosition.x += v * std::sin(carYawRad) * dt;
     carPosition.z += v * std::cos(carYawRad) * dt;
 
-    // Áp dụng vị trí và hướng vào nút gốc xe
+    // Dong bo 2 banh sau cung toc do va goc quay voi 2 banh truoc (4WD)
+    if (compMotRL) {
+        compMotRL->linearSpeedCmS = compMotFL->linearSpeedCmS;
+        compMotRL->rpm = compMotFL->rpm;
+        compMotRL->wheelAngle = compMotFL->wheelAngle;
+        compMotRL->isPowered = compMotFL->isPowered;
+    }
+    if (compMotRR) {
+        compMotRR->linearSpeedCmS = compMotFR->linearSpeedCmS;
+        compMotRR->rpm = compMotFR->rpm;
+        compMotRR->wheelAngle = compMotFR->wheelAngle;
+        compMotRR->isPowered = compMotFR->isPowered;
+    }
+
     carRoot->localPos = carPosition;
     carRoot->localRot.y = carYawRad;
 }
@@ -285,6 +320,11 @@ void RobotCarScene::resetSimulation() {
     if (compSrvBase)  compSrvBase->setTargetAngle(90.0f);
     if (compSrvElbow) compSrvElbow->setTargetAngle(90.0f);
     if (compSrvGrip)  compSrvGrip->setTargetAngle(45.0f);
+
+    if (compMotFL) compMotFL->wheelAngle = 0.0f;
+    if (compMotRL) compMotRL->wheelAngle = 0.0f;
+    if (compMotFR) compMotFR->wheelAngle = 0.0f;
+    if (compMotRR) compMotRR->wheelAngle = 0.0f;
 }
 
 void RobotCarScene::enterWorkbench(HardwareComponent* comp) {

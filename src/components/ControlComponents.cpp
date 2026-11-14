@@ -320,41 +320,149 @@ void ArduinoUnoComp::onElectricalUpdate() {
 void ArduinoUnoComp::renderPinsAndDetails() {
     HardwareComponent::renderPinsAndDetails();
 
-    // Cổng USB Type-B kim loại mạ bạc góc sau-trái
+    // 1. Vi dieu khien ATmega328P DIP-28 kem 28 chan kim loai va khe dinh huong
     glPushMatrix();
-    glTranslatef(-2.2f, 0.7f, 1.6f);
-    glColor3f(0.75f, 0.75f, 0.8f);
-    glutSolidCube(1.2f);
+    glTranslatef(0.9f, 0.42f, 0.5f);
+    // De cam socket IC DIP-28 mau den
+    glColor3f(0.08f, 0.08f, 0.08f);
+    glPushMatrix();
+    glScalef(3.6f, 0.55f, 0.95f);
+    glutSolidCube(1.0f);
+    glPopMatrix();
+    // Vach khuyet ban nguyet dinh huong Pin 1 o dau chip (-X)
+    glColor3f(0.35f, 0.35f, 0.35f);
+    glPushMatrix();
+    glTranslatef(-1.75f, 0.28f, 0.0f);
+    glScalef(0.12f, 0.05f, 0.45f);
+    glutSolidCube(1.0f);
+    glPopMatrix();
+    // 28 Chan kim loai ma bac hai ben suon
+    glColor3f(0.85f, 0.88f, 0.92f);
+    for (int p = 0; p < 14; ++p) {
+        float px = -1.5f + p * 0.23f;
+        glPushMatrix();
+        glTranslatef(px, -0.1f, -0.52f);
+        glScalef(0.08f, 0.45f, 0.12f);
+        glutSolidCube(1.0f);
+        glPopMatrix();
+
+        glPushMatrix();
+        glTranslatef(px, -0.1f, 0.52f);
+        glScalef(0.08f, 0.45f, 0.12f);
+        glutSolidCube(1.0f);
+        glPopMatrix();
+    }
     glPopMatrix();
 
-    // Jack nguồn DC Barrel màu đen góc sau
+    // 2. Cong USB Type-B kim loai ma Niken chong nhieu
     glPushMatrix();
-    glTranslatef(-2.2f, 0.7f, -1.6f);
-    glColor3f(0.12f, 0.12f, 0.12f);
-    glutSolidCube(1.3f);
+    glTranslatef(-2.6f, 0.7f, -0.9f);
+    glColor3f(0.78f, 0.80f, 0.84f);
+    glPushMatrix();
+    glScalef(1.4f, 1.15f, 1.25f);
+    glutSolidCube(1.0f);
     glPopMatrix();
-
-    // Chip vi điều khiển ATmega328P DIP-28 hình chữ nhật màu đen
-    glPushMatrix();
-    glTranslatef(0.8f, 0.8f, 0.0f);
-    glColor3f(0.15f, 0.15f, 0.15f);
-    glScalef(2.6f, 0.35f, 0.8f);
+    // Khe cam USB mau den ben trong
+    glColor3f(0.12f, 0.12f, 0.15f);
+    glTranslatef(-0.71f, 0.0f, 0.0f);
+    glScalef(0.05f, 0.75f, 0.85f);
     glutSolidCube(1.0f);
     glPopMatrix();
 
-    // Hàng rào cắm chân cắm cái (Female Pin Headers) 2 bên mép mạch
-    glDisable(GL_LIGHTING);
-    glColor3f(0.1f, 0.1f, 0.1f);
+    // 3. Jack nguon ngoai DC Barrel Jack 2.1mm
     glPushMatrix();
-    glTranslatef(0.0f, 0.85f, 2.2f);
-    glScalef(5.5f, 0.4f, 0.35f);
+    glTranslatef(-2.6f, 0.65f, 1.6f);
+    glColor3f(0.12f, 0.12f, 0.14f);
+    glPushMatrix();
+    glScalef(1.5f, 1.05f, 1.0f);
+    glutSolidCube(1.0f);
+    glPopMatrix();
+    // Lo cam tron + Kim tiep xuc giua ma vang
+    glColor3f(0.05f, 0.05f, 0.05f);
+    glTranslatef(-0.76f, 0.0f, 0.0f);
+    glRotatef(90.0f, 0, 1, 0);
+    glutSolidCylinder(0.35f, 0.05f, 12, 1);
+    glColor3f(0.85f, 0.75f, 0.2f);
+    glutSolidCylinder(0.1f, 0.35f, 8, 1);
+    glPopMatrix();
+
+    // 4. IC On ap 5V LDO AMS1117-5.0 SOT-223
+    glPushMatrix();
+    glTranslatef(-1.2f, 0.32f, 0.9f);
+    glColor3f(0.18f, 0.18f, 0.20f);
+    glPushMatrix();
+    glScalef(0.75f, 0.3f, 0.55f);
+    glutSolidCube(1.0f);
+    glPopMatrix();
+    // Tab dong tan nhiet ma thiec
+    glColor3f(0.75f, 0.78f, 0.82f);
+    glTranslatef(0.0f, 0.05f, 0.32f);
+    glScalef(0.55f, 0.1f, 0.18f);
+    glutSolidCube(1.0f);
+    glPopMatrix();
+
+    // 5. Cap tu hoa SMD nhom bac
+    for (float z : {1.2f, 1.7f}) {
+        glPushMatrix();
+        glTranslatef(-0.35f, 0.45f, z);
+        glColor3f(0.82f, 0.85f, 0.88f);
+        glRotatef(-90.0f, 1, 0, 0);
+        glutSolidCylinder(0.32f, 0.65f, 12, 2);
+        glPopMatrix();
+    }
+
+    // 6. Thach anh dao dong 16.000 MHz vo kim loai HC-49
+    glPushMatrix();
+    glTranslatef(-0.4f, 0.35f, -0.2f);
+    glColor3f(0.85f, 0.88f, 0.92f);
+    glScalef(1.1f, 0.4f, 0.45f);
+    glutSolidCube(1.0f);
+    glPopMatrix();
+
+    // 7. Nut nhan Reset phan cung vien bac nut do
+    glPushMatrix();
+    glTranslatef(-2.8f, 0.42f, -1.8f);
+    glColor3f(0.75f, 0.78f, 0.82f);
+    glPushMatrix();
+    glScalef(0.7f, 0.35f, 0.7f);
+    glutSolidCube(1.0f);
+    glPopMatrix();
+    glColor3f(0.85f, 0.2f, 0.1f);
+    glTranslatef(0.0f, 0.22f, 0.0f);
+    glRotatef(-90.0f, 1, 0, 0);
+    glutSolidCylinder(0.22f, 0.2f, 10, 1);
+    glPopMatrix();
+
+    // 8. Hang socket nu cam chan (Female Header Strips) 2 mep bo mach
+    glColor3f(0.12f, 0.12f, 0.14f);
+    // Mep tren: Digital Pins D0-D13
+    glPushMatrix();
+    glTranslatef(0.8f, 0.48f, -2.25f);
+    glScalef(4.8f, 0.75f, 0.45f);
+    glutSolidCube(1.0f);
+    glPopMatrix();
+
+    // Mep duoi: Power Header & Analog Header
+    glPushMatrix();
+    glTranslatef(-0.45f, 0.48f, 2.25f);
+    glScalef(2.2f, 0.75f, 0.45f);
     glutSolidCube(1.0f);
     glPopMatrix();
 
     glPushMatrix();
-    glTranslatef(0.0f, 0.85f, -2.2f);
-    glScalef(5.5f, 0.4f, 0.35f);
+    glTranslatef(1.85f, 0.48f, 2.25f);
+    glScalef(1.8f, 0.75f, 0.45f);
     glutSolidCube(1.0f);
+    glPopMatrix();
+
+    // 9. Bo den LED chi thi (ON mau xanh, D13 mau cam)
+    glPushMatrix();
+    glTranslatef(0.2f, 0.28f, -1.25f);
+    glColor3f(isPowered ? 0.2f : 0.05f, isPowered ? 1.0f : 0.2f, isPowered ? 0.3f : 0.05f);
+    glutSolidCube(0.25f);
+    glTranslatef(0.35f, 0.0f, 0.0f);
+    glColor3f(1.0f, 0.6f, 0.1f);
+    glutSolidCube(0.25f);
     glPopMatrix();
 }
 

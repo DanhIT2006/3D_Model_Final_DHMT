@@ -330,34 +330,78 @@ void BuckLM2596Comp::onElectricalUpdate() {
 void BuckLM2596Comp::renderPinsAndDetails() {
     HardwareComponent::renderPinsAndDetails();
 
-    // Vẽ cuộn cảm hình xuyến và tản nhiệt LM2596
+    // 1. Cuon cam xuyen loi ferit quan day dong anh kim
     glPushMatrix();
-    glTranslatef(-0.5f, 0.6f, 0.0f);
-    glColor3f(0.2f, 0.2f, 0.22f); // Tản nhiệt đen
-    glutSolidCube(1.1f);
+    glTranslatef(0.7f, 0.6f, -0.3f);
+    // Loi ferit tron mau xam den
+    glColor3f(0.25f, 0.25f, 0.28f);
+    glutSolidTorus(0.24f, 0.42f, 10, 16);
+    // Cac vong day dong quan quanh xuyen
+    glColor3f(0.85f, 0.45f, 0.12f);
+    for (int d = 0; d < 8; ++d) {
+        glPushMatrix();
+        glRotatef(d * 45.0f, 0, 1, 0);
+        glTranslatef(0.42f, 0.0f, 0.0f);
+        glScalef(0.12f, 0.52f, 0.22f);
+        glutSolidCube(1.0f);
+        glPopMatrix();
+    }
     glPopMatrix();
 
-    // Cuộn cảm tròn màu xám
+    // 2. IC Chuyen mach Buck LM2596S kem tan nhiet han vao PCB
     glPushMatrix();
-    glTranslatef(0.8f, 0.6f, -0.3f);
-    glColor3f(0.35f, 0.35f, 0.38f);
-    glutSolidCylinder(0.45f, 0.7f, 12, 1);
+    glTranslatef(-0.6f, 0.45f, -0.4f);
+    glColor3f(0.15f, 0.15f, 0.18f);
+    glScalef(1.1f, 0.45f, 0.9f);
+    glutSolidCube(1.0f);
+    glColor3f(0.75f, 0.78f, 0.82f);
+    glTranslatef(0.0f, 0.12f, -0.3f);
+    glScalef(0.8f, 0.1f, 0.25f);
+    glutSolidCube(1.0f);
     glPopMatrix();
 
-    // Mô phỏng LED 7 đoạn hiển thị điện áp ngõ ra (màu đỏ rực)
+    // 3. Chiet ap vi chinh da vong mau xanh duong 3296W num vit vang
     glPushMatrix();
-    glTranslatef(0.5f, cadSize.y * 0.52f, 0.4f);
-    glColor3f(0.05f, 0.05f, 0.05f); // Nền LED đen
-    glScalef(1.4f, 0.2f, 0.7f);
+    glTranslatef(-0.6f, 0.65f, 0.45f);
+    glColor3f(0.1f, 0.35f, 0.75f); // Than xanh hop chiet ap
+    glScalef(0.85f, 0.85f, 0.5f);
+    glutSolidCube(1.0f);
+    // Num vit vi chinh kim loai vang dong
+    glColor3f(0.9f, 0.8f, 0.2f);
+    glTranslatef(0.25f, 0.55f, 0.0f);
+    glutSolidCylinder(0.12f, 0.15f, 8, 1);
+    glPopMatrix();
+
+    // 4. Cap tu hoa loc nguon vao va ra co nap nhom bac
+    for (float cx : {-1.4f, 1.5f}) {
+        glPushMatrix();
+        glTranslatef(cx, 0.65f, 0.0f);
+        glColor3f(0.12f, 0.12f, 0.15f);
+        glRotatef(-90.0f, 1, 0, 0);
+        glutSolidCylinder(0.35f, 1.0f, 12, 2);
+        glTranslatef(0.0f, 0.0f, 1.01f);
+        glColor3f(0.82f, 0.85f, 0.88f);
+        glutSolidCylinder(0.34f, 0.05f, 12, 1);
+        glPopMatrix();
+    }
+
+    // 5. Man hinh LED 7 doan hien thi dien ap (Red LED Voltmeter)
+    glPushMatrix();
+    glTranslatef(0.35f, 0.52f, 0.4f);
+    glColor3f(0.05f, 0.05f, 0.05f); // Nen led den
+    glScalef(1.2f, 0.25f, 0.65f);
     glutSolidCube(1.0f);
     glPopMatrix();
 
     if (isPowered) {
-        // Ánh sáng LED đỏ số 5.0V
+        // Chu so LED do ruc sang 5.0V
         glPushMatrix();
-        glTranslatef(0.5f, cadSize.y * 0.55f + 0.12f, 0.4f);
-        glColor3f(1.0f, 0.1f, 0.1f);
+        glTranslatef(0.35f, 0.66f, 0.4f);
+        glColor3f(1.0f, 0.15f, 0.15f);
         glutSolidSphere(0.12f, 6, 6);
+        glTranslatef(0.25f, 0.0f, 0.0f);
+        glutSolidSphere(0.08f, 6, 6);
         glPopMatrix();
     }
 }
+

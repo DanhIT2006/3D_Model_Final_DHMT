@@ -12,19 +12,30 @@ public:
     // Nút gốc xe
     SceneNode* carRoot = nullptr;
 
-    // Các tầng khung gầm
-    SceneNode* chassisFloor1 = nullptr;
-    SceneNode* chassisFloor2 = nullptr;
+    // Các tầng khung gầm và thành xe bảo vệ
+    SceneNode* chassisFloor1    = nullptr;
+    SceneNode* chassisFloor2    = nullptr;
+    SceneNode* chassisSideLeft  = nullptr; // Thành xe bên trái
+    SceneNode* chassisSideRight = nullptr; // Thành xe bên phải
+    SceneNode* frontBumper      = nullptr; // Thành cản trước
+    SceneNode* rearBumper       = nullptr; // Thành cản sau
 
-    // 11 Linh kiện
+    // 11 Linh kiện & Hệ thống 4 Bánh xe (4WD)
     BatterySwitchComp* compBatSw   = nullptr;
     DominoBusComp*     compDomino  = nullptr;
     BuckLM2596Comp*    compBuck    = nullptr;
     ArduinoUnoComp*    compArd     = nullptr;
     L298NDriverComp*   compL298N   = nullptr;
     UltrasonicComp*    compHcsr04  = nullptr;
-    DCMotorComp*       compMotL    = nullptr;
-    DCMotorComp*       compMotR    = nullptr;
+
+    // 4 Động cơ DC & 4 Bánh xe cao su (4WD Robot Car)
+    DCMotorComp*       compMotFL   = nullptr; // Trước trái
+    DCMotorComp*       compMotRL   = nullptr; // Sau trái
+    DCMotorComp*       compMotFR   = nullptr; // Trước phải
+    DCMotorComp*       compMotRR   = nullptr; // Sau phải
+    DCMotorComp*       compMotL    = nullptr; // Tương thích ngược: Trỏ compMotFL
+    DCMotorComp*       compMotR    = nullptr; // Tương thích ngược: Trỏ compMotFR
+
     ServoMG996RComp*   compSrvBase = nullptr;
     ServoMG996RComp*   compSrvElbow= nullptr;
     ServoMG996RComp*   compSrvGrip = nullptr;

@@ -29,27 +29,40 @@ void initOpenGL() {
     glEnable(GL_LINE_SMOOTH);
     glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
 
-    // Thiết lập nguồn sáng (OpenGL Lighting)
+    // Thiết lập hệ thống chiếu sáng đa nguồn (Dual-Source Lighting)
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
+    glEnable(GL_LIGHT1);
 
-    GLfloat lightPos[]     = { 25.0f, 60.0f, 40.0f, 1.0f };
-    GLfloat lightAmbient[] = { 0.28f, 0.30f, 0.35f, 1.0f };
-    GLfloat lightDiffuse[] = { 0.85f, 0.85f, 0.88f, 1.0f };
-    GLfloat lightSpecular[]= { 0.50f, 0.50f, 0.50f, 1.0f };
+    // Key Light (Nguồn sáng chính từ góc trên - trước - phải)
+    GLfloat light0Pos[]     = { 30.0f, 65.0f, 45.0f, 1.0f };
+    GLfloat light0Ambient[] = { 0.25f, 0.27f, 0.32f, 1.0f };
+    GLfloat light0Diffuse[] = { 0.88f, 0.88f, 0.90f, 1.0f };
+    GLfloat light0Specular[]= { 0.55f, 0.55f, 0.55f, 1.0f };
 
-    glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
-    glLightfv(GL_LIGHT0, GL_AMBIENT,  lightAmbient);
-    glLightfv(GL_LIGHT0, GL_DIFFUSE,  lightDiffuse);
-    glLightfv(GL_LIGHT0, GL_SPECULAR, lightSpecular);
+    glLightfv(GL_LIGHT0, GL_POSITION, light0Pos);
+    glLightfv(GL_LIGHT0, GL_AMBIENT,  light0Ambient);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE,  light0Diffuse);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, light0Specular);
+
+    // Fill Light (Nguồn sáng bù mềm từ phía sau - trái - thấp hơn, chống bóng tối gắt ở gầm và bánh)
+    GLfloat light1Pos[]     = { -25.0f, 35.0f, -35.0f, 1.0f };
+    GLfloat light1Ambient[] = { 0.10f, 0.10f, 0.12f, 1.0f };
+    GLfloat light1Diffuse[] = { 0.35f, 0.38f, 0.42f, 1.0f };
+    GLfloat light1Specular[]= { 0.20f, 0.20f, 0.20f, 1.0f };
+
+    glLightfv(GL_LIGHT1, GL_POSITION, light1Pos);
+    glLightfv(GL_LIGHT1, GL_AMBIENT,  light1Ambient);
+    glLightfv(GL_LIGHT1, GL_DIFFUSE,  light1Diffuse);
+    glLightfv(GL_LIGHT1, GL_SPECULAR, light1Specular);
 
     // Cho phép tô màu vật liệu theo glColor (glColorMaterial)
     glEnable(GL_COLOR_MATERIAL);
     glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 
-    GLfloat matSpecular[] = { 0.4f, 0.4f, 0.4f, 1.0f };
+    GLfloat matSpecular[] = { 0.45f, 0.45f, 0.45f, 1.0f };
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, matSpecular);
-    glMateriali(GL_FRONT_AND_BACK, GL_SHININESS, 32);
+    glMateriali(GL_FRONT_AND_BACK, GL_SHININESS, 48);
 
     g_camera.setViewport(g_windowWidth, g_windowHeight);
 }

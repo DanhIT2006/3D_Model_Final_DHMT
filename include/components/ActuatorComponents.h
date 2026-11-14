@@ -34,6 +34,7 @@ public:
 
 public:
     DCMotorComp(bool isLeft);
+    DCMotorComp(const std::string& code, const std::string& name, bool isLeft);
     void updatePhysics(float dt, float inputVoltage, bool driverPowered = true);
     virtual void onElectricalUpdate() override;
     virtual void render(bool wireframeMode) override;

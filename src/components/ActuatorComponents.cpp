@@ -499,42 +499,122 @@ void L298NDriverComp::onElectricalUpdate() {
 void L298NDriverComp::renderPinsAndDetails() {
     HardwareComponent::renderPinsAndDetails();
 
-    // Khá»‘i táº£n nhiá»‡t nhÃ´m mÃ u Ä‘en cÃ³ cÃ¡c cÃ¡nh xáº» rÃ£nh á»Ÿ giá»¯a máº¡ch
+    // 1. Khoi tan nhiet nhom mau den co 6 canh xe ranh (Finned Heatsink)
     glPushMatrix();
-    glTranslatef(0.0f, 1.4f, 0.0f);
-    glColor3f(0.18f, 0.18f, 0.2f);
-    glScalef(2.4f, 2.2f, 1.6f);
+    glTranslatef(0.0f, 1.25f, -1.05f);
+    glColor3f(0.18f, 0.18f, 0.20f);
+    glPushMatrix();
+    glScalef(2.8f, 0.35f, 0.9f);
     glutSolidCube(1.0f);
     glPopMatrix();
-
-    // Chip IC L298N gáº¯n á»‘p vÃ o máº·t táº£n nhiá»‡t
-    glPushMatrix();
-    glTranslatef(0.0f, 1.2f, 0.9f);
-    glColor3f(0.1f, 0.1f, 0.1f);
-    glScalef(1.8f, 1.6f, 0.2f);
-    glutSolidCube(1.0f);
-    glPopMatrix();
-
-    // 2 Tá»¥ hÃ³a lá»c nguá»“n mÃ u Ä‘en/vÃ ng
-    for (float x : {-1.2f, 1.2f}) {
+    for (float fx = -1.2f; fx <= 1.25f; fx += 0.48f) {
         glPushMatrix();
-        glTranslatef(x, 0.9f, 0.8f);
-        glColor3f(0.15f, 0.15f, 0.2f);
-        glutSolidCylinder(0.35f, 1.2f, 10, 1);
+        glTranslatef(fx, 0.9f, 0.0f);
+        glScalef(0.12f, 1.7f, 0.9f);
+        glutSolidCube(1.0f);
         glPopMatrix();
     }
+    glPopMatrix();
+
+    // 2. Chip IC L298N gan op vao mat tan nhiet kem oc vit va chan kim loai
+    glPushMatrix();
+    glTranslatef(0.0f, 0.85f, -0.55f);
+    glColor3f(0.08f, 0.08f, 0.08f);
+    glScalef(2.2f, 1.3f, 0.3f);
+    glutSolidCube(1.0f);
+    glColor3f(0.85f, 0.88f, 0.92f);
+    glTranslatef(0.0f, 0.32f, 0.55f);
+    glutSolidCylinder(0.18f, 0.2f, 8, 1);
+    glPopMatrix();
+
+    // 3. 2 Tu hoa loc nguon 220uF 35V voi nap kim loai xe ranh
+    for (float x : {-0.45f, 0.55f}) {
+        float z = (x < 0) ? 0.15f : 0.45f;
+        glPushMatrix();
+        glTranslatef(x, 0.65f, z);
+        glColor3f(0.12f, 0.12f, 0.14f);
+        glRotatef(-90.0f, 1, 0, 0);
+        glutSolidCylinder(0.35f, 1.1f, 14, 2);
+        glTranslatef(0.0f, 0.0f, 1.11f);
+        glColor3f(0.82f, 0.85f, 0.88f);
+        glutSolidCylinder(0.34f, 0.05f, 14, 1);
+        glPopMatrix();
+    }
+
+    // 4. IC On ap 5V 78M05 TO-252
+    glPushMatrix();
+    glTranslatef(0.55f, 0.32f, -0.15f);
+    glColor3f(0.2f, 0.2f, 0.22f);
+    glScalef(0.65f, 0.25f, 0.6f);
+    glutSolidCube(1.0f);
+    glColor3f(0.75f, 0.78f, 0.8f);
+    glTranslatef(0.0f, 0.1f, -0.2f);
+    glScalef(0.8f, 0.1f, 0.4f);
+    glutSolidCube(1.0f);
+    glPopMatrix();
+
+    // 5. Jumper chon nguon 5V Enable
+    glPushMatrix();
+    glTranslatef(-0.45f, 0.42f, 0.85f);
+    glColor3f(jumper5VEnabled ? 0.1f : 0.35f, jumper5VEnabled ? 0.6f : 0.35f, jumper5VEnabled ? 0.9f : 0.35f);
+    glScalef(0.45f, 0.55f, 0.35f);
+    glutSolidCube(1.0f);
+    glPopMatrix();
+
+    // 6. 3 Khoi coc dau nguon & Motor mau xanh duong kem vit M3 ma ken
+    auto drawTerminal = [](float tx, float ty, float tz, float sx, float sy, float sz, int poles) {
+        glPushMatrix();
+        glTranslatef(tx, ty, tz);
+        glColor3f(0.1f, 0.35f, 0.85f);
+        glScalef(sx, sy, sz);
+        glutSolidCube(1.0f);
+        glPopMatrix();
+
+        for (int p = 0; p < poles; ++p) {
+            float ox = tx + (p - (poles - 1) * 0.5f) * (sx / poles);
+            glPushMatrix();
+            glTranslatef(ox, ty + sy * 0.52f, tz);
+            glColor3f(0.85f, 0.88f, 0.92f);
+            glutSolidCylinder(0.14f, 0.08f, 8, 1);
+            glPopMatrix();
+        }
+    };
+    drawTerminal(-0.6f, 0.52f, 1.6f, 1.6f, 0.85f, 0.85f, 3);
+    drawTerminal(-1.65f, 0.52f, 0.6f, 0.85f, 0.85f, 1.1f, 2);
+    drawTerminal( 1.65f, 0.52f, 0.6f, 0.85f, 0.85f, 1.1f, 2);
+
+    // 7. Dan 8 Diode xung bao ve Flyback
+    glColor3f(0.1f, 0.1f, 0.1f);
+    for (float dx : {-1.75f, 1.75f}) {
+        glPushMatrix();
+        glTranslatef(dx, 0.28f, -0.4f);
+        glScalef(0.35f, 0.25f, 1.5f);
+        glutSolidCube(1.0f);
+        glPopMatrix();
+    }
+
+    // 8. Hang rao 6 chan cam tin hieu logic (ENA, IN1-4, ENB)
+    glPushMatrix();
+    glTranslatef(0.8f, 0.38f, 1.6f);
+    glColor3f(0.85f, 0.75f, 0.2f);
+    glScalef(1.5f, 0.55f, 0.35f);
+    glutSolidCube(1.0f);
+    glPopMatrix();
 }
 
 // ===================== DONG CO DC & BANH XE =====================
 DCMotorComp::DCMotorComp(bool isLeft)
-    : HardwareComponent(isLeft ? "MOT_L" : "MOT_R",
-                        isLeft ? "Dong Co & Banh Trai" : "Dong Co & Banh Phai",
-                        "Dong Luc"),
+    : DCMotorComp(isLeft ? "MOT_L" : "MOT_R",
+                  isLeft ? "Dong Co Va Banh Trai" : "Dong Co Va Banh Phai",
+                  isLeft) {}
+
+DCMotorComp::DCMotorComp(const std::string& code, const std::string& name, bool isLeft)
+    : HardwareComponent(code, name, "Dong Luc"),
       isLeftMotor(isLeft) {
     cadSize = Vec3(6.5f, 4.0f, 8.0f);
-    nominalVoltage = 5.0f;
+    wheelRadius = 3.3f;
+    nominalVoltage = 7.4f;
 
-    // Há»™p sá»‘ mÃ u vÃ ng Ä‘áº·c trÆ°ng Ä‘á»™ng cÆ¡ TT Motor
     mesh = Mesh3D::createBox(2.2f, 2.4f, 5.5f, Vec3(0.96f, 0.78f, 0.1f));
 
     addPin("A", PinType::MOTOR_OUT, Vec3(0.0f, 0.0f, -2.4f));
@@ -581,34 +661,151 @@ void DCMotorComp::render(bool wireframeMode) {
     Mat4 localM = getLocalMatrix();
     glMultMatrixf(localM.data());
 
-    // 1. Váº½ há»™p sá»‘ mÃ u vÃ ng
+    // 1. DONG CO GIAM TOC TT MOTOR
     if (wireframeMode) {
         mesh.drawWireframe(isSelected ? Vec3(1.0f, 0.85f, 0.0f) : Vec3(0.0f, 0.95f, 0.4f));
     } else {
-        mesh.drawSolid(true);
+        // Hop giam toc vang ABS
+        glPushMatrix();
+        glColor3f(0.96f, 0.78f, 0.08f);
+        glTranslatef(0.0f, 0.0f, 0.5f);
+        glScalef(2.2f, 2.2f, 3.8f);
+        glutSolidCube(1.0f);
+        glPopMatrix();
+
+        // Tai bat oc hop so (Mounting ears)
+        glPushMatrix();
+        glColor3f(0.92f, 0.74f, 0.06f);
+        glTranslatef(0.0f, 0.0f, 2.6f);
+        glScalef(2.2f, 1.2f, 0.5f);
+        glutSolidCube(1.0f);
+        glPopMatrix();
+
+        // Than dong co dien DC bang thep ma ken / bac
+        glPushMatrix();
+        glTranslatef(0.0f, 0.0f, -2.2f);
+        glColor3f(0.78f, 0.80f, 0.84f);
+        glRotatef(90.0f, 1, 0, 0);
+        glutSolidCylinder(0.95f, 2.2f, 16, 2);
+        glPopMatrix();
+
+        // Nap duoi dong co mau den + 2 chan cuc han day dong
+        glPushMatrix();
+        glTranslatef(0.0f, 0.0f, -3.3f);
+        glColor3f(0.15f, 0.15f, 0.15f);
+        glutSolidCylinder(0.85f, 0.3f, 12, 1);
+        glColor3f(0.85f, 0.55f, 0.15f);
+        glTranslatef(-0.35f, 0.0f, -0.2f);
+        glutSolidCube(0.25f);
+        glTranslatef(0.7f, 0.0f, 0.0f);
+        glutSolidCube(0.25f);
+        glPopMatrix();
+
+        // Gia do kim loai chu L bat motor vao gam xe
+        glPushMatrix();
+        glColor3f(0.45f, 0.48f, 0.52f);
+        glTranslatef(isLeftMotor ? 1.05f : -1.05f, 0.6f, 0.5f);
+        glScalef(0.2f, 1.5f, 2.8f);
+        glutSolidCube(1.0f);
+        glPopMatrix();
+
+        // Truc ra hop so D-shaft mau trang noi sang vanh banh xe
+        glPushMatrix();
+        float shaftDir = isLeftMotor ? -1.0f : 1.0f;
+        glTranslatef(shaftDir * 1.5f, 0.0f, 0.0f);
+        glColor3f(0.92f, 0.92f, 0.95f);
+        glRotatef(90.0f, 0, 1, 0);
+        glutSolidCylinder(0.27f, 1.2f, 8, 1);
+        glPopMatrix();
+
         if (isSelected) mesh.drawWireframe(Vec3(1.0f, 0.85f, 0.0f), 2.5f);
     }
 
-    // 2. Váº½ trá»¥c vÃ  bÃ¡nh xe cao su
-    float wheelXOffset = isLeftMotor ? -2.2f : 2.2f;
+    // 2. BANH XE CAO SU SIEU CHI TIET (HIGH-FIDELITY TT WHEEL)
+    float wheelX = isLeftMotor ? -2.6f : 2.6f;
     glPushMatrix();
-    glTranslatef(wheelXOffset, 0.0f, 0.0f);
+    glTranslatef(wheelX, 0.0f, 0.0f);
+
+    // Quay theo goc lan cua banh xe quanh truc X
     glRotatef(wheelAngle * 57.29578f, 1.0f, 0.0f, 0.0f);
+
+    // Xoay de banh xe nam theo mat phang YZ
     glRotatef(90.0f, 0.0f, 1.0f, 0.0f);
 
     if (wireframeMode) {
         glDisable(GL_LIGHTING);
-        glColor3f(0.8f, 0.8f, 0.2f);
-        glutWireTorus(0.9f, wheelRadius * 0.75f, 10, 16);
+        glColor3f(0.9f, 0.8f, 0.1f);
+        glutWireTorus(0.7f, wheelRadius * 0.78f, 10, 20);
+        glutWireCylinder(wheelRadius * 0.55f, 2.0f, 12, 2);
     } else {
-        glColor3f(0.12f, 0.12f, 0.12f);
-        glutSolidTorus(0.85f, wheelRadius * 0.72f, 12, 20);
+        // A. LOP CAO SU DEN CO GAI (Treaded Rubber Tire)
+        float tireRadius = wheelRadius;
+        float tireWidth = 2.4f;
+        float halfW = tireWidth * 0.5f;
 
-        glColor3f(0.92f, 0.76f, 0.08f);
-        glutSolidCylinder(wheelRadius * 0.65f, 0.8f, 16, 2);
+        // Than lop chinh
+        glColor3f(0.09f, 0.09f, 0.10f);
+        glPushMatrix();
+        glTranslatef(0.0f, 0.0f, -halfW);
+        glutSolidCylinder(tireRadius, tireWidth, 24, 2);
+        glPopMatrix();
+
+        // 2 Mep bo tron cua lop cao su
+        glPushMatrix();
+        glTranslatef(0.0f, 0.0f, -halfW);
+        glutSolidTorus(0.28f, tireRadius - 0.28f, 10, 24);
+        glTranslatef(0.0f, 0.0f, tireWidth);
+        glutSolidTorus(0.28f, tireRadius - 0.28f, 10, 24);
+        glPopMatrix();
+
+        // 20 GAI LOP CAO SU VAU MA SAT noi tren chu vi lop
+        glColor3f(0.12f, 0.12f, 0.13f);
+        for (int t = 0; t < 20; ++t) {
+            float ang = t * (2.0f * 3.14159265f / 20.0f);
+            glPushMatrix();
+            glRotatef(ang * 57.29578f, 0.0f, 0.0f, 1.0f);
+            glTranslatef(tireRadius, 0.0f, 0.0f);
+            glScalef(0.18f, 0.42f, 2.1f);
+            glutSolidCube(1.0f);
+            glPopMatrix();
+        }
+
+        // B. VANH BANH XE MAU VANG (Yellow ABS Plastic Rim)
+        float rimRadius = tireRadius * 0.62f;
+        glColor3f(0.96f, 0.78f, 0.06f);
+
+        glPushMatrix();
+        glTranslatef(0.0f, 0.0f, -halfW + 0.1f);
+        glutSolidCylinder(rimRadius, tireWidth - 0.2f, 20, 2);
+        glPopMatrix();
+
+        // C. TAM BANH XE & 6 NAN HOA (6-Spoke Turbine Pattern)
+        glColor3f(0.90f, 0.72f, 0.05f);
+        glPushMatrix();
+        glTranslatef(0.0f, 0.0f, isLeftMotor ? (halfW - 0.4f) : (-halfW + 0.4f));
+        glutSolidCylinder(0.65f, 0.6f, 12, 2);
+
+        // Oc tan M3 ma bac o chinh giua tam banh xe
+        glColor3f(0.85f, 0.88f, 0.92f);
+        glTranslatef(0.0f, 0.0f, isLeftMotor ? 0.35f : -0.35f);
+        glutSolidCylinder(0.32f, 0.25f, 6, 1);
+        glPopMatrix();
+
+        // 6 Nan hoa dang canh quat
+        glColor3f(0.94f, 0.76f, 0.05f);
+        for (int s = 0; s < 6; ++s) {
+            float spkAng = s * (3.14159265f / 3.0f);
+            glPushMatrix();
+            glTranslatef(0.0f, 0.0f, isLeftMotor ? (halfW - 0.35f) : (-halfW + 0.35f));
+            glRotatef(spkAng * 57.29578f, 0.0f, 0.0f, 1.0f);
+            glTranslatef(rimRadius * 0.5f, 0.0f, 0.0f);
+            glScalef(rimRadius * 0.75f, 0.22f, 0.35f);
+            glutSolidCube(1.0f);
+            glPopMatrix();
+        }
     }
-    glPopMatrix();
 
+    glPopMatrix();
     glPopMatrix();
 }
 
