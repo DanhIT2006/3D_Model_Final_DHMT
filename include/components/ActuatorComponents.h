@@ -9,11 +9,15 @@ class L298NDriverComp : public HardwareComponent {
 public:
     float outVoltL = 0.0f; // Điện áp phân cực ra motor trái (-7.4V -> +7.4V)
     float outVoltR = 0.0f; // Điện áp phân cực ra motor phải (-7.4V -> +7.4V)
+    bool jumper5VEnabled = true; // Trạng thái Jumper chọn nguồn 5V Enable
 
 public:
     L298NDriverComp();
     virtual void onElectricalUpdate() override;
     virtual void renderPinsAndDetails() override;
+
+    virtual void initSubComponents() override;
+    virtual void onSubComponentAction(const std::string& subId) override;
 };
 
 /**

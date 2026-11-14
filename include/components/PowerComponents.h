@@ -17,6 +17,9 @@ public:
     void toggleSwitch();
     virtual void onElectricalUpdate() override;
     virtual void renderPinsAndDetails() override;
+
+    virtual void initSubComponents() override;
+    virtual void onSubComponentAction(const std::string& subId) override;
 };
 
 /**
@@ -50,4 +53,7 @@ public:
     void adjustVoltage(float delta);
     virtual void onElectricalUpdate() override;
     virtual void renderPinsAndDetails() override;
+
+    virtual void initSubComponents() override;
+    virtual void onSubComponentAction(const std::string& subId) override;
 };

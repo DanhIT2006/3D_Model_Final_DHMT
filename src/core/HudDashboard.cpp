@@ -33,6 +33,19 @@ void HudDashboard::render(int screenW, int screenH, const RobotCarScene& scene, 
 
     buttons.clear();
 
+    // Nếu đang ở chế độ quan sát vi mô: hiển thị giao diện bàn làm việc linh kiện chi tiết
+    if (scene.isWorkbenchMode && scene.inspectedComponent) {
+        renderWorkbenchHUD(screenW, screenH, const_cast<RobotCarScene&>(scene), camera);
+
+        glDisable(GL_BLEND);
+        glEnable(GL_DEPTH_TEST);
+        glMatrixMode(GL_PROJECTION);
+        glPopMatrix();
+        glMatrixMode(GL_MODELVIEW);
+        glPopMatrix();
+        return;
+    }
+
     // 1. Thanh trạng thái phía trên (Top Bar)
     renderTopBar(screenW, screenH, scene, camera, fps);
 
@@ -210,6 +223,10 @@ void HudDashboard::renderComponentInspector(int x, int y, int w, int h, const Ro
     FontRenderer::drawText2D(x + 15, y + h - 130, pinStr, Vec3(0.7f, 0.7f, 0.75f), FontRenderer::SMALL);
 
     // Nút tương tác nhanh riêng cho linh kiện
+    if (!comp->subComponents.empty()) {
+        buttons.push_back({x + 15, y + 48, 210, 26, "QUAN SAT CHI TIET [Q]", 99});
+    }
+
     if (comp->code == "BAT_SW") {
         buttons.push_back({x + 15, y + 15, 150, 28, "BAT/TAT NGUON [T]", 3});
     } else if (comp->code == "BUCK") {
@@ -312,6 +329,8 @@ void HudDashboard::renderHelpDialog(int screenW, int screenH) {
         {"F", "Bat / Tat che do xem khung day Wireframe (CG.4)"},
         {"C", "An / Hien cac duong day dien 3D"},
         {"+ / -", "Tang / Giam dien ap mach Buck LM2596"},
+        {"Q", "Vao / Thoat che do quan sat vi mo linh kien 3D (Workbench)"},
+        {"[ / ]", "Chon linh kien con truoc / tiep theo trong che do quan sat"},
         {"Chuot Trai", "Click chon linh kien 3D / Giu keo de xoay Camera"},
         {"Chuot Phai / Cuon", "Truot Camera (Pan) / Phong to - Thu nho (Zoom)"}
     };
@@ -326,11 +345,152 @@ void HudDashboard::renderHelpDialog(int screenW, int screenH) {
     FontRenderer::drawText2DWithShadow(x + 180, y + 15, "Nhan [H] de dong bang nay", Vec3(1.0f, 0.8f, 0.2f), FontRenderer::SMALL);
 }
 
-bool HudDashboard::onMouseClick(int mouseX, int mouseY, RobotCarScene& scene) {
+namespace {
+    void drawWrappedText(int x, int y, int maxCharsPerLine, int lineSpacing, const std::string& text, const Vec3& color) {
+        std::string remaining = text;
+        int curY = y;
+        while (!remaining.empty()) {
+            if ((int)remaining.length() <= maxCharsPerLine) {
+                FontRenderer::drawText2D(x, curY, remaining, color, FontRenderer::SMALL);
+                break;
+            }
+            size_t splitPos = remaining.rfind(' ', maxCharsPerLine);
+            if (splitPos == std::string::npos) splitPos = maxCharsPerLine;
+            std::string line = remaining.substr(0, splitPos);
+            FontRenderer::drawText2D(x, curY, line, color, FontRenderer::SMALL);
+            curY -= lineSpacing;
+            if (splitPos + 1 < remaining.length()) {
+                remaining = remaining.substr(splitPos + 1);
+            } else {
+                break;
+            }
+        }
+    }
+}
+
+void HudDashboard::renderWorkbenchHUD(int screenW, int screenH, RobotCarScene& scene, const Camera3D& camera) {
+    (void)camera;
+    HardwareComponent* comp = scene.inspectedComponent;
+    if (!comp) return;
+
+    // 1. Thanh tiêu đề trên cùng
+    Raster2D::fillRect(0, screenH - 52, screenW, 52, Vec3(0.07f, 0.09f, 0.13f));
+    Raster2D::drawLineBresenham(0, screenH - 53, screenW, screenH - 53, Vec3(0.0f, 0.65f, 0.95f));
+
+    std::string titleStr = "CHE DO QUAN SAT VI MO: " + comp->name + " [" + comp->code + "]";
+    FontRenderer::drawText2DWithShadow(25, screenH - 26, titleStr, Vec3(0.0f, 0.9f, 1.0f), FontRenderer::NORMAL);
+    FontRenderer::drawText2D(25, screenH - 45, "Chuot trai: Xoay 3D | Chuot phai: Pan | Cuon chuot: Zoom | Click truc tiep vao tu/chip hoac danh muc ben trai", Vec3(0.72f, 0.76f, 0.82f), FontRenderer::SMALL);
+
+    // Nút quay lại ở góc trên phải
+    buttons.push_back({screenW - 225, screenH - 44, 210, 32, "QUAY LAI XE ROBOT [ESC]", 100});
+
+    // 2. Bảng bên trái: Danh mục linh kiện nhỏ (Sub-components list)
+    int listW = 320;
+    int listH = screenH - 120;
+    int listX = 20;
+    int listY = 50;
+
+    Raster2D::fillRect(listX, listY, listW, listH, Vec3(0.06f, 0.08f, 0.12f));
+    Raster2D::drawLineBresenham(listX, listY + listH, listX + listW, listY + listH, Vec3(0.2f, 0.5f, 0.8f));
+    Raster2D::drawLineBresenham(listX + listW, listY, listX + listW, listY + listH, Vec3(0.2f, 0.5f, 0.8f));
+    Raster2D::drawLineBresenham(listX, listY, listX, listY + listH, Vec3(0.2f, 0.5f, 0.8f));
+    Raster2D::drawLineBresenham(listX, listY, listX + listW, listY, Vec3(0.2f, 0.5f, 0.8f));
+
+    std::string listTitle = "DANH MUC LINH KIEN CON (" + std::to_string(comp->subComponents.size()) + ")";
+    FontRenderer::drawText2DWithShadow(listX + 15, listY + listH - 25, listTitle, Vec3(1.0f, 0.85f, 0.2f), FontRenderer::NORMAL);
+    FontRenderer::drawText2D(listX + 15, listY + listH - 44, "Dung Tab / [ / ] de duyet nhanh", Vec3(0.6f, 0.65f, 0.7f), FontRenderer::SMALL);
+
+    for (size_t i = 0; i < comp->subComponents.size(); ++i) {
+        int itemY = listY + listH - 74 - (int)i * 28;
+        if (itemY < listY + 10) break;
+
+        const auto& sub = comp->subComponents[i];
+        buttons.push_back({listX + 8, itemY, listW - 16, 24, sub.name, 200 + (int)i});
+
+        if (sub.isSelected) {
+            Raster2D::fillRect(listX + 8, itemY, listW - 16, 24, Vec3(0.12f, 0.32f, 0.52f));
+            Raster2D::fillRect(listX + 8, itemY, 4, 24, Vec3(1.0f, 0.85f, 0.1f));
+            FontRenderer::drawText2DWithShadow(listX + 18, itemY + 6, std::to_string(i + 1) + ". " + sub.name, Vec3(1.0f, 0.95f, 0.3f), FontRenderer::SMALL);
+        } else {
+            Raster2D::fillRect(listX + 8, itemY, listW - 16, 24, Vec3(0.08f, 0.10f, 0.15f));
+            FontRenderer::drawText2D(listX + 18, itemY + 6, std::to_string(i + 1) + ". " + sub.name, Vec3(0.8f, 0.85f, 0.9f), FontRenderer::SMALL);
+        }
+    }
+
+    // 3. Card phía dưới bên phải: Bảng phân tích kỹ thuật
+    int cardX = 360;
+    int cardY = 20;
+    int cardW = screenW - 380;
+    int cardH = 200;
+
+    Raster2D::fillRect(cardX, cardY, cardW, cardH, Vec3(0.06f, 0.08f, 0.12f));
+    Raster2D::drawLineBresenham(cardX, cardY + cardH, cardX + cardW, cardY + cardH, Vec3(0.1f, 0.7f, 0.95f));
+    Raster2D::drawLineBresenham(cardX, cardY, cardX, cardY + cardH, Vec3(0.1f, 0.7f, 0.95f));
+    Raster2D::drawLineBresenham(cardX + cardW, cardY, cardX + cardW, cardY + cardH, Vec3(0.1f, 0.7f, 0.95f));
+    Raster2D::drawLineBresenham(cardX, cardY, cardX + cardW, cardY, Vec3(0.1f, 0.7f, 0.95f));
+
+    SubComponent* sub = comp->getSelectedSubComponent();
+    if (sub) {
+        FontRenderer::drawText2DWithShadow(cardX + 20, cardY + cardH - 26, "CHI TIET LINH KIEN: " + sub->name, Vec3(1.0f, 0.85f, 0.1f), FontRenderer::NORMAL);
+        FontRenderer::drawText2D(cardX + 20, cardY + cardH - 48, "Thong so ky thuat / Tri so: " + sub->rating, Vec3(0.9f, 0.95f, 1.0f), FontRenderer::SMALL);
+        FontRenderer::drawText2D(cardX + 20, cardY + cardH - 68, "Tac dung & Nguyen ly trong he thong:", Vec3(0.2f, 0.85f, 1.0f), FontRenderer::SMALL);
+
+        int maxChars = (cardW - 40) / 7;
+        if (maxChars < 60) maxChars = 60;
+        drawWrappedText(cardX + 20, cardY + cardH - 88, maxChars, 18, sub->roleDesc, Vec3(0.85f, 0.88f, 0.92f));
+
+        if (sub->isInteractive) {
+            buttons.push_back({cardX + 20, cardY + 16, 230, 30, sub->actionName, 101});
+        }
+
+        buttons.push_back({cardX + (sub->isInteractive ? 265 : 20), cardY + 16, 110, 30, "< TRUOC [", 102});
+        buttons.push_back({cardX + (sub->isInteractive ? 385 : 140), cardY + 16, 110, 30, "TIEP > ]", 103});
+
+        buttons.push_back({cardX + cardW - 190, cardY + 16, 175, 30, "QUAY LAI XE [ESC]", 100});
+    }
+
+    // Vẽ toàn bộ nút bấm
+    for (const auto& btn : buttons) {
+        if (btn.actionId >= 200 && btn.actionId < 300) continue; // Đã vẽ ở danh sách
+        Vec3 btnCol = (btn.actionId == 100) ? Vec3(0.5f, 0.15f, 0.15f) :
+                      (btn.actionId == 101) ? Vec3(0.1f, 0.45f, 0.35f) :
+                      (btn.actionId == 99)  ? Vec3(0.08f, 0.35f, 0.55f) :
+                                              Vec3(0.14f, 0.20f, 0.30f);
+        Raster2D::fillRect(btn.x, btn.y, btn.w, btn.h, btnCol);
+        Raster2D::drawLineBresenham(btn.x, btn.y, btn.x + btn.w, btn.y, Vec3(0.3f, 0.6f, 0.9f));
+        FontRenderer::drawText2DWithShadow(btn.x + 10, btn.y + 8, btn.label, Vec3(1, 1, 1), FontRenderer::SMALL);
+    }
+}
+
+bool HudDashboard::onMouseClick(int mouseX, int mouseY, RobotCarScene& scene, Camera3D& camera) {
     for (const auto& btn : buttons) {
         if (mouseX >= btn.x && mouseX <= btn.x + btn.w &&
             mouseY >= btn.y && mouseY <= btn.y + btn.h) {
             switch (btn.actionId) {
+                case 99: // Vào chế độ quan sát vi mô
+                    if (scene.selectedComponent) {
+                        scene.enterWorkbench(scene.selectedComponent);
+                        camera.enterWorkbenchMode();
+                    }
+                    break;
+                case 100: // Thoát chế độ quan sát vi mô
+                    scene.exitWorkbench();
+                    camera.exitWorkbenchMode();
+                    break;
+                case 101: // Tương tác linh kiện nhỏ
+                    if (scene.inspectedComponent) {
+                        SubComponent* sub = scene.inspectedComponent->getSelectedSubComponent();
+                        if (sub) {
+                            scene.inspectedComponent->onSubComponentAction(sub->id);
+                        }
+                    }
+                    break;
+                case 102: // Linh kiện trước
+                    if (scene.inspectedComponent) scene.inspectedComponent->selectPrevSubComponent();
+                    break;
+                case 103: // Linh kiện tiếp
+                    if (scene.inspectedComponent) scene.inspectedComponent->selectNextSubComponent();
+                    break;
                 case 1: // Đổi chế độ
                     if (scene.compArd) scene.compArd->toggleControlMode();
                     break;
@@ -345,6 +505,12 @@ bool HudDashboard::onMouseClick(int mouseX, int mouseY, RobotCarScene& scene) {
                     break;
                 case 5: // Tăng áp Buck
                     if (scene.compBuck) scene.compBuck->adjustVoltage(0.2f);
+                    break;
+                default:
+                    if (btn.actionId >= 200 && btn.actionId < 300) {
+                        int idx = btn.actionId - 200;
+                        if (scene.inspectedComponent) scene.inspectedComponent->selectSubComponentByIndex(idx);
+                    }
                     break;
             }
             return true;

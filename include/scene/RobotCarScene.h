@@ -45,6 +45,10 @@ public:
     // Linh kiện hiện đang được người dùng click chọn trong 3D
     HardwareComponent* selectedComponent = nullptr;
 
+    // Chế độ quan sát vi mô (Micro-Component Workbench Inspection Mode)
+    bool isWorkbenchMode = false;
+    HardwareComponent* inspectedComponent = nullptr;
+
 public:
     RobotCarScene();
     ~RobotCarScene();
@@ -52,6 +56,12 @@ public:
     void initScene();
     void update(float dt);
     void render(bool wireframeMode);
+
+    // Chế độ quan sát vi mô bàn làm việc CAD
+    void enterWorkbench(HardwareComponent* comp);
+    void exitWorkbench();
+    void renderWorkbenchScene(bool wireframeMode);
+    SubComponent* pickSubComponent(const Vec3& rayOrigin, const Vec3& rayDir);
 
     // Động học vi sai xe 2 bánh
     void updateDifferentialDrive(float dt);

@@ -40,6 +40,9 @@ public:
 
     virtual void onElectricalUpdate() override;
     virtual void renderPinsAndDetails() override;
+
+    virtual void initSubComponents() override;
+    virtual void onSubComponentAction(const std::string& subId) override;
 };
 
 /**
@@ -57,4 +60,6 @@ public:
     void updateRaycast(const Vec3& sensorWorldPos, const Vec3& forwardDir, const Vec3& targetObjPos, float targetObjRadius);
     virtual void onElectricalUpdate() override;
     virtual void renderPinsAndDetails() override;
+
+    virtual void initSubComponents() override;
 };

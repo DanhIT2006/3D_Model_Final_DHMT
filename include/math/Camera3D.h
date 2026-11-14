@@ -41,11 +41,22 @@ public:
     int lastMouseX = 0;
     int lastMouseY = 0;
 
+    // Trạng thái quan sát bàn làm việc vi mô (Workbench Mode)
+    bool isWorkbench = false;
+    ViewMode savedMode = ViewMode::PERSPECTIVE_ORBIT;
+    Vec3 savedTarget = Vec3(0, 3, 0);
+    float savedRadius = 55.0f;
+    float savedTheta = 0.785f;
+    float savedPhi = 0.523f;
+
 public:
     Camera3D();
 
     void setViewport(int width, int height);
     void setViewMode(ViewMode newMode);
+
+    void enterWorkbenchMode();
+    void exitWorkbenchMode();
 
     // Cập nhật vị trí mắt quan sát dựa trên tham số cầu hoặc vị trí xe
     void update(const Vec3& carPosition, float carYawRad);

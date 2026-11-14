@@ -208,6 +208,12 @@ void RobotCarScene::update(float dt) {
 }
 
 void RobotCarScene::render(bool wireframeMode) {
+    // Nếu đang ở chế độ quan sát vi mô: chỉ vẽ bàn làm việc và linh kiện được cô lập
+    if (isWorkbenchMode && inspectedComponent) {
+        renderWorkbenchScene(wireframeMode);
+        return;
+    }
+
     // 1. Vẽ mặt sàn lưới Grid (sân đấu / mặt bàn thực nghiệm)
     glDisable(GL_LIGHTING);
     glLineWidth(1.0f);
@@ -281,7 +287,96 @@ void RobotCarScene::resetSimulation() {
     if (compSrvGrip)  compSrvGrip->setTargetAngle(45.0f);
 }
 
+void RobotCarScene::enterWorkbench(HardwareComponent* comp) {
+    if (!comp) return;
+    inspectedComponent = comp;
+    isWorkbenchMode = true;
+    if (inspectedComponent->selectedSubCompIndex == -1 && !inspectedComponent->subComponents.empty()) {
+        inspectedComponent->selectSubComponentByIndex(0);
+    }
+}
+
+void RobotCarScene::exitWorkbench() {
+    isWorkbenchMode = false;
+    inspectedComponent = nullptr;
+}
+
+void RobotCarScene::renderWorkbenchScene(bool wireframeMode) {
+    glDisable(GL_LIGHTING);
+
+    // 1. Mâm xoay kỹ thuật CAD (Precision Turntable)
+    glLineWidth(1.2f);
+    // Vòng tròn đồng tâm
+    for (float r : {2.0f, 4.0f, 6.0f, 8.0f}) {
+        glColor3f(0.18f, 0.35f, 0.48f);
+        glBegin(GL_LINE_LOOP);
+        for (int i = 0; i < 48; ++i) {
+            float a = i * 2.0f * 3.14159265f / 48.0f;
+            glVertex3f(r * std::cos(a), 0.0f, r * std::sin(a));
+        }
+        glEnd();
+    }
+
+    // Các nan hoa chia độ 45 độ
+    glColor3f(0.15f, 0.25f, 0.35f);
+    glBegin(GL_LINES);
+    for (int i = 0; i < 8; ++i) {
+        float a = i * 2.0f * 3.14159265f / 8.0f;
+        glVertex3f(0.0f, 0.0f, 0.0f);
+        glVertex3f(8.5f * std::cos(a), 0.0f, 8.5f * std::sin(a));
+    }
+    glEnd();
+
+    // Lưới ô vuông kỹ thuật (Grid 14x14 cm)
+    glColor3f(0.12f, 0.16f, 0.22f);
+    glBegin(GL_LINES);
+    for (float v = -7.0f; v <= 7.0f; v += 1.0f) {
+        glVertex3f(v, 0.0f, -7.0f);
+        glVertex3f(v, 0.0f,  7.0f);
+        glVertex3f(-7.0f, 0.0f, v);
+        glVertex3f( 7.0f, 0.0f, v);
+    }
+    glEnd();
+
+    // 2. Hệ trục tọa độ 3D (RGB Axes)
+    glLineWidth(2.5f);
+    glBegin(GL_LINES);
+    // Trục X (Đỏ)
+    glColor3f(1.0f, 0.2f, 0.2f);
+    glVertex3f(-6.0f, 0.05f, 6.0f);
+    glVertex3f(-4.5f, 0.05f, 6.0f);
+    // Trục Y (Xanh lá)
+    glColor3f(0.2f, 1.0f, 0.2f);
+    glVertex3f(-6.0f, 0.05f, 6.0f);
+    glVertex3f(-6.0f, 1.55f, 6.0f);
+    // Trục Z (Xanh dương)
+    glColor3f(0.2f, 0.5f, 1.0f);
+    glVertex3f(-6.0f, 0.05f, 6.0f);
+    glVertex3f(-6.0f, 0.05f, 4.5f);
+    glEnd();
+    glLineWidth(1.0f);
+
+    glEnable(GL_LIGHTING);
+
+    // 3. Kết xuất linh kiện được cô lập
+    if (inspectedComponent) {
+        inspectedComponent->renderWorkbench(wireframeMode);
+    }
+}
+
+SubComponent* RobotCarScene::pickSubComponent(const Vec3& rayOrigin, const Vec3& rayDir) {
+    if (isWorkbenchMode && inspectedComponent) {
+        return inspectedComponent->pickSubComponent(rayOrigin, rayDir);
+    }
+    return nullptr;
+}
+
 HardwareComponent* RobotCarScene::pickComponent(const Vec3& rayOrigin, const Vec3& rayDir) {
+    if (isWorkbenchMode && inspectedComponent) {
+        inspectedComponent->pickSubComponent(rayOrigin, rayDir);
+        return inspectedComponent;
+    }
+
     float closestDist = 1e9f;
     SceneNode* hitNode = carRoot->raycast(rayOrigin, rayDir, closestDist);
 

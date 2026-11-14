@@ -60,8 +60,56 @@ void InputHandler::onKeyDown(unsigned char key, int x, int y, RobotCarScene& sce
             }
             break;
 
-        case 27: // Phím Escape -> Thoát chương trình
-            exit(0);
+        case 'q':
+        case 'Q':
+            if (scene.isWorkbenchMode) {
+                scene.exitWorkbench();
+                camera.exitWorkbenchMode();
+            } else {
+                HardwareComponent* targetComp = scene.selectedComponent;
+                if (!targetComp) {
+                    targetComp = scene.compL298N ? (HardwareComponent*)scene.compL298N : (HardwareComponent*)scene.compArd;
+                    if (targetComp) {
+                        scene.selectedComponent = targetComp;
+                        targetComp->isSelected = true;
+                    }
+                }
+                if (targetComp) {
+                    scene.enterWorkbench(targetComp);
+                    camera.enterWorkbenchMode();
+                }
+            }
+            break;
+
+        case '[':
+            if (scene.isWorkbenchMode && scene.inspectedComponent) {
+                scene.inspectedComponent->selectPrevSubComponent();
+            }
+            break;
+
+        case ']':
+        case '\t':
+            if (scene.isWorkbenchMode && scene.inspectedComponent) {
+                scene.inspectedComponent->selectNextSubComponent();
+            }
+            break;
+
+        case 13: // Enter
+            if (scene.isWorkbenchMode && scene.inspectedComponent) {
+                SubComponent* sub = scene.inspectedComponent->getSelectedSubComponent();
+                if (sub && sub->isInteractive) {
+                    scene.inspectedComponent->onSubComponentAction(sub->id);
+                }
+            }
+            break;
+
+        case 27: // Phím Escape -> Thoát chế độ quan sát hoặc thoát chương trình
+            if (scene.isWorkbenchMode) {
+                scene.exitWorkbench();
+                camera.exitWorkbenchMode();
+            } else {
+                exit(0);
+            }
             break;
     }
 }
@@ -126,14 +174,18 @@ void InputHandler::onMouseClick(int button, int state, int x, int y, int screenW
     if (state == GLUT_DOWN && button == GLUT_LEFT_BUTTON) {
         // Tọa độ HUD: gốc (0, 0) ở góc dưới-trái
         int hudY = screenH - y;
-        if (hud.onMouseClick(x, hudY, scene)) {
+        if (hud.onMouseClick(x, hudY, scene, camera)) {
             return; // Đã click vào nút trên HUD
         }
 
-        // Bắn tia Raycast chọn linh kiện 3D
+        // Bắn tia Raycast chọn linh kiện 3D hoặc linh kiện con trong Workbench
         Vec3 rayOrigin, rayDir;
         camera.screenToRay(x, y, rayOrigin, rayDir);
-        scene.pickComponent(rayOrigin, rayDir);
+        if (scene.isWorkbenchMode) {
+            scene.pickSubComponent(rayOrigin, rayDir);
+        } else {
+            scene.pickComponent(rayOrigin, rayDir);
+        }
     }
 
     // Chuyển tiếp sự kiện chuột sang Camera để xoay/pan

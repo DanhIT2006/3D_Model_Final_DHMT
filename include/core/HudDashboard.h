@@ -30,7 +30,7 @@ public:
     void render(int screenW, int screenH, const RobotCarScene& scene, const Camera3D& camera, float fps);
 
     // Xử lý click chuột vào các nút trên HUD
-    bool onMouseClick(int mouseX, int mouseY, RobotCarScene& scene);
+    bool onMouseClick(int mouseX, int mouseY, RobotCarScene& scene, Camera3D& camera);
 
 private:
     void renderTopBar(int screenW, int screenH, const RobotCarScene& scene, const Camera3D& camera, float fps);
@@ -38,4 +38,7 @@ private:
     void renderComponentInspector(int x, int y, int w, int h, const RobotCarScene& scene);
     void renderOscilloscopeAndGauges(int x, int y, int w, int h, const RobotCarScene& scene);
     void renderHelpDialog(int screenW, int screenH);
+
+    // Chế độ quan sát vi mô linh kiện
+    void renderWorkbenchHUD(int screenW, int screenH, RobotCarScene& scene, const Camera3D& camera);
 };

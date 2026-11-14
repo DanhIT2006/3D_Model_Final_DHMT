@@ -36,7 +36,48 @@ const char* Camera3D::getViewModeName() const {
     return "Unknown";
 }
 
+void Camera3D::enterWorkbenchMode() {
+    if (isWorkbench) return;
+    savedMode = mode;
+    savedTarget = target;
+    savedRadius = radius;
+    savedTheta = theta;
+    savedPhi = phi;
+
+    isWorkbench = true;
+    mode = ViewMode::PERSPECTIVE_ORBIT;
+    target = Vec3(0.0f, 0.5f, 0.0f);
+    radius = 13.0f;
+    theta = 0.785f;
+    phi = 0.55f;
+}
+
+void Camera3D::exitWorkbenchMode() {
+    if (!isWorkbench) return;
+    isWorkbench = false;
+    mode = savedMode;
+    target = savedTarget;
+    radius = savedRadius;
+    theta = savedTheta;
+    phi = savedPhi;
+}
+
 void Camera3D::update(const Vec3& carPosition, float carYawRad) {
+    if (isWorkbench) {
+        target = Vec3(0.0f, 0.5f, 0.0f);
+        phi = std::clamp(phi, -1.45f, 1.45f);
+        float cosPhi = std::cos(phi);
+        float sinPhi = std::sin(phi);
+        float cosTheta = std::cos(theta);
+        float sinTheta = std::sin(theta);
+
+        eyePos.x = target.x + radius * cosPhi * sinTheta;
+        eyePos.y = target.y + radius * sinPhi;
+        eyePos.z = target.z + radius * cosPhi * cosTheta;
+        upVec = Vec3(0.0f, 1.0f, 0.0f);
+        return;
+    }
+
     if (mode == ViewMode::CAR_FOLLOW) {
         // Camera đặt ở phía sau đuôi xe, cao hơn một chút và nhìn về mũi xe
         float followDist = 32.0f;
@@ -134,6 +175,16 @@ void Camera3D::onMouseMove(int x, int y) {
 
 void Camera3D::onMouseWheel(int wheel, int direction, int x, int y) {
     (void)wheel; (void)x; (void)y;
+    if (isWorkbench) {
+        float zoomSpeed = 1.2f;
+        if (direction > 0) {
+            radius = std::max(4.0f, radius - zoomSpeed);
+        } else {
+            radius = std::min(40.0f, radius + zoomSpeed);
+        }
+        return;
+    }
+
     float zoomSpeed = 2.5f;
     if (direction > 0) {
         radius = std::max(10.0f, radius - zoomSpeed);
