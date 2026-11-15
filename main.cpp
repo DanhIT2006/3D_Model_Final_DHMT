@@ -127,6 +127,14 @@ void keyboardUp(unsigned char key, int x, int y) {
     }
 }
 
+void specialKey(int key, int x, int y) {
+    g_input.onSpecialKeyDown(key, x, y);
+}
+
+void specialKeyUp(int key, int x, int y) {
+    g_input.onSpecialKeyUp(key, x, y);
+}
+
 void mouse(int button, int state, int x, int y) {
     if (g_scene) {
         g_input.onMouseClick(button, state, x, y, g_windowWidth, g_windowHeight, *g_scene, g_camera, g_hud);
@@ -161,6 +169,8 @@ int main(int argc, char** argv) {
     glutReshapeFunc(reshape);
     glutKeyboardFunc(keyboard);
     glutKeyboardUpFunc(keyboardUp);
+    glutSpecialFunc(specialKey);
+    glutSpecialUpFunc(specialKeyUp);
     glutMouseFunc(mouse);
     glutMotionFunc(motion);
     glutMouseWheelFunc(mouseWheel);

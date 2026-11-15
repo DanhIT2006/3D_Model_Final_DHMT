@@ -262,14 +262,14 @@ void RobotCarScene::update(float dt) {
         compHcsr04->updateRaycast(sensorPos, forwardDir, targetObject->localPos, 1.6f);
     }
 
-    // 2. Chạy bước mô phỏng mạch điện
+    // 2. Cập nhật động học cánh tay và firmware Arduino (tính toán lệnh PWM trước khi mô phỏng mạch)
+    updateArmAndGrasping(dt);
+
+    // 3. Chạy bước mô phỏng mạch điện (Truyền tải tín hiệu Arduino -> L298N -> Động cơ DC)
     circuit.stepCircuit(dt);
 
-    // 3. Động học vi sai xe
+    // 4. Động học vi sai xe (Cập nhật vị trí và góc quay xe theo vận tốc động cơ)
     updateDifferentialDrive(dt);
-
-    // 4. Động học cánh tay và gắp vật
-    updateArmAndGrasping(dt);
 
     // 5. Cập nhật cây đồ thị phân cảnh
     carRoot->update(dt);

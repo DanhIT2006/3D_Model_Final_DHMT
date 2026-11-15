@@ -147,14 +147,18 @@ void InputHandler::onKeyDown(unsigned char key, int x, int y, RobotCarScene& sce
 void InputHandler::onKeyUp(unsigned char key, int x, int y, RobotCarScene& scene) {
     (void)x; (void)y; (void)scene;
     keyStates[key] = false;
+    keyStates[std::tolower(key)] = false;
+    keyStates[std::toupper(key)] = false;
 }
 
 void InputHandler::onSpecialKeyDown(int key, int x, int y) {
-    (void)key; (void)x; (void)y;
+    (void)x; (void)y;
+    specialKeyStates[key] = true;
 }
 
 void InputHandler::onSpecialKeyUp(int key, int x, int y) {
-    (void)key; (void)x; (void)y;
+    (void)x; (void)y;
+    specialKeyStates[key] = false;
 }
 
 void InputHandler::updateContinuousInput(float dt, RobotCarScene& scene) {
@@ -171,19 +175,24 @@ void InputHandler::updateContinuousInput(float dt, RobotCarScene& scene) {
         return keyStates[c] || keyStates[std::toupper(c)] || keyStates[std::tolower(c)];
     };
 
-    // Điều khiển động cơ xe (WASD)
+    bool fwd   = isDown('w') || specialKeyStates[GLUT_KEY_UP];
+    bool bwd   = isDown('s') || specialKeyStates[GLUT_KEY_DOWN];
+    bool left  = isDown('a') || specialKeyStates[GLUT_KEY_LEFT];
+    bool right = isDown('d') || specialKeyStates[GLUT_KEY_RIGHT];
+
+    // Điều khiển động cơ xe (WASD hoặc Phím mũi tên)
     int spd = 200;
-    if (isDown('w')) {
+    if (fwd) {
         scene.compArd->motorSpeedL = scene.compArd->motorSpeedR = spd;
         scene.compArd->motorDirL = scene.compArd->motorDirR = 1;
-    } else if (isDown('s')) {
+    } else if (bwd) {
         scene.compArd->motorSpeedL = scene.compArd->motorSpeedR = spd;
         scene.compArd->motorDirL = scene.compArd->motorDirR = -1;
-    } else if (isDown('a')) {
+    } else if (left) {
         scene.compArd->motorSpeedL = scene.compArd->motorSpeedR = 180;
         scene.compArd->motorDirL = -1;
         scene.compArd->motorDirR = 1;
-    } else if (isDown('d')) {
+    } else if (right) {
         scene.compArd->motorSpeedL = scene.compArd->motorSpeedR = 180;
         scene.compArd->motorDirL = 1;
         scene.compArd->motorDirR = -1;

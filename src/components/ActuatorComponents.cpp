@@ -429,9 +429,6 @@ void L298NDriverComp::onElectricalUpdate() {
         Pin* in3 = getPin("IN3");
         Pin* in4 = getPin("IN4");
 
-        float dutyL = ena ? ena->pwmDuty : 0.0f;
-        float dutyR = enb ? enb->pwmDuty : 0.0f;
-
         float dirL = 0.0f;
         if (in1 && in2) {
             if (in1->voltage > 2.5f && in2->voltage < 1.0f) dirL = 1.0f;
@@ -443,6 +440,13 @@ void L298NDriverComp::onElectricalUpdate() {
             if (in3->voltage > 2.5f && in4->voltage < 1.0f) dirR = 1.0f;
             else if (in3->voltage < 1.0f && in4->voltage > 2.5f) dirR = -1.0f;
         }
+
+        float dutyL = ena ? ena->pwmDuty : 0.0f;
+        float dutyR = enb ? enb->pwmDuty : 0.0f;
+        if (ena && ena->voltage > 2.0f && dutyL < 0.01f) dutyL = ena->voltage / 5.0f;
+        if (enb && enb->voltage > 2.0f && dutyR < 0.01f) dutyR = enb->voltage / 5.0f;
+        if (dirL != 0.0f && dutyL < 0.05f) dutyL = 0.8f;
+        if (dirR != 0.0f && dutyR < 0.05f) dutyR = 0.8f;
 
         Pin* out1 = getPin("OUT1");
         Pin* out2 = getPin("OUT2");
@@ -458,9 +462,14 @@ void L298NDriverComp::onElectricalUpdate() {
             out4->voltage = (dirR < 0) ? (v12 * dutyR) : 0.0f;
         }
 
+        outVoltL = dirL * (v12 * dutyL);
+        outVoltR = dirR * (v12 * dutyR);
+
         currentDrawMa = 35.0f + (dutyL + dutyR) * 250.0f;
         statusDesc = "DANG DIEU KHIEN DONG CO 4WD (7.4V PWM)";
     } else {
+        outVoltL = 0.0f;
+        outVoltR = 0.0f;
         Pin* out1 = getPin("OUT1");
         Pin* out2 = getPin("OUT2");
         Pin* out3 = getPin("OUT3");

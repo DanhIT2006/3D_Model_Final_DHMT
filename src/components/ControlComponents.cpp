@@ -215,10 +215,35 @@ void ArduinoUnoComp::resetAutoSequence() {
     gripAngleDeg = 45.0f;
 }
 
+void ArduinoUnoComp::updateOutputPins() {
+    if (!isPowered) {
+        for (const auto& pinName : {"D2", "D4", "D5", "D6", "D7", "D9", "D10", "D11", "D12", "D13"}) {
+            if (auto* p = getPin(pinName)) { p->voltage = 0.0f; p->pwmDuty = 0.0f; }
+        }
+        return;
+    }
+
+    // Cập nhật chân điều khiển hướng động cơ L298N (IN1, IN2, IN3, IN4)
+    if (auto* p = getPin("D2"))  p->voltage = (motorDirL > 0) ? 5.0f : 0.0f; // IN1
+    if (auto* p = getPin("D4"))  p->voltage = (motorDirL < 0) ? 5.0f : 0.0f; // IN2
+    if (auto* p = getPin("D12")) p->voltage = (motorDirR > 0) ? 5.0f : 0.0f; // IN3
+    if (auto* p = getPin("D13")) p->voltage = (motorDirR < 0) ? 5.0f : 0.0f; // IN4
+
+    // Cập nhật giá trị ra các chân Pin PWM
+    float dutyL = (float)motorSpeedL / 255.0f;
+    float dutyR = (float)motorSpeedR / 255.0f;
+    if (auto* p = getPin("D5"))  { p->pwmDuty = dutyL; p->voltage = dutyL * 5.0f; }
+    if (auto* p = getPin("D6"))  { p->pwmDuty = dutyR; p->voltage = dutyR * 5.0f; }
+    if (auto* p = getPin("D9"))  { p->pwmDuty = baseAngleDeg / 180.0f; p->voltage = 5.0f; }
+    if (auto* p = getPin("D10")) { p->pwmDuty = elbowAngleDeg / 180.0f; p->voltage = 5.0f; }
+    if (auto* p = getPin("D11")) { p->pwmDuty = gripAngleDeg / 180.0f; p->voltage = 5.0f; }
+}
+
 void ArduinoUnoComp::updateFirmware(float dt, float measuredDistanceCm, bool& shouldGraspObject, bool& objectGrasped) {
     if (!isPowered) {
         motorSpeedL = motorSpeedR = 0;
         motorDirL = motorDirR = 0;
+        updateOutputPins();
         return;
     }
 
@@ -277,18 +302,7 @@ void ArduinoUnoComp::updateFirmware(float dt, float measuredDistanceCm, bool& sh
         }
     }
 
-    // Cập nhật chân điều khiển hướng động cơ L298N (IN1, IN2, IN3, IN4)
-    if (auto* p = getPin("D2"))  p->voltage = (motorDirL > 0) ? 5.0f : 0.0f; // IN1
-    if (auto* p = getPin("D4"))  p->voltage = (motorDirL < 0) ? 5.0f : 0.0f; // IN2
-    if (auto* p = getPin("D12")) p->voltage = (motorDirR > 0) ? 5.0f : 0.0f; // IN3
-    if (auto* p = getPin("D13")) p->voltage = (motorDirR < 0) ? 5.0f : 0.0f; // IN4
-
-    // Cập nhật giá trị ra các chân Pin PWM
-    if (auto* p = getPin("D5"))  { p->pwmDuty = (float)motorSpeedL / 255.0f; p->voltage = p->pwmDuty * 5.0f; }
-    if (auto* p = getPin("D6"))  { p->pwmDuty = (float)motorSpeedR / 255.0f; p->voltage = p->pwmDuty * 5.0f; }
-    if (auto* p = getPin("D9"))  { p->pwmDuty = baseAngleDeg / 180.0f; p->voltage = 5.0f; }
-    if (auto* p = getPin("D10")) { p->pwmDuty = elbowAngleDeg / 180.0f; p->voltage = 5.0f; }
-    if (auto* p = getPin("D11")) { p->pwmDuty = gripAngleDeg / 180.0f; p->voltage = 5.0f; }
+    updateOutputPins();
 }
 
 void ArduinoUnoComp::onElectricalUpdate() {
@@ -302,6 +316,9 @@ void ArduinoUnoComp::onElectricalUpdate() {
     if (out5v) {
         out5v->voltage = isPowered ? 5.0f : 0.0f;
     }
+
+    // Luôn cập nhật chân I/O và PWM theo trạng thái nguồn và tốc độ/hướng hiện tại
+    updateOutputPins();
 
     std::ostringstream ss;
     ss << (controlMode == RobotControlMode::MANUAL ? "THU CONG (Manual)" : "TU HANH GAP (Auto Grab)");

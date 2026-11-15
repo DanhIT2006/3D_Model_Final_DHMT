@@ -37,6 +37,7 @@ public:
     void resetAutoSequence();
 
     void updateFirmware(float dt, float measuredDistanceCm, bool& shouldGraspObject, bool& objectGrasped);
+    void updateOutputPins();
 
     virtual void onElectricalUpdate() override;
     virtual void renderPinsAndDetails() override;

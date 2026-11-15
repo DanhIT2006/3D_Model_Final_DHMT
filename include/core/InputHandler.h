@@ -10,6 +10,7 @@
 class InputHandler {
 public:
     std::map<unsigned char, bool> keyStates;
+    std::map<int, bool> specialKeyStates;
     bool wireframeMode = false;
 
 public:
