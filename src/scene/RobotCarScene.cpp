@@ -112,7 +112,7 @@ void RobotCarScene::initScene() {
 
     // 6. Canh tay robot 3 bac tu do co khi chuan (Base Yaw -> Twin-Boom Pitch -> Gear Gripper)
     compSrvBase = new ServoMG996RComp("SRV_BASE", "Khop De Xoay (Base Yaw)", ServoJointType::BASE_YAW);
-    compSrvBase->localPos = Vec3(0.0f, 0.35f, 4.60f);
+    compSrvBase->localPos = Vec3(0.0f, 0.35f, 6.20f);
     chassisFloor2->addChild(compSrvBase);
 
     compSrvElbow = new ServoMG996RComp("SRV_ELBOW", "Khop Khuyu Tay Doi (Twin-Boom Pitch)", ServoJointType::LINEAR_LIFT);
@@ -186,45 +186,18 @@ void RobotCarScene::updateArmAndGrasping(float dt) {
     if (!compSrvGrip || !targetObject) return;
 
     float yawDeg = compSrvBase ? (compSrvBase->currentAngleDeg - 90.0f) : 0.0f;
-    float liftProgress = compSrvElbow ? ((140.0f - compSrvElbow->currentAngleDeg) / 140.0f) : 0.0f;
-    if (liftProgress < 0.0f) liftProgress = 0.0f;
-    if (liftProgress > 1.0f) liftProgress = 1.0f;
+    float liftDeg = compSrvElbow ? compSrvElbow->currentAngleDeg : 0.0f;
 
-    float shoulderUpDeg = 58.0f - liftProgress * 30.0f;
-    float forearmDownDeg = 35.0f + liftProgress * 48.0f;
-
-    // Tọa độ mâm xoay trên sàn tầng 2 trong không gian thế giới (z = +4.60cm trên xe)
-    float totalYawRad = carYawRad + (yawDeg * 3.14159265f / 180.0f);
-    Vec3 basePos = carPosition + Vec3(4.60f * std::sin(carYawRad), 6.35f, 4.60f * std::cos(carYawRad));
-
-    const float L1 = 6.80f;
-    const float L2 = 6.50f;
-    const float L3 = 3.80f;
-
-    float radShoulder = shoulderUpDeg * 3.14159265f / 180.0f;
-    float dY1 = L1 * std::sin(radShoulder);
-    float dZ1 = L1 * std::cos(radShoulder);
-
-    float radForearmNet = (shoulderUpDeg - forearmDownDeg) * 3.14159265f / 180.0f;
-    float dY2 = L2 * std::sin(radForearmNet);
-    float dZ2 = L2 * std::cos(radForearmNet);
-
-    float radClaw = 35.0f * 3.14159265f / 180.0f;
-    float dY3 = -L3 * std::sin(radClaw);
-    float dZ3 =  L3 * std::cos(radClaw);
-
-    float horizDist = dZ1 + dZ2 + dZ3;
-    float gripY = std::max(1.5f, basePos.y + 3.00f + dY1 + dY2 + dY3);
-    float gripX = basePos.x + horizDist * std::sin(totalYawRad);
-    float gripZ = basePos.z + horizDist * std::cos(totalYawRad);
-
-    gripWorldPos = Vec3(gripX, gripY, gripZ);
+    // Tính tâm điểm kẹp thế giới chuẩn xác bằng hàm động học cánh tay (z_base = +6.20cm, floor2Height = 6.35cm)
+    gripWorldPos = RoboticArmRenderer::computeGripTipWorldPos(
+        carPosition, carYawRad, 6.35f, yawDeg, liftDeg
+    );
 
     bool shouldGrasp = false;
     float distToObj = gripWorldPos.distanceTo(targetObject->localPos);
     float measuredDist = distToObj;
 
-    // Cap nhat firmware Arduino
+    // Cập nhật firmware Arduino
     if (compArd) {
         compArd->updateFirmware(dt, measuredDist, shouldGrasp, isObjectGrasped);
 
@@ -234,11 +207,12 @@ void RobotCarScene::updateArmAndGrasping(float dt) {
     }
 
     float distXZ = std::hypot(gripWorldPos.x - targetObject->localPos.x, gripWorldPos.z - targetObject->localPos.z);
-    bool inGraspZone = (distXZ < 2.8f && std::abs(gripWorldPos.y - targetObject->localPos.y) < 2.5f);
+    float distY  = std::abs(gripWorldPos.y - targetObject->localPos.y);
+    bool inGraspZone = (distXZ <= 3.8f && distY <= 3.2f);
 
-    // Kiem tra dieu kien gap vat
+    // Kiểm tra điều kiện gắp vật
     if (!isObjectGrasped) {
-        if ((shouldGrasp || compSrvGrip->currentAngleDeg < 35.0f) && inGraspZone) {
+        if ((shouldGrasp || compSrvGrip->currentAngleDeg <= 35.0f) && inGraspZone) {
             isObjectGrasped = true;
         }
     }
@@ -248,7 +222,8 @@ void RobotCarScene::updateArmAndGrasping(float dt) {
             isObjectGrasped = false;
             targetObject->localPos.y = 1.6f;
         } else {
-            targetObject->localPos = gripWorldPos + Vec3(0.0f, -0.4f, 0.0f);
+            // Tự động căn tâm khối hàng vào giữa 2 má đệm cao su đỏ (Soft Magnetic Snap)
+            targetObject->localPos = gripWorldPos + Vec3(0.0f, -0.1f, 0.0f);
         }
     }
 }

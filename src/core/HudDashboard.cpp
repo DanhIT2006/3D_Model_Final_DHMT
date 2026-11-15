@@ -131,8 +131,8 @@ void HudDashboard::render(int screenW, int screenH, const RobotCarScene& scene, 
     // 3. Góc dưới-trái: Bảng chi tiết linh kiện được chọn (Component Inspector)
     renderComponentInspector(15, 15, 360, 230, scene);
 
-    // 4. Góc dưới-phải: Đồng hồ đo góc Servo & Dao động ký xung PWM (Oscilloscope)
-    renderOscilloscopeAndGauges(screenW - 350, 15, 335, 230, scene);
+    // 4. Góc dưới-phải: Bảng đồng hồ & dao động ký PWM đã được gỡ bỏ theo yêu cầu người dùng
+    // renderOscilloscopeAndGauges(screenW - 350, 15, 335, 230, scene);
 
     // 5. Bảng hướng dẫn phím tắt khi người dùng nhấn 'H'
     if (showHelp) {

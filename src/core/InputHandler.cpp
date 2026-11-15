@@ -201,10 +201,10 @@ void InputHandler::updateContinuousInput(float dt, RobotCarScene& scene) {
         scene.compArd->motorDirL = scene.compArd->motorDirR = 0;
     }
 
-    // Điều khiển cơ cấu nâng hạ thẳng đứng (I / K) và ngàm kẹp (O / P)
+    // Điều khiển cơ cấu nâng hạ cánh tay (I / K) và ngàm kẹp (O / P)
     float liftSpeed = 80.0f;
-    if (isDown('i')) scene.compArd->elbowAngleDeg = std::min(180.0f, scene.compArd->elbowAngleDeg + liftSpeed * dt);
-    if (isDown('k')) scene.compArd->elbowAngleDeg = std::max(0.0f,   scene.compArd->elbowAngleDeg - liftSpeed * dt);
+    if (isDown('i')) scene.compArd->elbowAngleDeg = std::min(90.0f, scene.compArd->elbowAngleDeg + liftSpeed * dt);
+    if (isDown('k')) scene.compArd->elbowAngleDeg = std::max(0.0f,  scene.compArd->elbowAngleDeg - liftSpeed * dt);
 
     if (isDown('j')) scene.compArd->baseAngleDeg  = std::min(180.0f, scene.compArd->baseAngleDeg + 50.0f * dt);
     if (isDown('l')) scene.compArd->baseAngleDeg  = std::max(0.0f,   scene.compArd->baseAngleDeg - 50.0f * dt);

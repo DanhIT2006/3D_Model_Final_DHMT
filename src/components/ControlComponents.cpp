@@ -254,14 +254,14 @@ void ArduinoUnoComp::updateFirmware(float dt, float measuredDistanceCm, bool& sh
 
         switch (autoSeqStep) {
             case 0: // Bước 0: Xe tiến lại gần vật thể
-                if (obstacleDistCm > 11.5f) {
+                if (obstacleDistCm > 5.0f) {
                     motorSpeedL = motorSpeedR = 150;
                     motorDirL = motorDirR = 1; // Chạy tiến
                     baseAngleDeg = 90.0f;
-                    elbowAngleDeg = 140.0f; // Bàn nâng ở vị trí cao khi chạy
+                    elbowAngleDeg = 90.0f; // Bàn nâng ở vị trí cao khi chạy
                     gripAngleDeg = 85.0f;  // Mở rộng ngàm sẵn
                 } else {
-                    // Đã tới cự ly chuẩn (~10-11 cm), phanh dừng xe
+                    // Đã tới cự ly chuẩn (~4.5 - 5.0 cm), phanh dừng xe
                     motorSpeedL = motorSpeedR = 0;
                     motorDirL = motorDirR = 0;
                     autoSeqStep = 1;
@@ -289,8 +289,8 @@ void ArduinoUnoComp::updateFirmware(float dt, float measuredDistanceCm, bool& sh
                 }
                 break;
 
-            case 3: // Bước 3: Nâng bàn nâng thẳng đứng lên cao mang theo vật thể
-                elbowAngleDeg = std::min(180.0f, elbowAngleDeg + 70.0f * dt);
+            case 3: // Bước 3: Nâng bàn nâng lên cao mang theo vật thể
+                elbowAngleDeg = std::min(90.0f, elbowAngleDeg + 70.0f * dt);
                 if (autoSeqTimer > 2.5f) {
                     autoSeqStep = 4;
                     autoSeqTimer = 0.0f;

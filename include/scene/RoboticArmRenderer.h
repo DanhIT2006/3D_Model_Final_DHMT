@@ -10,22 +10,21 @@ public:
     /**
      * @brief Vẽ Cánh tay Robot 2 khâu (Boom + Forearm) không đâm xuyên sàn Tầng 2 & vươn qua đầu HC-SR04
      * @param yawDeg Góc xoay mâm đế SRV_BASE (-90°..+90°)
-     * @param liftProgress Tiến trình hạ tay gắp: 0.0f (Nâng cao nghỉ) -> 1.0f (Vươn ra trước hạ xuống đất)
+     * @param liftDeg Góc nâng/hạ cánh tay: 0.0° (Hạ gắp sát đất) -> 90.0° (Nâng cao thu về)
      * @param gripOpenRatio Độ mở ngàm kẹp SRV_GRIP (0.0 = Đóng chặt, 1.0 = Mở rộng)
      */
     static void renderArmAssembly(
-        float yawDeg, float liftProgress, float gripOpenRatio,
+        float yawDeg, float liftDeg, float gripOpenRatio,
         bool isBaseSelected, bool isElbowSelected, bool isGripSelected)
     {
-        if (liftProgress < 0.0f) liftProgress = 0.0f;
-        if (liftProgress > 1.0f) liftProgress = 1.0f;
+        // t = 0.0f khi hạ thấp nhất để gắp (liftDeg = 0), t = 1.0f khi nâng cao tối đa (liftDeg = 90)
+        float t = std::max(0.0f, std::min(1.0f, liftDeg / 90.0f));
 
-        // Nội suy góc Khâu 1 (Vai - Shoulder Boom) và Khâu 2 (Khuỷu - Forearm):
-        // Khi nghỉ (liftProgress = 0.0): Khâu 1 dựng cao +58° lên trời, Khâu 2 gập nhẹ -35° giữ ngàm ở trên cao.
-        // Khi gắp (liftProgress = 1.0): Khâu 1 vươn về trước ở góc +28° (vẫn CAO HƠN sàn Tầng 2!),
-        // còn Khâu 2 ở đầu mút ngoài mũi xe mới chúc xuống -83° để đưa ngàm gắp xuống mặt sàn phía trước HC-SR04!
-        float shoulderUpDeg = 58.0f - liftProgress * 30.0f; // Luôn dương (+58° -> +28°), KHÔNG BAO GIỜ đâm xuống sàn!
-        float forearmDownDeg = 35.0f + liftProgress * 48.0f; // Quay chúc xuống tại đầu mút ngoài mũi xe
+        // Khi t = 0 (Hạ gắp): shoulderUp = 14 độ (vươn xa), forearmBend = 68 độ (hạ đúng tâm khối hàng y = 1.65cm)
+        // Khi t = 1 (Nâng cao): shoulderUp = 62 độ (nâng bổng lên cao), forearmBend = 32 độ
+        float shoulderUpDeg  = 14.0f + t * 48.0f;
+        float forearmBendDeg = 68.0f - t * 36.0f;
+        float pitchDownDeg   = forearmBendDeg - shoulderUpDeg;
 
         glPushMatrix();
 
@@ -71,12 +70,12 @@ public:
         glTranslatef(0.0f, 3.00f, 0.0f);
 
         // --------------------------------------------------------------------
-        // KHÂU 1 (BOOM ARM - Dài L1 = 6.8 cm):
+        // KHÂU 1 (BOOM ARM - Dài L1 = 8.20 cm):
         // Dùng -shoulderUpDeg để vươn LÊN TRÊN (+Y) và RA TRƯỚC (+Z)
         // --------------------------------------------------------------------
         glRotatef(-shoulderUpDeg, 1.0f, 0.0f, 0.0f);
 
-        const float L1 = 6.80f;
+        const float L1 = 8.20f;
         // Vẽ 2 thanh dầm hợp kim song song (Twin-Boom CNC Links)
         for (float side : {-1.10f, +1.10f}) {
             glPushMatrix();
@@ -95,12 +94,12 @@ public:
         glTranslatef(0.0f, 0.0f, L1);
 
         // --------------------------------------------------------------------
-        // KHÂU 2 (FOREARM + SRV_ELBOW - Dài L2 = 6.5 cm):
+        // KHÂU 2 (FOREARM + SRV_ELBOW - Dài L2 = 8.60 cm):
         // Từ trên cao chúc xuống vượt qua đầu HC-SR04 tới điểm gắp
         // --------------------------------------------------------------------
-        glRotatef(+forearmDownDeg, 1.0f, 0.0f, 0.0f);
+        glRotatef(+forearmBendDeg, 1.0f, 0.0f, 0.0f);
 
-        const float L2 = 6.50f;
+        const float L2 = 8.60f;
         for (float side : {-0.85f, +0.85f}) {
             glPushMatrix();
             glTranslatef(side, 0.0f, L2 * 0.5f);
@@ -114,9 +113,8 @@ public:
         // ====================================================================
         // KHỚP 3: CỔ TAY & NGÀM GẮP BÁNH RĂNG ĐỐI XỨNG (SRV_GRIP)
         // ====================================================================
-        // Giữ cho cụm cổ tay và 2 ngón kẹp hướng nghiêng 35 độ so với phương ngang
-        float netAngle = -shoulderUpDeg + forearmDownDeg;
-        glRotatef(35.0f - netAngle, 1.0f, 0.0f, 0.0f);
+        // Góc bù cổ tay: Giữ cho 2 ngón kẹp nghiêng nhẹ -25.0 độ hướng về phía trước
+        glRotatef(25.0f - pitchDownDeg, 1.0f, 0.0f, 0.0f);
 
         // 3.1. Khung gá cổ tay & Thân Servo kẹp SRV_GRIP
         glPushMatrix();
@@ -166,22 +164,71 @@ public:
     }
 
     /**
+     * @brief Hàm tính chính xác tọa độ 3D của Tâm Điểm Kẹp (Giữa 2 miếng đệm đỏ của ngàm gắp)
+     * Đồng bộ tuyệt đối với các lệnh glTranslatef / glRotatef trong renderArmAssembly
+     */
+    static Vec3 computeGripTipWorldPos(
+        const Vec3& carWorldPos, float carYawRad,
+        float floor2Height,      // Độ cao mặt sàn Tầng 2 (6.35f cm)
+        float baseYawDeg,        // Góc xoay đế SRV_BASE (0 độ khi nhìn thẳng)
+        float liftDeg)           // Góc nâng trên đồng hồ LIFT (0..90 độ, 0 = Hạ thấp nhất để gắp)
+    {
+        float t = std::max(0.0f, std::min(1.0f, liftDeg / 90.0f));
+
+        // Góc khớp đã tối ưu tầm vươn xa (z ≈ 18.2cm) và hạ sát tâm khối hàng (y ≈ 1.65cm) khi liftDeg = 0
+        float shoulderUpDeg  = 14.0f + t * 48.0f;
+        float forearmBendDeg = 68.0f - t * 36.0f;
+
+        const float baseLocalZ = 6.20f; // Đế xoay đặt tiến về mũi Sàn Tầng 2
+        const float baseTowerY = 3.00f; // Chiều cao chốt khớp Vai trên mặt Sàn Tầng 2
+        const float L1         = 8.20f; // Chiều dài Khâu 1 (Thanh xám)
+        const float L2         = 8.60f; // Chiều dài Khâu 2 (Thanh vàng)
+        const float clawReach  = 2.65f; // Khoảng cách từ cổ tay tới tâm 2 miếng đệm cao su đỏ
+
+        float sRad = shoulderUpDeg * 3.14159265f / 180.0f;
+        // Góc tổng của Khâu 2 so với phương ngang (chúc xuống mặt đất một góc pitchDownRad)
+        float pitchDownDeg = forearmBendDeg - shoulderUpDeg;
+        float fRad = pitchDownDeg * 3.14159265f / 180.0f;
+        // Góc nghiêng của bàn kẹp (chúc nhẹ 25 độ về phía trước)
+        float cRad = 25.0f * 3.14159265f / 180.0f;
+
+        // 1. Tính tầm vươn dọc theo mặt phẳng cánh tay (forwardDist, heightY)
+        float forwardFromBase = L1 * std::cos(sRad) + L2 * std::cos(fRad) + clawReach * std::cos(cRad);
+        float localY = floor2Height + baseTowerY
+                     + L1 * std::sin(sRad)
+                     - L2 * std::sin(fRad)
+                     - clawReach * std::sin(cRad);
+
+        // 2. Xoay theo góc Yaw của đế SRV_BASE
+        float bYawRad = baseYawDeg * 3.14159265f / 180.0f;
+        float carLocalX = std::sin(bYawRad) * forwardFromBase;
+        float carLocalZ = baseLocalZ + std::cos(bYawRad) * forwardFromBase;
+
+        // 3. Chuyển từ hệ tọa độ cục bộ của xe sang hệ tọa độ Thế giới (World Space)
+        Vec3 worldGrip;
+        worldGrip.x = carWorldPos.x + carLocalX * std::cos(carYawRad) + carLocalZ * std::sin(carYawRad);
+        worldGrip.y = carWorldPos.y + std::max(0.85f, localY); // Không bao giờ chạm xuyên mặt đất
+        worldGrip.z = carWorldPos.z - carLocalX * std::sin(carYawRad) + carLocalZ * std::cos(carYawRad);
+        return worldGrip;
+    }
+
+    /**
      * @brief Vẽ Vòng tròn Tâm Ngắm Chiếu Xuống Sàn (Drop-Target Reticle)
      */
     static void renderDropTargetReticle(const Vec3& gripWorldPos, const Vec3& targetCargoPos, bool isGrasped) {
         if (isGrasped) return;
 
-        float dist3D = gripWorldPos.distanceTo(targetCargoPos);
         float distXZ = std::hypot(gripWorldPos.x - targetCargoPos.x, gripWorldPos.z - targetCargoPos.z);
+        float distY  = std::abs(gripWorldPos.y - targetCargoPos.y);
 
         Vec3 reticleColor;
         float ringRadius = 2.4f;
-        if (dist3D < 3.2f) {
-            reticleColor = Vec3(0.2f, 1.0f, 0.3f); // Xanh lá cây sáng (Vùng gắp lý tưởng!)
-            ringRadius = 1.8f;
-        } else if (distXZ < 2.5f) {
-            reticleColor = Vec3(1.0f, 0.65f, 0.1f); // Vàng cam (Đã căn chuẩn tâm XZ)
-            ringRadius = 2.1f;
+        if (distXZ <= 3.8f && distY <= 3.2f) {
+            reticleColor = Vec3(0.15f, 1.0f, 0.35f); // Xanh lá cây sáng (RGB: 0.15, 1.0, 0.35 - Vùng gắp lý tưởng!)
+            ringRadius = 1.9f;
+        } else if (distXZ <= 5.5f) {
+            reticleColor = Vec3(1.0f, 0.65f, 0.1f);  // Vàng cam (Đang tiến gần)
+            ringRadius = 2.2f;
         } else {
             reticleColor = Vec3(0.15f, 0.65f, 1.0f); // Xanh dương (Còn ở xa)
             ringRadius = 2.6f;
@@ -190,19 +237,19 @@ public:
         glDisable(GL_LIGHTING);
         glLineWidth(2.0f);
 
-        // 1. Đường dọi thẳng đứng từ ngàm kẹp xuống sàn y = 0.05f
+        // 1. Đường dọi thẳng đứng từ ngàm kẹp xuống sàn y = 0.02f
         glColor3f(reticleColor.x, reticleColor.y, reticleColor.z);
         glEnable(GL_LINE_STIPPLE);
         glLineStipple(2, 0xAAAA); // Nét đứt
         glBegin(GL_LINES);
         glVertex3f(gripWorldPos.x, gripWorldPos.y, gripWorldPos.z);
-        glVertex3f(gripWorldPos.x, 0.05f, gripWorldPos.z);
+        glVertex3f(gripWorldPos.x, 0.02f, gripWorldPos.z);
         glEnd();
         glDisable(GL_LINE_STIPPLE);
 
         // 2. Vòng tròn tâm ngắm trên mặt sàn
         glPushMatrix();
-        glTranslatef(gripWorldPos.x, 0.05f, gripWorldPos.z);
+        glTranslatef(gripWorldPos.x, 0.02f, gripWorldPos.z);
 
         // Vòng ngoài
         glBegin(GL_LINE_LOOP);
