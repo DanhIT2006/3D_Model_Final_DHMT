@@ -1,4 +1,5 @@
 #include "scene/RobotCarScene.h"
+#include "scene/RoboticArmRenderer.h"
 #include <GL/freeglut.h>
 #include <cmath>
 #include <iostream>
@@ -90,7 +91,9 @@ void RobotCarScene::initScene() {
     compBuck->localPos = Vec3(3.0f, 0.7f, -7.0f);
     chassisFloor1->addChild(compBuck);
 
-    compHcsr04 = nullptr;
+    compHcsr04 = new UltrasonicComp();
+    compHcsr04->localPos = Vec3(0.0f, 1.2f, 12.8f);
+    chassisFloor1->addChild(compHcsr04);
 
     // 4. San Tang 2 (Chassis Floor 2) cach Tang 1 delta Y = 6.0 cm
     chassisFloor2 = new SceneNode("FLOOR_2", "San Khung Gam Tang 2");
@@ -107,23 +110,23 @@ void RobotCarScene::initScene() {
     compBatSw->localPos = Vec3(0.0f, 1.1f, -8.5f);
     chassisFloor2->addChild(compBatSw);
 
-    // 6. Co cau nang ha thang dung va tay gap AGV (Linear Elevator Gripper)
-    compSrvBase = new ServoMG996RComp("SRV_BASE", "Tru Ray Dan Huong AGV", ServoJointType::BASE_YAW);
-    compSrvBase->localPos = Vec3(0.0f, 0.0f, 11.5f);
-    chassisFloor1->addChild(compSrvBase);
+    // 6. Canh tay robot 3 bac tu do co khi chuan (Base Yaw -> Twin-Boom Pitch -> Gear Gripper)
+    compSrvBase = new ServoMG996RComp("SRV_BASE", "Khop De Xoay (Base Yaw)", ServoJointType::BASE_YAW);
+    compSrvBase->localPos = Vec3(0.0f, 0.35f, 7.5f);
+    chassisFloor2->addChild(compSrvBase);
 
-    compSrvElbow = new ServoMG996RComp("SRV_ELBOW", "Ban Truot Nang Ha (Linear Lift)", ServoJointType::LINEAR_LIFT);
-    compSrvElbow->localPos = Vec3(0.0f, 1.5f, 0.0f);
+    compSrvElbow = new ServoMG996RComp("SRV_ELBOW", "Khop Khuyu Tay Doi (Twin-Boom Pitch)", ServoJointType::LINEAR_LIFT);
+    compSrvElbow->localPos = Vec3(0.0f, 0.0f, 0.0f);
     compSrvBase->addChild(compSrvElbow);
 
-    compSrvGrip = new ServoMG996RComp("SRV_GRIP", "Cum Ngam Kep Gap Do Vat", ServoJointType::GRIPPER);
-    compSrvGrip->localPos = Vec3(0.0f, 0.0f, 1.4f);
+    compSrvGrip = new ServoMG996RComp("SRV_GRIP", "Cum Ngam Kep Banh Rang (Gripper)", ServoJointType::GRIPPER);
+    compSrvGrip->localPos = Vec3(0.0f, 0.0f, 0.0f);
     compSrvElbow->addChild(compSrvGrip);
 
-    // 7. Khoi vat the mau can gap
+    // 7. Khoi vat the mau can gap (Target Cargo Crate)
     targetObject = new SceneNode("TARGET_OBJ", "Vat The Can Gap");
     targetObject->localPos = initialObjectPos;
-    targetObject->mesh = Mesh3D::createBox(3.2f, 3.0f, 3.2f, Vec3(0.95f, 0.35f, 0.1f));
+    targetObject->mesh = Mesh3D::createBox(3.4f, 3.2f, 3.4f, Vec3(0.95f, 0.40f, 0.12f));
 
     // 8. Dang ky toan bo cac linh kien vao bo giai mach dien CircuitSimulator
     circuit.registerComponent(compBatSw);
@@ -131,6 +134,7 @@ void RobotCarScene::initScene() {
     circuit.registerComponent(compBuck);
     circuit.registerComponent(compArd);
     circuit.registerComponent(compL298N);
+    circuit.registerComponent(compHcsr04);
     circuit.registerComponent(compMotFL);
     circuit.registerComponent(compMotRL);
     circuit.registerComponent(compMotFR);
@@ -179,12 +183,33 @@ void RobotCarScene::updateDifferentialDrive(float dt) {
 void RobotCarScene::updateArmAndGrasping(float dt) {
     if (!compSrvGrip || !targetObject) return;
 
-    Mat4 gripWorldM = compSrvGrip->getWorldMatrix();
-    // Vi tri tam diem kep ngam trong khong gian the gioi (Z = 3.4cm trong he toa do ngam)
-    Vec3 gripWorldPos = gripWorldM.transformPoint(Vec3(0.0f, 0.0f, 3.4f));
+    float yawDeg = compSrvBase ? (compSrvBase->currentAngleDeg - 90.0f) : 0.0f;
+    float pitchDeg = compSrvElbow ? ((140.0f - compSrvElbow->currentAngleDeg) * 0.55f) : 0.0f;
+    if (pitchDeg < 0.0f) pitchDeg = 0.0f;
+    if (pitchDeg > 80.0f) pitchDeg = 80.0f;
+
+    // Tọa độ mâm xoay trên sàn tầng 2 trong không gian thế giới
+    float totalYawRad = carYawRad + (yawDeg * 3.14159265f / 180.0f);
+    Vec3 basePos = carPosition + Vec3(7.5f * std::sin(carYawRad), 6.35f, 7.5f * std::cos(carYawRad));
+
+    float pitchRad = pitchDeg * 3.14159265f / 180.0f;
+    float L_arm = 8.20f;
+    float dY1 = -L_arm * std::sin(pitchRad);
+    float dZ1 =  L_arm * std::cos(pitchRad);
+
+    float wristPitchRad = pitchRad * 0.35f;
+    float L_claw = 4.20f;
+    float dY2 = -L_claw * std::sin(wristPitchRad);
+    float dZ2 =  L_claw * std::cos(wristPitchRad);
+
+    float horizDist = dZ1 + dZ2;
+    float gripY = std::max(1.5f, 10.65f + dY1 + dY2);
+    float gripX = basePos.x + horizDist * std::sin(totalYawRad);
+    float gripZ = basePos.z + horizDist * std::cos(totalYawRad);
+
+    gripWorldPos = Vec3(gripX, gripY, gripZ);
 
     bool shouldGrasp = false;
-    // Cu ly truc tiep tu mui xe / ngam kep toi vat the mau
     float distToObj = gripWorldPos.distanceTo(targetObject->localPos);
     float measuredDist = distToObj;
 
@@ -192,29 +217,27 @@ void RobotCarScene::updateArmAndGrasping(float dt) {
     if (compArd) {
         compArd->updateFirmware(dt, measuredDist, shouldGrasp, isObjectGrasped);
 
-        // Truyen goc dieu khien sang cac servo
         if (compSrvBase)  compSrvBase->setTargetAngle(compArd->baseAngleDeg);
         if (compSrvElbow) compSrvElbow->setTargetAngle(compArd->elbowAngleDeg);
         if (compSrvGrip)  compSrvGrip->setTargetAngle(compArd->gripAngleDeg);
     }
 
+    float distXZ = std::hypot(gripWorldPos.x - targetObject->localPos.x, gripWorldPos.z - targetObject->localPos.z);
+    bool inGraspZone = (distXZ < 2.8f && std::abs(gripWorldPos.y - targetObject->localPos.y) < 2.5f);
+
     // Kiem tra dieu kien gap vat
     if (!isObjectGrasped) {
-        // Nếu ngàm đóng lại (góc < 25 độ) và cự ly ngàm tới vật thể < 4.2 cm -> Kẹp dính vật thể!
-        if ((shouldGrasp || compSrvGrip->currentAngleDeg < 25.0f) && distToObj < 4.2f) {
+        if ((shouldGrasp || compSrvGrip->currentAngleDeg < 35.0f) && inGraspZone) {
             isObjectGrasped = true;
         }
     }
 
     if (isObjectGrasped) {
-        // Khi đã kẹp, vật thể di chuyển hoàn toàn đồng bộ theo ngàm kẹp
         if (compSrvGrip->currentAngleDeg > 55.0f) {
-            // Người dùng hoặc máy mở ngàm ra -> nhả vật thể rơi xuống mặt sàn
             isObjectGrasped = false;
-            targetObject->localPos.y = 1.5f; // Đặt nằm trên mặt sàn
+            targetObject->localPos.y = 1.6f;
         } else {
-            // Vật thể bám theo tâm ngàm
-            targetObject->localPos = gripWorldPos;
+            targetObject->localPos = gripWorldPos + Vec3(0.0f, -0.4f, 0.0f);
         }
     }
 }
@@ -271,8 +294,9 @@ void RobotCarScene::render(bool wireframeMode) {
     // 3. Vẽ các đường dây điện 3D
     circuit.render3DWires();
 
-    // 4. Vẽ vật thể cần gắp
-    targetObject->render(wireframeMode);
+    // 4. Vẽ vật thể cần gắp & Vòng tròn tâm ngắm chiếu xuống sàn
+    RoboticArmRenderer::renderCargoCrate(targetObject->localPos, 3.4f, 3.2f, 3.4f, isObjectGrasped);
+    RoboticArmRenderer::renderDropTargetReticle(gripWorldPos, targetObject->localPos, isObjectGrasped);
 
     // 5. Vẽ tia phát sóng siêu âm HC-SR04 trực quan
     if (compHcsr04 && compHcsr04->isPowered) {
@@ -344,21 +368,44 @@ void RobotCarScene::exitWorkbench() {
 void RobotCarScene::renderWorkbenchScene(bool wireframeMode) {
     glDisable(GL_LIGHTING);
 
-    // 1. Mâm xoay kỹ thuật CAD (Precision Turntable)
-    glLineWidth(1.2f);
-    // Vòng tròn đồng tâm
-    for (float r : {2.0f, 4.0f, 6.0f, 8.0f}) {
-        glColor3f(0.18f, 0.35f, 0.48f);
+    // 1. Dia xoay ky thuat ban trong suot (Holo-Turntable Grid)
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glColor4f(0.04f, 0.12f, 0.22f, 0.35f);
+    glBegin(GL_TRIANGLE_FAN);
+    glVertex3f(0.0f, -0.01f, 0.0f);
+    for (int i = 0; i <= 64; ++i) {
+        float a = i * 2.0f * 3.14159265f / 64.0f;
+        glVertex3f(8.8f * std::cos(a), -0.01f, 8.8f * std::sin(a));
+    }
+    glEnd();
+    glDisable(GL_BLEND);
+
+    // Vong tron dong tam
+    glLineWidth(1.4f);
+    for (float r : {2.0f, 4.0f, 6.0f, 8.5f}) {
+        glColor3f(0.18f, 0.45f, 0.68f);
         glBegin(GL_LINE_LOOP);
-        for (int i = 0; i < 48; ++i) {
-            float a = i * 2.0f * 3.14159265f / 48.0f;
+        for (int i = 0; i < 64; ++i) {
+            float a = i * 2.0f * 3.14159265f / 64.0f;
             glVertex3f(r * std::cos(a), 0.0f, r * std::sin(a));
         }
         glEnd();
     }
 
-    // Các nan hoa chia độ 45 độ
-    glColor3f(0.15f, 0.25f, 0.35f);
+    // Vach chia do tren vanh ngoai R = 8.5cm (0 - 360 do)
+    glColor3f(0.20f, 0.65f, 0.85f);
+    glBegin(GL_LINES);
+    for (int deg = 0; deg < 360; deg += 5) {
+        float rad = deg * 3.14159265f / 180.0f;
+        float rInner = (deg % 30 == 0) ? 7.8f : ((deg % 15 == 0) ? 8.05f : 8.25f);
+        glVertex3f(rInner * std::cos(rad), 0.0f, rInner * std::sin(rad));
+        glVertex3f(8.5f   * std::cos(rad), 0.0f, 8.5f   * std::sin(rad));
+    }
+    glEnd();
+
+    // Cac nan hoa huong tam 45 do
+    glColor3f(0.14f, 0.30f, 0.42f);
     glBegin(GL_LINES);
     for (int i = 0; i < 8; ++i) {
         float a = i * 2.0f * 3.14159265f / 8.0f;
@@ -367,8 +414,9 @@ void RobotCarScene::renderWorkbenchScene(bool wireframeMode) {
     }
     glEnd();
 
-    // Lưới ô vuông kỹ thuật (Grid 14x14 cm)
-    glColor3f(0.12f, 0.16f, 0.22f);
+    // Luoi vuong ky thuat ti le 1.0cm (-7cm den +7cm)
+    glColor3f(0.10f, 0.22f, 0.32f);
+    glLineWidth(1.0f);
     glBegin(GL_LINES);
     for (float v = -7.0f; v <= 7.0f; v += 1.0f) {
         glVertex3f(v, 0.0f, -7.0f);
@@ -378,29 +426,26 @@ void RobotCarScene::renderWorkbenchScene(bool wireframeMode) {
     }
     glEnd();
 
-    // 2. Hệ trục tọa độ 3D (RGB Axes)
+    // 2. He truc toa do 3D (RGB Axes)
     glLineWidth(2.5f);
     glBegin(GL_LINES);
-    // Trục X (Đỏ)
+    // Truc X (Do)
     glColor3f(1.0f, 0.2f, 0.2f);
-    glVertex3f(-6.0f, 0.05f, 6.0f);
-    glVertex3f(-4.5f, 0.05f, 6.0f);
-    // Trục Y (Xanh lá)
+    glVertex3f(-6.0f, 0.05f, 6.0f); glVertex3f(-4.5f, 0.05f, 6.0f);
+    // Truc Y (Xanh la)
     glColor3f(0.2f, 1.0f, 0.2f);
-    glVertex3f(-6.0f, 0.05f, 6.0f);
-    glVertex3f(-6.0f, 1.55f, 6.0f);
-    // Trục Z (Xanh dương)
+    glVertex3f(-6.0f, 0.05f, 6.0f); glVertex3f(-6.0f, 1.55f, 6.0f);
+    // Truc Z (Xanh duong)
     glColor3f(0.2f, 0.5f, 1.0f);
-    glVertex3f(-6.0f, 0.05f, 6.0f);
-    glVertex3f(-6.0f, 0.05f, 4.5f);
+    glVertex3f(-6.0f, 0.05f, 6.0f); glVertex3f(-6.0f, 0.05f, 4.5f);
     glEnd();
     glLineWidth(1.0f);
 
     glEnable(GL_LIGHTING);
 
-    // 3. Kết xuất linh kiện được cô lập
+    // 3. Ket xuat linh kien duoc co lap
     if (inspectedComponent) {
-        inspectedComponent->renderWorkbench(wireframeMode);
+        inspectedComponent->renderWorkbench(wireframeMode, isXrayMode);
     }
 }
 

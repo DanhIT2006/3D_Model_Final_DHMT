@@ -43,6 +43,7 @@ public:
     // Vật thể mẫu để gắp (Target Object)
     SceneNode* targetObject = nullptr;
     bool isObjectGrasped = false;
+    Vec3 gripWorldPos = Vec3(0.0f, 2.5f, 16.0f);
     Vec3 initialObjectPos = Vec3(0.0f, 1.5f, 38.0f);
 
     // Thông số động học xe vi sai (Differential Drive Kinematics)
@@ -58,6 +59,7 @@ public:
 
     // Chế độ quan sát vi mô (Micro-Component Workbench Inspection Mode)
     bool isWorkbenchMode = false;
+    bool isXrayMode = false; // Chế độ X-Ray bo mạch (Phím X)
     HardwareComponent* inspectedComponent = nullptr;
 
 public:

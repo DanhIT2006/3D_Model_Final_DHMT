@@ -70,4 +70,6 @@ public:
     void updateMotion(float dt);
     virtual void onElectricalUpdate() override;
     virtual void render(bool wireframeMode) override;
+    virtual void renderPinsAndDetails() override;
+    virtual void initSubComponents() override;
 };

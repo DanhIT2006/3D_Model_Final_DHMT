@@ -69,6 +69,12 @@ void CircuitSimulator::setupStandardCarCircuit() {
     addWire("W_ARD_IN4", "ARD", "D13", "L298N", "IN4", blueSig);
     addWire("W_ARD_ENB", "ARD", "D6",  "L298N", "ENB", yellowPWM);
 
+    // 7. Tuyến cảm biến siêu âm HC-SR04
+    addWire("W_ARD_HCSR04_VCC",  "ARD", "5V",  "HCSR04", "VCC",  orange5V);
+    addWire("W_ARD_HCSR04_GND",  "ARD", "GND", "HCSR04", "GND",  blackGND);
+    addWire("W_ARD_HCSR04_TRIG", "ARD", "D7",  "HCSR04", "TRIG", blueSig);
+    addWire("W_ARD_HCSR04_ECHO", "ARD", "D8",  "HCSR04", "ECHO", blueSig);
+
     // 8. Tuyến công suất động cơ L298N -> MOT_L, MOT_R
     addWire("W_L298N_MOTL_A", "L298N", "OUT1", "MOT_L", "A", blueSig);
     addWire("W_L298N_MOTL_B", "L298N", "OUT2", "MOT_L", "B", blueSig);

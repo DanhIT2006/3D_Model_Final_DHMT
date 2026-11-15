@@ -1,4 +1,5 @@
 #include "core/HudDashboard.h"
+#include "scene/RoboticArmRenderer.h"
 #include <GL/freeglut.h>
 #include <cmath>
 #include <sstream>
@@ -35,6 +36,62 @@ void HudDashboard::render(int screenW, int screenH, const RobotCarScene& scene, 
     glGetDoublev(GL_MODELVIEW_MATRIX, lastModelView);
     glGetDoublev(GL_PROJECTION_MATRIX, lastProjection);
     glGetIntegerv(GL_VIEWPORT, lastViewport);
+
+    int pipW = 230;
+    int pipH = 165;
+    int pipX = screenW - pipW - 15;
+    int pipY = screenH - pipH - 55;
+
+    // KET XUAT CAMERA CAN CANH NGAM GAP (PiP CLAW-EYE VIEWPORT)
+    if (!scene.isWorkbenchMode && showClawCam) {
+        glViewport(pipX, pipY, pipW, pipH);
+        glEnable(GL_SCISSOR_TEST);
+        glScissor(pipX, pipY, pipW, pipH);
+        glClear(GL_DEPTH_BUFFER_BIT);
+
+        glMatrixMode(GL_PROJECTION);
+        glPushMatrix();
+        glLoadIdentity();
+        gluPerspective(48.0, (double)pipW / (double)pipH, 0.5, 300.0);
+
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+        glLoadIdentity();
+
+        float yawDeg = scene.compSrvBase ? (scene.compSrvBase->currentAngleDeg - 90.0f) : 0.0f;
+        float totalYawRad = scene.carYawRad + (yawDeg * 3.14159265f / 180.0f);
+        Vec3 gripPt = scene.gripWorldPos;
+        Vec3 eyePt = gripPt + Vec3(-3.0f * std::sin(totalYawRad), 7.5f, -3.0f * std::cos(totalYawRad));
+        Vec3 targetPt = gripPt + Vec3(1.5f * std::sin(totalYawRad), -1.2f, 1.5f * std::cos(totalYawRad));
+
+        gluLookAt(eyePt.x, eyePt.y, eyePt.z, targetPt.x, targetPt.y, targetPt.z, 0, 1, 0);
+
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_LIGHTING);
+
+        // San phu
+        glColor3f(0.18f, 0.20f, 0.24f);
+        glBegin(GL_LINES);
+        for (float g = -15.0f; g <= 15.0f; g += 3.0f) {
+            glVertex3f(targetPt.x + g, -3.3f, targetPt.z - 15.0f);
+            glVertex3f(targetPt.x + g, -3.3f, targetPt.z + 15.0f);
+            glVertex3f(targetPt.x - 15.0f, -3.3f, targetPt.z + g);
+            glVertex3f(targetPt.x + 15.0f, -3.3f, targetPt.z + g);
+        }
+        glEnd();
+
+        const_cast<RobotCarScene&>(scene).carRoot->render(false);
+        RoboticArmRenderer::renderCargoCrate(scene.targetObject->localPos, 3.4f, 3.2f, 3.4f, scene.isObjectGrasped);
+        RoboticArmRenderer::renderDropTargetReticle(scene.gripWorldPos, scene.targetObject->localPos, scene.isObjectGrasped);
+
+        glDisable(GL_LIGHTING);
+        glDisable(GL_SCISSOR_TEST);
+
+        glMatrixMode(GL_PROJECTION); glPopMatrix();
+        glMatrixMode(GL_MODELVIEW); glPopMatrix();
+
+        glViewport(0, 0, screenW, screenH);
+    }
 
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
@@ -82,7 +139,46 @@ void HudDashboard::render(int screenW, int screenH, const RobotCarScene& scene, 
         renderHelpDialog(screenW, screenH);
     }
 
-    // 6. Gợi ý phím tắt nhanh ở góc trên phải
+    // 6. Khung vien cong nghe cao cho PiP Claw Cam tren 2D HUD
+    if (!scene.isWorkbenchMode && showClawCam) {
+        Raster2D::drawLineBresenham(pipX, pipY, pipX + pipW, pipY, Vec3(0.0f, 0.7f, 0.95f));
+        Raster2D::drawLineBresenham(pipX + pipW, pipY, pipX + pipW, pipY + pipH, Vec3(0.0f, 0.7f, 0.95f));
+        Raster2D::drawLineBresenham(pipX + pipW, pipY + pipH, pipX, pipY + pipH, Vec3(0.0f, 0.7f, 0.95f));
+        Raster2D::drawLineBresenham(pipX, pipY + pipH, pipX, pipY, Vec3(0.0f, 0.7f, 0.95f));
+
+        int cornerLen = 12;
+        Raster2D::drawLineBresenham(pipX, pipY, pipX + cornerLen, pipY, Vec3(1.0f, 0.85f, 0.2f));
+        Raster2D::drawLineBresenham(pipX, pipY, pipX, pipY + cornerLen, Vec3(1.0f, 0.85f, 0.2f));
+        Raster2D::drawLineBresenham(pipX + pipW, pipY, pipX + pipW - cornerLen, pipY, Vec3(1.0f, 0.85f, 0.2f));
+        Raster2D::drawLineBresenham(pipX + pipW, pipY, pipX + pipW, pipY + cornerLen, Vec3(1.0f, 0.85f, 0.2f));
+        Raster2D::drawLineBresenham(pipX, pipY + pipH, pipX + cornerLen, pipY + pipH, Vec3(1.0f, 0.85f, 0.2f));
+        Raster2D::drawLineBresenham(pipX, pipY + pipH, pipX, pipY + pipH - cornerLen, Vec3(1.0f, 0.85f, 0.2f));
+        Raster2D::drawLineBresenham(pipX + pipW, pipY + pipH, pipX + pipW - cornerLen, pipY + pipH, Vec3(1.0f, 0.85f, 0.2f));
+        Raster2D::drawLineBresenham(pipX + pipW, pipY + pipH, pipX + pipW, pipY + pipH - cornerLen, Vec3(1.0f, 0.85f, 0.2f));
+
+        int midX = pipX + pipW / 2;
+        int midY = pipY + pipH / 2;
+        Raster2D::drawCircleMidpoint(midX, midY, 6, Vec3(0.0f, 1.0f, 0.8f));
+        Raster2D::drawLineBresenham(midX - 10, midY, midX - 6, midY, Vec3(0.0f, 1.0f, 0.8f));
+        Raster2D::drawLineBresenham(midX + 6, midY, midX + 10, midY, Vec3(0.0f, 1.0f, 0.8f));
+        Raster2D::drawLineBresenham(midX, midY - 10, midX, midY - 6, Vec3(0.0f, 1.0f, 0.8f));
+        Raster2D::drawLineBresenham(midX, midY + 6, midX, midY + 10, Vec3(0.0f, 1.0f, 0.8f));
+
+        Raster2D::fillRect(pipX + 2, pipY + pipH - 22, pipW - 4, 20, Vec3(0.06f, 0.10f, 0.16f));
+        FontRenderer::drawText2DWithShadow(pipX + 8, pipY + pipH - 16, "CAM NGAN GAP (PIP) [C]", Vec3(0.0f, 0.9f, 1.0f), FontRenderer::SMALL);
+
+        float d = scene.gripWorldPos.distanceTo(scene.targetObject->localPos);
+        if (scene.isObjectGrasped) {
+            FontRenderer::drawText2DWithShadow(pipX + 8, pipY + 8, "[DA KEP DONG BO]", Vec3(0.2f, 1.0f, 0.4f), FontRenderer::SMALL);
+        } else if (d < 3.2f) {
+            FontRenderer::drawText2DWithShadow(pipX + 8, pipY + 8, "[READY TO GRAB - BAM G]", Vec3(0.2f, 1.0f, 0.3f), FontRenderer::SMALL);
+        } else {
+            std::string dStr = "Cu ly: " + std::to_string((int)d) + "cm";
+            FontRenderer::drawText2DWithShadow(pipX + 8, pipY + 8, dStr, Vec3(1.0f, 0.85f, 0.2f), FontRenderer::SMALL);
+        }
+    }
+
+    // 7. Gợi ý phím tắt nhanh ở góc trên phải
     FontRenderer::drawText2DWithShadow(screenW - 220, screenH - 55, "Nhan [H]: Xem phim tat", Vec3(0.9f, 0.9f, 0.2f), FontRenderer::NORMAL);
 
     glDisable(GL_BLEND);
@@ -398,6 +494,7 @@ void HudDashboard::renderWorkbenchHUD(int screenW, int screenH, RobotCarScene& s
 
     std::string titleStr = "CHE DO CO LAP LINH KIEN: " + comp->name + " [" + comp->code + "]";
     FontRenderer::drawText2DWithShadow(25, screenH - 26, titleStr, Vec3(0.0f, 0.9f, 1.0f), FontRenderer::NORMAL);
+    FontRenderer::drawText2DWithShadow(screenW - 550, screenH - 26, "[X] X-RAY PCB: " + std::string(scene.isXrayMode ? "DANG BAT (ALPHA 0.30)" : "DANG TAT"), scene.isXrayMode ? Vec3(0.2f, 1.0f, 0.4f) : Vec3(0.6f, 0.7f, 0.8f), FontRenderer::NORMAL);
     FontRenderer::drawText2D(25, screenH - 45, "Chuot trai: Xoay 3D | Chuot phai: Pan | Cuon: Zoom (6-25cm) | Click chi tiet hoac danh muc ben trai", Vec3(0.72f, 0.76f, 0.82f), FontRenderer::SMALL);
 
     // Nút quay lại ở góc trên phải

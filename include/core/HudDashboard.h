@@ -13,6 +13,8 @@
 class HudDashboard {
 public:
     bool showHelp = false;
+    bool showClawCam = true; // Khung nhìn ngàm gắp góc nhìn cận cảnh PiP (Phím C)
+    bool xrayMode = false;   // Chế độ X-Ray bo mạch làm mờ PCB để lộ đường đồng (Phím X)
     float radarSweepAngle = 0.0f;
     float animTimer = 0.0f;
 

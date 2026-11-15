@@ -81,6 +81,6 @@ public:
     void selectPrevSubComponent();
     SubComponent* pickSubComponent(const Vec3& rayOrigin, const Vec3& rayDir);
 
-    virtual void renderWorkbench(bool wireframeMode);
+    virtual void renderWorkbench(bool wireframeMode, bool xrayMode = false);
     virtual void onSubComponentAction(const std::string& subId);
 };

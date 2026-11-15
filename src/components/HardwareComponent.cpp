@@ -185,7 +185,7 @@ SubComponent* HardwareComponent::pickSubComponent(const Vec3& rayOrigin, const V
     return nullptr;
 }
 
-void HardwareComponent::renderWorkbench(bool wireframeMode) {
+void HardwareComponent::renderWorkbench(bool wireframeMode, bool xrayMode) {
     glPushMatrix();
     // Đặt linh kiện cách mặt bàn 0.1cm
     glTranslatef(0.0f, 0.1f, 0.0f);
@@ -197,6 +197,16 @@ void HardwareComponent::renderWorkbench(bool wireframeMode) {
     // 1. Vẽ bo mạch chủ (Base Board)
     if (wireframeMode) {
         mesh.drawWireframe(Vec3(0.0f, 0.8f, 0.4f), 1.2f);
+    } else if (xrayMode) {
+        // Chế độ X-Ray: Làm mờ vỏ nhựa / mặt PCB xuống alpha = 0.30f để lộ chân cắm và đường mạch
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glDepthMask(GL_FALSE);
+        glColor4f(0.12f, 0.35f, 0.55f, 0.30f);
+        mesh.drawSolid(false);
+        glDepthMask(GL_TRUE);
+        glDisable(GL_BLEND);
+        mesh.drawWireframe(Vec3(0.2f, 0.8f, 1.0f), 1.0f);
     } else {
         mesh.drawSolid(true);
         mesh.drawWireframe(Vec3(0.1f, 0.4f, 0.2f), 1.0f);

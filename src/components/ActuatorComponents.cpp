@@ -1,4 +1,5 @@
 ﻿#include "components/ActuatorComponents.h"
+#include "scene/RoboticArmRenderer.h"
 #include <GL/freeglut.h>
 #include <cmath>
 #include <sstream>
@@ -979,6 +980,8 @@ ServoMG996RComp::ServoMG996RComp(const std::string& code, const std::string& nam
     } else if (jointType == ServoJointType::GRIPPER) {
         armSegmentMesh = Mesh3D::createBox(4.6f, 1.8f, 1.6f, Vec3(0.96f, 0.46f, 0.10f));
     }
+
+    initSubComponents();
 }
 
 void ServoMG996RComp::setTargetAngle(float deg) {
@@ -1035,144 +1038,161 @@ void ServoMG996RComp::onElectricalUpdate() {
     updateMotion(0.016f);
 }
 
+void ServoMG996RComp::initSubComponents() {
+    subComponents.clear();
+
+    SubComponent motor;
+    motor.id = "MG996R_BODY";
+    motor.name = "Dong Co Servo MG996R High-Torque Metal Gear";
+    motor.category = "Chap hanh co khi";
+    motor.rating = "Momen xoan: 11.0 kg.cm / 4.8V-7.2V / Hop so kim loai";
+    motor.roleDesc = "Dong co servo goc quay voi he thong giam toc banh rang kim loai, chiu luc tai lon, phan hoi goc chinh xac bang bien tro ben trong va mach dieu khien xung PWM 50Hz.";
+    motor.liveStatusText = "Goc hien tai: " + std::to_string((int)currentAngleDeg) + " do | Dien ap: 5.0V";
+    motor.localPos = Vec3(0.0f, 0.0f, 0.0f);
+    motor.size = Vec3(4.0f, 4.3f, 2.0f);
+    motor.color = Vec3(0.14f, 0.15f, 0.17f);
+    motor.shape = SubShapeType::BOX_SMD;
+    motor.mesh = Mesh3D::createBox(4.0f, 4.3f, 2.0f, motor.color);
+    addSubComponent(motor);
+
+    SubComponent gear;
+    gear.id = "MG996R_GEAR";
+    gear.name = "Hop So Banh Rang Kim Loai (Metal Gear Train)";
+    gear.category = "Giam toc truyen dong";
+    gear.rating = "Hop kim dong + thep nung / Ty so truyen 1:300";
+    gear.roleDesc = "He thong 5 tang banh rang kim loai sieu ben giup nhan mo-men xoan tu dong co DC toc do cao thanh luc keo lon de nang canh tay va kep giu vat the.";
+    gear.liveStatusText = "Ty so truyen: 1:300 | Kha nang chiu tai: 11kg.cm";
+    gear.localPos = Vec3(1.0f, 2.2f, 0.0f);
+    gear.size = Vec3(1.6f, 0.8f, 1.6f);
+    gear.color = Vec3(0.85f, 0.75f, 0.32f);
+    gear.shape = SubShapeType::CYLINDER_CAP;
+    gear.mesh = Mesh3D::createCylinder(0.8f, 0.8f, 16, gear.color);
+    addSubComponent(gear);
+
+    SubComponent horn;
+    horn.id = "MG996R_HORN";
+    horn.name = "Dia Quay Servo Horn (Aluminum 25T Disc)";
+    horn.category = "Khop noi co hoc";
+    horn.rating = "Truc 25 rang (25T) / Hop kim nhom CNC / 4 lo bat vit M3";
+    horn.roleDesc = "Dia quay gan chat vao truc servo, truyen dong truc tiep sang cac thanh dam CNC cua canh tay robot.";
+    horn.liveStatusText = "Goc quay: " + std::to_string((int)currentAngleDeg) + " do";
+    horn.localPos = Vec3(1.0f, 2.7f, 0.0f);
+    horn.size = Vec3(2.0f, 0.3f, 2.0f);
+    horn.color = Vec3(0.92f, 0.25f, 0.22f);
+    horn.shape = SubShapeType::CYLINDER_CAP;
+    horn.mesh = Mesh3D::createCylinder(1.0f, 0.3f, 16, horn.color);
+    addSubComponent(horn);
+
+    selectSubComponentByIndex(0);
+}
+
+void ServoMG996RComp::renderPinsAndDetails() {
+    HardwareComponent::renderPinsAndDetails();
+
+    // 1. Than dong co Servo MG996R mau den nham 4.07 x 4.29 x 1.97 cm
+    glColor3f(0.14f, 0.15f, 0.17f);
+    glPushMatrix();
+    glScalef(4.07f, 4.29f, 1.97f);
+    glutSolidCube(1.0f);
+    glPopMatrix();
+
+    // 2. Dai tem kim loai xanh duong/vang dac trung MG996R
+    glColor3f(0.10f, 0.45f, 0.85f);
+    glPushMatrix();
+    glTranslatef(0.0f, 0.2f, 0.0f);
+    glScalef(4.10f, 1.6f, 2.02f);
+    glutSolidCube(1.0f);
+    glPopMatrix();
+
+    // 3. Tai ga bat vit 2 ben (Mounting Flanges)
+    glColor3f(0.14f, 0.15f, 0.17f);
+    glPushMatrix();
+    glTranslatef(0.0f, 1.25f, 0.0f);
+    glScalef(5.45f, 0.32f, 1.97f);
+    glutSolidCube(1.0f);
+    glPopMatrix();
+
+    // Lo bat vit dem cao su va bac dong
+    glColor3f(0.85f, 0.75f, 0.32f);
+    for (float ex : {-2.4f, 2.4f}) {
+        for (float ez : {-0.55f, 0.55f}) {
+            glPushMatrix();
+            glTranslatef(ex, 1.25f, ez);
+            glRotatef(-90.0f, 1, 0, 0);
+            glutSolidCylinder(0.18f, 0.36f, 10, 1);
+            glPopMatrix();
+        }
+    }
+
+    // 4. Truc ra kim loai 25T va Dia tron Servo Horn
+    glPushMatrix();
+    glTranslatef(1.05f, 2.15f, 0.0f);
+    // Truc ra kim loai dong/thep
+    glColor3f(0.85f, 0.75f, 0.32f);
+    glRotatef(-90.0f, 1, 0, 0);
+    glutSolidCylinder(0.30f, 0.50f, 16, 2);
+
+    // Dia quay Servo Horn tron mau do CNC
+    glTranslatef(0.0f, 0.0f, 0.45f);
+    glRotatef(currentAngleDeg, 0, 0, 1);
+    glColor3f(0.90f, 0.22f, 0.20f);
+    glutSolidCylinder(1.10f, 0.20f, 18, 2);
+
+    // 4 Lo oc M3 tren dia quay
+    glColor3f(0.85f, 0.88f, 0.92f);
+    for (int h = 0; h < 4; ++h) {
+        float a = h * 1.5707963f;
+        glPushMatrix();
+        glTranslatef(0.75f * std::cos(a), 0.75f * std::sin(a), 0.18f);
+        glutSolidCylinder(0.10f, 0.05f, 8, 1);
+        glPopMatrix();
+    }
+    glPopMatrix();
+
+    // 5. Cap 3 day servo (Nau GND, Do VCC, Cam PWM)
+    glPushMatrix();
+    glTranslatef(-2.05f, -1.6f, 0.0f);
+    glColor3f(0.40f, 0.25f, 0.15f); // Nau
+    glPushMatrix(); glTranslatef(0.0f, 0.0f, -0.2f); glScalef(0.6f, 0.15f, 0.15f); glutSolidCube(1.0f); glPopMatrix();
+    glColor3f(0.85f, 0.15f, 0.15f); // Do
+    glPushMatrix(); glTranslatef(0.0f, 0.0f,  0.0f); glScalef(0.6f, 0.15f, 0.15f); glutSolidCube(1.0f); glPopMatrix();
+    glColor3f(0.95f, 0.55f, 0.12f); // Cam
+    glPushMatrix(); glTranslatef(0.0f, 0.0f,  0.2f); glScalef(0.6f, 0.15f, 0.15f); glutSolidCube(1.0f); glPopMatrix();
+    glPopMatrix();
+}
+
 void ServoMG996RComp::render(bool wireframeMode) {
+    (void)wireframeMode;
     if (!visible) return;
 
-    glPushMatrix();
-    Mat4 localM = getLocalMatrix();
-    glMultMatrixf(localM.data());
-
     if (jointType == ServoJointType::BASE_YAW) {
-        // =========================================================================
-        // 1. KHUNG TRá»¤ RAY THáº²NG Äá»¨NG (DUAL VERTICAL RAILS & LEAD SCREW AGV MAST)
-        // =========================================================================
-        Vec3 metalDark(0.20f, 0.22f, 0.25f);
-        Vec3 chromeRail(0.88f, 0.90f, 0.94f);
-        Vec3 brassScrew(0.85f, 0.75f, 0.32f);
-        Vec3 motorBlack(0.12f, 0.12f, 0.14f);
-        Vec3 boltSilver(0.75f, 0.75f, 0.78f);
+        // Tim khop khuyu va khop kep la con trong cay SceneNode
+        ServoMG996RComp* elbowComp = (!children.empty()) ? dynamic_cast<ServoMG996RComp*>(children[0]) : nullptr;
+        ServoMG996RComp* gripComp = (elbowComp && !elbowComp->children.empty()) ? dynamic_cast<ServoMG996RComp*>(elbowComp->children[0]) : nullptr;
 
-        // a) Bá»‡ chÃ¢n gáº¯n sÃ n Táº§ng 1 (Y = 0.0cm, Z = 0.0cm)
-        drawSolidBox(0.0f, 0.0f, 0.0f, 7.6f, 0.6f, 2.6f, metalDark, wireframeMode);
-        // 4 Bulong báº¯t chÃ¢n Ä‘áº¿
-        for (float bx : {-3.1f, 3.1f}) {
-            for (float bz : {-0.8f, 0.8f}) {
-                drawSolidCylinderY(bx, 0.35f, bz, 0.18f, 0.2f, boltSilver, wireframeMode, 8);
-            }
-        }
+        float yawDeg = currentAngleDeg - 90.0f; // 90 do la huong thang phia truoc (+Z)
+        float pitchDeg = (elbowComp) ? (140.0f - elbowComp->currentAngleDeg) * 0.55f : 0.0f;
+        if (pitchDeg < 0.0f) pitchDeg = 0.0f;
+        if (pitchDeg > 80.0f) pitchDeg = 80.0f;
 
-        // b) Khung giáº±ng liÃªn káº¿t vá»›i mÅ©i sÃ n Táº§ng 2 (Y = 6.0cm, Z = -0.7cm)
-        drawSolidBox(0.0f, 6.0f, -0.7f, 7.6f, 0.6f, 1.6f, metalDark, wireframeMode);
-        drawSolidCylinderY(-3.1f, 6.35f, -0.7f, 0.18f, 0.2f, boltSilver, wireframeMode, 8);
-        drawSolidCylinderY( 3.1f, 6.35f, -0.7f, 0.18f, 0.2f, boltSilver, wireframeMode, 8);
+        float gripRatio = (gripComp) ? (gripComp->currentAngleDeg / 85.0f) : 0.5f;
+        if (gripRatio < 0.0f) gripRatio = 0.0f;
+        if (gripRatio > 1.0f) gripRatio = 1.0f;
 
-        // c) Hai thanh ray trá»¥ trÃ²n tháº³ng Ä‘á»©ng máº¡ crom (Left & Right Chrome Rails)
-        // Ray tráº£i dÃ i tá»« Y = 0.0cm Ä‘áº¿n Y = 14.0cm (chiá»u dÃ i 14.0cm, tÃ¢m táº¡i Y = 7.0cm)
-        drawSolidCylinderY(-2.6f, 7.0f, 0.0f, 0.30f, 14.0f, chromeRail, wireframeMode, 16);
-        drawSolidCylinderY( 2.6f, 7.0f, 0.0f, 0.30f, 14.0f, chromeRail, wireframeMode, 16);
+        bool isBaseSelected = isSelected;
+        bool isElbowSelected = (elbowComp && elbowComp->isSelected);
+        bool isGripSelected = (gripComp && gripComp->isSelected);
 
-        // d) Trá»¥c vÃ­t me bi / thanh rÄƒng ren á»Ÿ trung tÃ¢m (Center Lead Screw)
-        // VÃ­t me cháº¡y tá»« Y = 0.4cm Ä‘áº¿n Y = 13.8cm (chiá»u dÃ i 13.4cm, tÃ¢m táº¡i Y = 7.1cm)
-        drawSolidCylinderY(0.0f, 7.1f, 0.0f, 0.22f, 13.4f, brassScrew, wireframeMode, 16);
-
-        // e) Náº¯p náº¹p giá»¯ Ä‘á»‰nh 2 thanh ray (Top Cap Plate táº¡i Y = 14.0cm)
-        drawSolidBox(0.0f, 14.0f, 0.0f, 7.6f, 0.6f, 2.6f, metalDark, wireframeMode);
-
-        // Khá»‘i báº¡c Ä‘á»¡ trá»¥c vÃ­t me Ä‘á»‰nh
-        drawSolidCylinderY(0.0f, 14.3f, 0.0f, 0.45f, 0.6f, boltSilver, wireframeMode, 12);
-
-        // f) Cá»¥m Ä‘á»™ng cÆ¡ bÆ°á»›c kÃ©o tá»i NEMA / Servo cÃ´ng suáº¥t lá»›n á»Ÿ Ä‘á»‰nh (Top Motor)
-        // ThÃ¢n Ä‘á»™ng cÆ¡ kÃ­ch thÆ°á»›c 4.0 x 2.4 x 4.0 cm
-        drawSolidBox(0.0f, 15.6f, 0.0f, 4.0f, 2.4f, 4.0f, motorBlack, wireframeMode);
-        // Náº¯p Ä‘áº§u Ä‘á»™ng cÆ¡ máº¡ báº¡c
-        drawSolidBox(0.0f, 16.85f, 0.0f, 4.0f, 0.15f, 4.0f, boltSilver, wireframeMode);
-        // Giáº¯c cáº¯m dÃ¢y Ä‘iá»u khiá»ƒn Ä‘á»™ng cÆ¡ bÃªn hÃ´ng
-        drawSolidBox(2.05f, 15.6f, 0.0f, 0.3f, 1.0f, 1.4f, Vec3(0.2f, 0.5f, 0.9f), wireframeMode);
-
-    } else if (jointType == ServoJointType::LINEAR_LIFT) {
-        // =========================================================================
-        // 2. BÃ€N TRÆ¯á»¢T NÃ‚NG Háº  THáº²NG Äá»¨NG (VERTICAL ELEVATOR CARRIAGE)
-        // =========================================================================
-        Vec3 carriageAlu(0.72f, 0.74f, 0.78f);
-        Vec3 bearingSteel(0.82f, 0.84f, 0.88f);
-        Vec3 brassNut(0.85f, 0.75f, 0.30f);
-
-        // a) Táº¥m bÃ n trÆ°á»£t nhÃ´m CNC (Main Carriage Slider Plate)
-        // Äáº·t á»Ÿ phÃ­a trÆ°á»›c trá»¥c ray (Z = 0.7cm)
-        drawSolidBox(0.0f, 0.0f, 0.7f, 7.2f, 2.6f, 0.8f, carriageAlu, wireframeMode);
-
-        // b) Hai khá»‘i báº¡c Ä‘áº¡n trÆ°á»£t SC8UU Ã´m khÃ­t 2 thanh ray Ä‘á»©ng (Dual Linear Bearings)
-        // Báº¡c Ä‘áº¡n tháº³ng Ä‘á»©ng dá»c trá»¥c Y Ã´m láº¥y ray táº¡i X = -2.6cm vÃ  X = +2.6cm, Z = 0.0cm
-        drawSolidCylinderY(-2.6f, 0.0f, 0.0f, 0.50f, 2.6f, bearingSteel, wireframeMode, 16);
-        drawSolidCylinderY( 2.6f, 0.0f, 0.0f, 0.50f, 2.6f, bearingSteel, wireframeMode, 16);
-
-        // Khá»‘i vá» nhÃ´m Ä‘á»‹nh hÃ¬nh bá»c ngoÃ i 2 báº¡c Ä‘áº¡n
-        drawSolidBox(-2.6f, 0.0f, 0.2f, 1.4f, 2.6f, 1.2f, carriageAlu, wireframeMode);
-        drawSolidBox( 2.6f, 0.0f, 0.2f, 1.4f, 2.6f, 1.2f, carriageAlu, wireframeMode);
-
-        // c) á»” Ä‘ai á»‘c Ä‘á»“ng ren T8 Äƒn khá»›p trá»¥c vÃ­t me trung tÃ¢m (Center Brass Lead Nut)
-        drawSolidCylinderY(0.0f, 0.0f, 0.0f, 0.44f, 2.0f, brassNut, wireframeMode, 14);
-
-        // d) Tai gÃ¡ liÃªn káº¿t cá»¥m tay gáº¯p phÃ­a trÆ°á»›c (Gripper Mount Interface)
-        drawSolidBox(0.0f, 0.0f, 1.2f, 4.6f, 2.2f, 0.4f, Vec3(0.30f, 0.32f, 0.36f), wireframeMode);
-
-    } else if (jointType == ServoJointType::GRIPPER) {
-        // =========================================================================
-        // 3. Cá»¤M NGÃ€M Káº¸P ÄÃ”I SONG SONG (PARALLEL CLAMPING GRIPPER)
-        // =========================================================================
-        Vec3 gripBody(0.18f, 0.20f, 0.24f);
-        Vec3 chromeRod(0.88f, 0.90f, 0.94f);
-        Vec3 jawOrange(0.96f, 0.46f, 0.10f);
-        Vec3 rubberBlack(0.12f, 0.12f, 0.12f);
-        Vec3 hornWhite(0.92f, 0.92f, 0.92f);
-
-        // a) Vá» há»™p cÆ¡ cáº¥u servo kÃ©o ngÃ m (Gripper Actuator Housing)
-        drawSolidBox(0.0f, 0.0f, 0.6f, 4.6f, 1.8f, 1.4f, gripBody, wireframeMode);
-        // ÄÄ©a trÃ²n xoay servo trÃªn nÃ³c
-        drawSolidCylinderY(0.0f, 0.95f, 0.6f, 0.65f, 0.15f, hornWhite, wireframeMode, 14);
-
-        // b) Hai trá»¥c trÆ°á»£t ngang dáº«n hÆ°á»›ng 2 cÃ ng káº¹p (Dual Horizontal Slide Rods)
-        drawSolidCylinderX(0.0f,  0.45f, 1.4f, 0.16f, 7.2f, chromeRod, wireframeMode, 12);
-        drawSolidCylinderX(0.0f, -0.45f, 1.4f, 0.16f, 7.2f, chromeRod, wireframeMode, 12);
-
-        // c) Äá»™ má»Ÿ cá»§a 2 cÃ ng:
-        // GÃ³c < 25 Ä‘á»™ -> Káº¹p cháº·t (khoáº£ng cÃ¡ch máº·t cao su = 2.8cm Ã´m cháº·t khá»‘i 3.2cm)
-        // GÃ³c 90 Ä‘á»™  -> Má»Ÿ rá»™ng (khoáº£ng cÃ¡ch máº·t cao su = 6.0cm thoáº£i mÃ¡i lá»t váº­t)
-        float openGap = 1.35f + (currentAngleDeg / 90.0f) * 1.65f;
-
-        // ===== CÃ€NG Káº¸P TRÃI (LEFT JAW) =====
-        // Khá»‘i báº¡c trÆ°á»£t ngang bÃªn trÃ¡i
-        drawSolidBox(-openGap, 0.0f, 1.4f, 0.6f, 1.8f, 0.8f, gripBody, wireframeMode);
-        // Báº£n cÃ ng káº¹p vÆ°Æ¡n dÃ i vá» phÃ­a trÆ°á»›c (+Z)
-        drawSolidBox(-openGap - 0.25f, 0.0f, 3.4f, 0.5f, 2.2f, 4.0f, jawOrange, wireframeMode);
-        // Äáº§u vÃ¡t nhá»n dáº«n hÆ°á»›ng á»Ÿ mÅ©i cÃ ng
         glPushMatrix();
-        glTranslatef(-openGap - 0.25f, 0.0f, 5.5f);
-        glRotatef(20.0f, 0.0f, 1.0f, 0.0f);
-        drawSolidBox(0.0f, 0.0f, 0.0f, 0.45f, 2.0f, 0.8f, jawOrange, wireframeMode);
+        Mat4 localM = getLocalMatrix();
+        glMultMatrixf(localM.data());
+
+        RoboticArmRenderer::renderArmAssembly(
+            yawDeg, pitchDeg, gripRatio,
+            isBaseSelected, isElbowSelected, isGripSelected
+        );
+
         glPopMatrix();
-        // Miáº¿ng Ä‘á»‡m cao su Ä‘en cÃ³ vÃ¢n bÃ¡m á»Ÿ máº·t trong cÃ ng trÃ¡i
-        drawSolidBox(-openGap + 0.05f, 0.0f, 3.4f, 0.15f, 1.8f, 3.2f, rubberBlack, wireframeMode);
-
-        // ===== CÃ€NG Káº¸P PHáº¢I (RIGHT JAW) =====
-        // Khá»‘i báº¡c trÆ°á»£t ngang bÃªn pháº£i
-        drawSolidBox(openGap, 0.0f, 1.4f, 0.6f, 1.8f, 0.8f, gripBody, wireframeMode);
-        // Báº£n cÃ ng káº¹p vÆ°Æ¡n dÃ i vá» phÃ­a trÆ°á»›c (+Z)
-        drawSolidBox(openGap + 0.25f, 0.0f, 3.4f, 0.5f, 2.2f, 4.0f, jawOrange, wireframeMode);
-        // Äáº§u vÃ¡t nhá»n dáº«n hÆ°á»›ng á»Ÿ mÅ©i cÃ ng
-        glPushMatrix();
-        glTranslatef(openGap + 0.25f, 0.0f, 5.5f);
-        glRotatef(-20.0f, 0.0f, 1.0f, 0.0f);
-        drawSolidBox(0.0f, 0.0f, 0.0f, 0.45f, 2.0f, 0.8f, jawOrange, wireframeMode);
-        glPopMatrix();
-        // Miáº¿ng Ä‘á»‡m cao su Ä‘en cÃ³ vÃ¢n bÃ¡m á»Ÿ máº·t trong cÃ ng pháº£i
-        drawSolidBox(openGap - 0.05f, 0.0f, 3.4f, 0.15f, 1.8f, 3.2f, rubberBlack, wireframeMode);
+        return; // Toan bo 3 khop da duoc ket xuat dong bo trong renderArmAssembly
     }
-
-    // 2. Äá»‡ quy váº½ cÃ¡c nÃºt con ná»‘i tiáº¿p
-    for (auto* child : children) {
-        child->render(wireframeMode);
-    }
-
-    glPopMatrix();
 }

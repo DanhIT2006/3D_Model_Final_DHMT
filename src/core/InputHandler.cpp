@@ -20,7 +20,29 @@ void InputHandler::onKeyDown(unsigned char key, int x, int y, RobotCarScene& sce
 
         case 'c':
         case 'C':
-            scene.circuit.showWires = !scene.circuit.showWires;
+            hud.showClawCam = !hud.showClawCam;
+            break;
+
+        case 'x':
+        case 'X':
+            if (scene.isWorkbenchMode) {
+                scene.isXrayMode = !scene.isXrayMode;
+                hud.xrayMode = scene.isXrayMode;
+            }
+            break;
+
+        case 'g':
+        case 'G':
+            if (scene.isObjectGrasped) {
+                scene.isObjectGrasped = false;
+                scene.targetObject->localPos.y = 1.6f;
+            } else {
+                float distXZ = std::hypot(scene.gripWorldPos.x - scene.targetObject->localPos.x,
+                                          scene.gripWorldPos.z - scene.targetObject->localPos.z);
+                if (distXZ < 3.8f) {
+                    scene.isObjectGrasped = true;
+                }
+            }
             break;
 
         case 'h':

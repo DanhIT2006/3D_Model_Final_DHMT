@@ -46,7 +46,7 @@ void Camera3D::enterWorkbenchMode() {
 
     isWorkbench = true;
     mode = ViewMode::PERSPECTIVE_ORBIT;
-    target = Vec3(0.0f, 0.65f, 0.0f);
+    target = Vec3(0.0f, -0.35f, 0.0f);
     radius = 13.5f;
     theta = 0.785f;
     phi = 0.55f;
@@ -64,7 +64,7 @@ void Camera3D::exitWorkbenchMode() {
 
 void Camera3D::update(const Vec3& carPosition, float carYawRad) {
     if (isWorkbench) {
-        target = Vec3(0.0f, 0.5f, 0.0f);
+        target = Vec3(0.0f, -0.35f, 0.0f);
         phi = std::clamp(phi, -1.45f, 1.45f);
         float cosPhi = std::cos(phi);
         float sinPhi = std::sin(phi);

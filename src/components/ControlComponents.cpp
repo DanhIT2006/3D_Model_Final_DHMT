@@ -548,6 +548,23 @@ void ArduinoUnoComp::renderPinsAndDetails() {
     glPopMatrix();
 }
 
+// ===================== HC-SR04 =====================
+UltrasonicComp::UltrasonicComp()
+    : HardwareComponent("HCSR04", "Cam Bien Sieu Am HC-SR04", "Do Khoang Cach") {
+    cadSize = Vec3(4.5f, 2.0f, 1.8f);
+    nominalVoltage = 5.0f;
+
+    // PCB xanh dương đặc trưng
+    mesh = Mesh3D::createBox(cadSize.x, cadSize.y, 0.16f, Vec3(0.08f, 0.38f, 0.72f));
+
+    addPin("VCC",  PinType::POWER_5V,  Vec3(-0.6f, -0.6f, -0.2f));
+    addPin("TRIG", PinType::DIGITAL_IO,Vec3(-0.2f, -0.6f, -0.2f));
+    addPin("ECHO", PinType::DIGITAL_IO,Vec3( 0.2f, -0.6f, -0.2f), true);
+    addPin("GND",  PinType::POWER_GND, Vec3( 0.6f, -0.6f, -0.2f));
+
+    initSubComponents();
+}
+
 void UltrasonicComp::initSubComponents() {
     subComponents.clear();
 
@@ -639,20 +656,84 @@ void UltrasonicComp::onElectricalUpdate() {
 void UltrasonicComp::renderPinsAndDetails() {
     HardwareComponent::renderPinsAndDetails();
 
-    // Thạch anh dao động 4.0MHz nhỏ ở giữa 2 mắt
+    // 1. Hai ống phát/thu sóng siêu âm T/R mạ nhôm bạc sáng (Transducers)
+    // Tại x = -1.3f (Transmitter T) và x = +1.3f (Receiver R), nhô về phía trước +Z
+    for (float tx : {-1.3f, 1.3f}) {
+        glPushMatrix();
+        glTranslatef(tx, 0.0f, 0.08f);
+
+        // Vành đệm cao su đen ở chân ống
+        glColor3f(0.12f, 0.12f, 0.14f);
+        glutSolidCylinder(0.82f, 0.12f, 18, 1);
+
+        // Thân ống kim loại nhôm bạc (Đường kính 1.6cm, dài 1.2cm)
+        glTranslatef(0.0f, 0.0f, 0.10f);
+        glColor3f(0.85f, 0.88f, 0.92f);
+        glutSolidCylinder(0.80f, 1.20f, 20, 2);
+
+        // Vòng nẹp kim loại bo tròn mép ngoài
+        glTranslatef(0.0f, 0.0f, 1.20f);
+        glColor3f(0.75f, 0.78f, 0.82f);
+        glutSolidTorus(0.06f, 0.76f, 8, 20);
+
+        // Mặt lưới mắt cáo đan chéo màu đen/xám bên trong
+        glColor3f(0.15f, 0.16f, 0.18f);
+        glBegin(GL_TRIANGLE_FAN);
+        glVertex3f(0.0f, 0.0f, -0.02f);
+        for (int i = 0; i <= 20; ++i) {
+            float a = i * 2.0f * 3.14159265f / 20.0f;
+            glVertex3f(0.74f * std::cos(a), 0.74f * std::sin(a), -0.02f);
+        }
+        glEnd();
+
+        // Lưới đan chéo chống chạm màng rung
+        glDisable(GL_LIGHTING);
+        glColor3f(0.35f, 0.38f, 0.42f);
+        glLineWidth(1.0f);
+        glBegin(GL_LINES);
+        for (float g = -0.55f; g <= 0.55f; g += 0.22f) {
+            glVertex3f(g, -0.52f, 0.002f); glVertex3f(g, 0.52f, 0.002f);
+            glVertex3f(-0.52f, g, 0.002f); glVertex3f(0.52f, g, 0.002f);
+        }
+        glEnd();
+        glEnable(GL_LIGHTING);
+
+        glPopMatrix();
+    }
+
+    // 2. Thạch anh dao động 4.0MHz HC-49S kim loại ở giữa
     glPushMatrix();
-    glTranslatef(0.0f, 0.0f, cadSize.z * 0.52f);
-    glColor3f(0.85f, 0.75f, 0.4f);
-    glScalef(0.6f, 0.3f, 0.15f);
+    glTranslatef(0.0f, 0.10f, 0.12f);
+    glColor3f(0.85f, 0.88f, 0.92f);
+    glScalef(0.75f, 0.30f, 0.18f);
     glutSolidCube(1.0f);
     glPopMatrix();
 
-    // Nếu phát hiện vật cản gần (< 15cm), nháy tia đỏ cảnh báo
+    // 3. Hàng 4 chân cắm góc vuông (VCC, TRIG, ECHO, GND) ở mép dưới quay ra sau
+    glPushMatrix();
+    glTranslatef(0.0f, -0.75f, -0.08f);
+    // Đế nhựa đen
+    glColor3f(0.12f, 0.12f, 0.14f);
+    glScalef(1.20f, 0.22f, 0.25f);
+    glutSolidCube(1.0f);
+    glPopMatrix();
+    // 4 chân vàng
+    glColor3f(0.92f, 0.78f, 0.22f);
+    for (int p = 0; p < 4; ++p) {
+        float px = -0.38f + p * 0.254f;
+        glPushMatrix();
+        glTranslatef(px, -0.75f, -0.35f);
+        glScalef(0.06f, 0.06f, 0.45f);
+        glutSolidCube(1.0f);
+        glPopMatrix();
+    }
+
+    // 4. Nếu phát hiện vật cản gần (< 15cm), nháy tia đỏ cảnh báo
     if (isPowered && obstacleDetected) {
         glPushMatrix();
-        glTranslatef(0.0f, 0.7f, 0.0f);
-        glColor3f(1.0f, 0.1f, 0.1f);
-        glutSolidSphere(0.18f, 6, 6);
+        glTranslatef(0.0f, 0.65f, 0.15f);
+        glColor3f(1.0f, 0.15f, 0.15f);
+        glutSolidSphere(0.16f, 8, 8);
         glPopMatrix();
     }
 }
