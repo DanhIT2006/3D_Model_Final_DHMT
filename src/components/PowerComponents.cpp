@@ -32,9 +32,9 @@ void BatterySwitchComp::initSubComponents() {
     c1.rating = "3.7V - 2600mAh / Dong xa 20A";
     c1.roleDesc = "Cung cap nang luong hoa hoc chuyen doi thanh dien nang. Mac noi tiep voi Cell 2 tao dien ap tong 7.4V.";
     c1.liveStatusText = "Dien ap cell: 3.7V | Dung luong: 2600mAh";
-    c1.localPos = Vec3(0.8f, 0.2f, -1.0f);
+    c1.localPos = Vec3(0.8f, 0.25f, -1.05f);
     c1.size = Vec3(5.6f, 1.8f, 1.8f);
-    c1.color = Vec3(0.1f, 0.4f, 0.85f);
+    c1.color = Vec3(0.12f, 0.40f, 0.88f);
     c1.shape = SubShapeType::CYLINDER_CAP;
     c1.mesh = Mesh3D::createBox(5.6f, 1.8f, 1.8f, c1.color);
     addSubComponent(c1);
@@ -46,9 +46,9 @@ void BatterySwitchComp::initSubComponents() {
     c2.rating = "3.7V - 2600mAh / Dong xa 20A";
     c2.roleDesc = "Cell pin thu hai mac noi tiep. Cung cap dong dien tai lon cho 4 dong co DC va 3 servo tay gap.";
     c2.liveStatusText = "Dien ap cell: 3.7V | Tong dien ap pack: 7.4V";
-    c2.localPos = Vec3(0.8f, 0.2f, 1.0f);
+    c2.localPos = Vec3(0.8f, 0.25f, 1.05f);
     c2.size = Vec3(5.6f, 1.8f, 1.8f);
-    c2.color = Vec3(0.1f, 0.4f, 0.85f);
+    c2.color = Vec3(0.12f, 0.40f, 0.88f);
     c2.shape = SubShapeType::CYLINDER_CAP;
     c2.mesh = Mesh3D::createBox(5.6f, 1.8f, 1.8f, c2.color);
     addSubComponent(c2);
@@ -60,13 +60,13 @@ void BatterySwitchComp::initSubComponents() {
     sw.rating = "10A 12VDC / Tiep diem dong hop kim";
     sw.roleDesc = "Dong ngat co hoc cuc duong (+) cua pack pin. Dam bao an toan tuyet doi, ngat toan bo dien nang khi bao tri hoac khong van hanh xe.";
     sw.liveStatusText = switchOn ? "Trang thai: DANG BAT (ON - 7.4V cap toan he thong)" : "Trang thai: DANG TAT (OFF - Ngat dien toan xe)";
-    sw.localPos = Vec3(-2.2f, 0.6f, 0.0f);
-    sw.size = Vec3(1.5f, 1.2f, 1.2f);
+    sw.localPos = Vec3(-2.75f, 0.6f, 0.0f);
+    sw.size = Vec3(1.5f, 1.2f, 1.5f);
     sw.color = switchOn ? Vec3(0.2f, 0.8f, 0.3f) : Vec3(0.85f, 0.15f, 0.1f);
     sw.shape = SubShapeType::PUSH_BUTTON;
     sw.isInteractive = true;
     sw.actionName = "BAT / TAT NGUON PIN";
-    sw.mesh = Mesh3D::createBox(1.5f, 1.2f, 1.2f, sw.color);
+    sw.mesh = Mesh3D::createBox(1.5f, 1.2f, 1.5f, sw.color);
     addSubComponent(sw);
 
     selectSubComponentByIndex(0);
@@ -106,33 +106,48 @@ void BatterySwitchComp::onElectricalUpdate() {
 void BatterySwitchComp::renderPinsAndDetails() {
     HardwareComponent::renderPinsAndDetails();
 
-    // Vẽ công tắc gạt màu đỏ ở mặt sau/trên
+    // 1. Công tắc bập bênh KCD1 màu đỏ ở góc trái khay (x = -2.75f)
     glPushMatrix();
-    glTranslatef(-cadSize.x * 0.25f, cadSize.y * 0.55f, 0.0f);
-    glColor3f(0.1f, 0.1f, 0.1f); // Khung công tắc
+    glTranslatef(-2.75f, cadSize.y * 0.52f, 0.0f);
+    // Khung viền công tắc màu đen
+    glColor3f(0.10f, 0.10f, 0.12f);
+    glPushMatrix();
+    glScalef(1.5f, 0.35f, 1.5f);
     glutSolidCube(1.0f);
-
-    // Nút gập màu đỏ: nghiêng theo switchOn
-    glTranslatef(0.0f, 0.2f, 0.0f);
-    glRotatef(switchOn ? -18.0f : 18.0f, 0, 0, 1);
-    glColor3f(switchOn ? 0.9f : 0.4f, 0.1f, 0.1f);
-    glutSolidCube(0.7f);
     glPopMatrix();
 
-    // Vẽ 2 thỏi pin 18650 xanh lam bên trong khay
-    glPushMatrix();
-    glTranslatef(cadSize.x * 0.12f, cadSize.y * 0.15f, -cadSize.z * 0.22f);
-    glRotatef(90.0f, 0, 0, 1);
-    glColor3f(0.1f, 0.35f, 0.85f); // Vỏ pin xanh lục/lam
-    glutSolidCylinder(0.85f, 5.5f, 12, 1);
+    // Phím bập bênh màu đỏ nghiêng theo switchOn
+    glTranslatef(0.0f, 0.22f, 0.0f);
+    glRotatef(switchOn ? -16.0f : 16.0f, 0, 0, 1);
+    glColor3f(switchOn ? 0.90f : 0.40f, 0.12f, 0.10f);
+    glScalef(1.10f, 0.25f, 1.10f);
+    glutSolidCube(1.0f);
     glPopMatrix();
 
-    glPushMatrix();
-    glTranslatef(cadSize.x * 0.12f, cadSize.y * 0.15f, cadSize.z * 0.22f);
-    glRotatef(90.0f, 0, 0, 1);
-    glColor3f(0.1f, 0.35f, 0.85f);
-    glutSolidCylinder(0.85f, 5.5f, 12, 1);
-    glPopMatrix();
+    // 2. Hai thỏi pin 18650 màu xanh dương nằm gọn bên trong khay dọc theo trục X
+    // Kích thước chuẩn: dài 5.6cm, bán kính 0.85cm, đặt tại z = -1.05f và z = +1.05f
+    for (float cz : {-1.05f, 1.05f}) {
+        glPushMatrix();
+        // Dịch về đầu âm (-X) tại x = -2.0f, quay 90 độ quanh Y để hướng dọc theo trục +X
+        glTranslatef(-2.0f, 0.25f, cz);
+        glRotatef(90.0f, 0.0f, 1.0f, 0.0f); // +Z thành +X
+
+        // Lò xo tiếp điểm cực âm mạ bạc ở đầu -X
+        glColor3f(0.75f, 0.78f, 0.82f);
+        glutSolidCylinder(0.40f, 0.15f, 10, 1);
+
+        // Thân pin hình trụ tròn màu xanh dương đặc trưng 18650
+        glTranslatef(0.0f, 0.0f, 0.15f);
+        glColor3f(0.12f, 0.40f, 0.88f);
+        glutSolidCylinder(0.85f, 5.30f, 18, 2);
+
+        // Vành cách điện và cực dương kim loại nhô lên ở đầu +X
+        glTranslatef(0.0f, 0.0f, 5.30f);
+        glColor3f(0.85f, 0.88f, 0.92f);
+        glutSolidCylinder(0.38f, 0.18f, 14, 1);
+
+        glPopMatrix();
+    }
 }
 
 // ===================== DOMINO =====================

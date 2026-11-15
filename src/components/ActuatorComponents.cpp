@@ -1171,9 +1171,9 @@ void ServoMG996RComp::render(bool wireframeMode) {
         ServoMG996RComp* gripComp = (elbowComp && !elbowComp->children.empty()) ? dynamic_cast<ServoMG996RComp*>(elbowComp->children[0]) : nullptr;
 
         float yawDeg = currentAngleDeg - 90.0f; // 90 do la huong thang phia truoc (+Z)
-        float pitchDeg = (elbowComp) ? (140.0f - elbowComp->currentAngleDeg) * 0.55f : 0.0f;
-        if (pitchDeg < 0.0f) pitchDeg = 0.0f;
-        if (pitchDeg > 80.0f) pitchDeg = 80.0f;
+        float liftProgress = (elbowComp) ? (140.0f - elbowComp->currentAngleDeg) / 140.0f : 0.0f;
+        if (liftProgress < 0.0f) liftProgress = 0.0f;
+        if (liftProgress > 1.0f) liftProgress = 1.0f;
 
         float gripRatio = (gripComp) ? (gripComp->currentAngleDeg / 85.0f) : 0.5f;
         if (gripRatio < 0.0f) gripRatio = 0.0f;
@@ -1188,7 +1188,7 @@ void ServoMG996RComp::render(bool wireframeMode) {
         glMultMatrixf(localM.data());
 
         RoboticArmRenderer::renderArmAssembly(
-            yawDeg, pitchDeg, gripRatio,
+            yawDeg, liftProgress, gripRatio,
             isBaseSelected, isElbowSelected, isGripSelected
         );
 

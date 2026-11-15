@@ -141,10 +141,11 @@ void HardwareComponent::selectPrevSubComponent() {
 SubComponent* HardwareComponent::pickSubComponent(const Vec3& rayOrigin, const Vec3& rayDir) {
     float closestDist = 1e9f;
     int bestIndex = -1;
+    float liftY = std::max(cadSize.y * 0.5f + 0.25f, 0.6f);
 
     for (int i = 0; i < (int)subComponents.size(); ++i) {
         const auto& sub = subComponents[i];
-        Vec3 pos = sub.localPos + Vec3(0.0f, 0.1f, 0.0f);
+        Vec3 pos = sub.localPos + Vec3(0.0f, liftY, 0.0f);
         Vec3 halfSize = sub.size * 0.5f + Vec3(0.25f, 0.25f, 0.25f);
 
         Vec3 minPt = pos - halfSize;
@@ -187,8 +188,9 @@ SubComponent* HardwareComponent::pickSubComponent(const Vec3& rayOrigin, const V
 
 void HardwareComponent::renderWorkbench(bool wireframeMode, bool xrayMode) {
     glPushMatrix();
-    // Đặt linh kiện cách mặt bàn 0.1cm
-    glTranslatef(0.0f, 0.1f, 0.0f);
+    // Nâng linh kiện lên cao hơn mặt bàn xoay (y = 0) để toàn bộ thân và chân cắm không bị chìm
+    float liftY = std::max(cadSize.y * 0.5f + 0.25f, 0.6f);
+    glTranslatef(0.0f, liftY, 0.0f);
 
     // Kích hoạt Polygon Offset để chống Z-fighting tuyệt đối giữa các lớp hình học
     glEnable(GL_POLYGON_OFFSET_FILL);

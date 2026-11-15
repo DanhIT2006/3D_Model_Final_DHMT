@@ -1,4 +1,5 @@
 #include "components/ControlComponents.h"
+#include "components/ComponentPrimitives.h"
 #include <GL/freeglut.h>
 #include <cmath>
 #include <sstream>
@@ -573,10 +574,10 @@ void UltrasonicComp::initSubComponents() {
     transT.name = "Loa phat song sieu am T (Ultrasonic Transmitter)";
     transT.rating = "Tan so 40.0 kHz / Luoi bao ve kim loai";
     transT.roleDesc = "Phat ra chuoi 8 xung song am tan so 40kHz lan truyen trong khong khi voi van toc am thanh ~340m/s khi nhan xung Trigger tu Arduino.";
-    transT.localPos = Vec3(-1.3f, 0.0f, 0.4f);
-    transT.size = Vec3(1.5f, 1.5f, 1.2f);
-    transT.color = Vec3(0.85f, 0.85f, 0.88f);
-    transT.mesh = Mesh3D::createCylinder(0.7f, 1.2f, 12, transT.color);
+    transT.localPos = Vec3(-1.25f, 0.0f, 0.65f);
+    transT.size = Vec3(1.6f, 1.6f, 1.25f);
+    transT.color = Vec3(0.85f, 0.88f, 0.90f);
+    transT.mesh = Mesh3D::createCylinder(0.78f, 1.22f, 18, transT.color);
     addSubComponent(transT);
 
     SubComponent recvR;
@@ -584,10 +585,10 @@ void UltrasonicComp::initSubComponents() {
     recvR.name = "Mang thu song sieu am R (Ultrasonic Receiver)";
     recvR.rating = "Dau thu gom ap dien 40.0 kHz";
     recvR.roleDesc = "Tiep nhan song am phan xa nguoc lai tu be mat vat can, chuyen thanh tin hieu dien dua vao IC khuếch dai LM324 de kich hoat chan Echo.";
-    recvR.localPos = Vec3(1.3f, 0.0f, 0.4f);
-    recvR.size = Vec3(1.5f, 1.5f, 1.2f);
-    recvR.color = Vec3(0.85f, 0.85f, 0.88f);
-    recvR.mesh = Mesh3D::createCylinder(0.7f, 1.2f, 12, recvR.color);
+    recvR.localPos = Vec3(1.25f, 0.0f, 0.65f);
+    recvR.size = Vec3(1.6f, 1.6f, 1.25f);
+    recvR.color = Vec3(0.85f, 0.88f, 0.90f);
+    recvR.mesh = Mesh3D::createCylinder(0.78f, 1.22f, 18, recvR.color);
     addSubComponent(recvR);
 
     SubComponent crystal4;
@@ -595,10 +596,10 @@ void UltrasonicComp::initSubComponents() {
     crystal4.name = "Thach anh dao dong 4MHz";
     crystal4.rating = "4.000 MHz / Dinh chuan nhip phat xung";
     crystal4.roleDesc = "On dinh nhip xung 40kHz phat ra, tranh bi sai lech cu ly do nhiet do moi truong.";
-    crystal4.localPos = Vec3(0.0f, 0.25f, -0.4f);
-    crystal4.size = Vec3(0.8f, 0.35f, 0.4f);
-    crystal4.color = Vec3(0.8f, 0.8f, 0.82f);
-    crystal4.mesh = Mesh3D::createBox(0.8f, 0.35f, 0.4f, crystal4.color);
+    crystal4.localPos = Vec3(0.0f, -0.35f, 0.15f);
+    crystal4.size = Vec3(0.95f, 0.42f, 0.25f);
+    crystal4.color = Vec3(0.82f, 0.85f, 0.88f);
+    crystal4.mesh = Mesh3D::createBox(0.95f, 0.42f, 0.25f, crystal4.color);
     addSubComponent(crystal4);
 
     SubComponent hdr4;
@@ -606,10 +607,10 @@ void UltrasonicComp::initSubComponents() {
     hdr4.name = "Hang 4 chan cam tin hieu (VCC, Trig, Echo, GND)";
     hdr4.rating = "Header 4-pin goc vuong 2.54mm";
     hdr4.roleDesc = "Giao tiep voi Arduino Uno: Chan Trig nhan tin hieu phat; chan Echo xuat do rong xung ty le thuan voi thoi gian bay cua song am.";
-    hdr4.localPos = Vec3(0.0f, -0.6f, -0.7f);
-    hdr4.size = Vec3(1.2f, 0.5f, 0.4f);
-    hdr4.color = Vec3(0.85f, 0.75f, 0.2f);
-    hdr4.mesh = Mesh3D::createBox(1.2f, 0.5f, 0.4f, hdr4.color);
+    hdr4.localPos = Vec3(0.0f, -1.05f, 0.0f);
+    hdr4.size = Vec3(1.2f, 0.45f, 0.35f);
+    hdr4.color = Vec3(0.90f, 0.78f, 0.20f);
+    hdr4.mesh = Mesh3D::createBox(1.2f, 0.45f, 0.35f, hdr4.color);
     addSubComponent(hdr4);
 
     selectSubComponentByIndex(0);
@@ -654,46 +655,74 @@ void UltrasonicComp::onElectricalUpdate() {
 }
 
 void UltrasonicComp::renderPinsAndDetails() {
-    HardwareComponent::renderPinsAndDetails();
+    // 1. Thạch anh dao động 4.000MHz màu bạc ở chính giữa mặt trước PCB (Giữa 2 mắt siêu âm)
+    glPushMatrix();
+    glTranslatef(0.0f, -0.35f, 0.14f);
+    CompDraw::drawBeveledBox(0.95f, 0.42f, 0.22f, {0.82f, 0.85f, 0.88f}, (selectedSubCompIndex == 2));
+    glPopMatrix();
 
-    // 1. Hai ống phát/thu sóng siêu âm T/R mạ nhôm bạc sáng (Transducers)
-    // Tại x = -1.3f (Transmitter T) và x = +1.3f (Receiver R), nhô về phía trước +Z
-    for (float tx : {-1.3f, 1.3f}) {
+    // 2. Hai ống Phát (T - Trái) và Thu (R - Phải) siêu âm tròn 360 độ hoàn chỉnh
+    const float cylX[2] = {-1.25f, +1.25f};
+    const float rOuter = 0.78f;
+    const float rInner = 0.64f;
+    const float cylLen = 1.22f;
+    const int slices = 32;
+
+    for (int m = 0; m < 2; ++m) {
+        bool isThisEyeSelected = (selectedSubCompIndex == m);
         glPushMatrix();
-        glTranslatef(tx, 0.0f, 0.08f);
+        glTranslatef(cylX[m], 0.0f, 0.08f); // Đặt trên mặt trước PCB
 
-        // Vành đệm cao su đen ở chân ống
-        glColor3f(0.12f, 0.12f, 0.14f);
-        glutSolidCylinder(0.82f, 0.12f, 18, 1);
-
-        // Thân ống kim loại nhôm bạc (Đường kính 1.6cm, dài 1.2cm)
-        glTranslatef(0.0f, 0.0f, 0.10f);
-        glColor3f(0.85f, 0.88f, 0.92f);
-        glutSolidCylinder(0.80f, 1.20f, 20, 2);
-
-        // Vòng nẹp kim loại bo tròn mép ngoài
-        glTranslatef(0.0f, 0.0f, 1.20f);
-        glColor3f(0.75f, 0.78f, 0.82f);
-        glutSolidTorus(0.06f, 0.76f, 8, 20);
-
-        // Mặt lưới mắt cáo đan chéo màu đen/xám bên trong
-        glColor3f(0.15f, 0.16f, 0.18f);
-        glBegin(GL_TRIANGLE_FAN);
-        glVertex3f(0.0f, 0.0f, -0.02f);
-        for (int i = 0; i <= 20; ++i) {
-            float a = i * 2.0f * 3.14159265f / 20.0f;
-            glVertex3f(0.74f * std::cos(a), 0.74f * std::sin(a), -0.02f);
+        // 2.1. Vỏ trụ nhôm màu bạc sáng (Từ z = 0 đến z = cylLen)
+        glColor3f(isThisEyeSelected ? 1.0f : 0.85f,
+                  isThisEyeSelected ? 0.88f : 0.87f,
+                  isThisEyeSelected ? 0.25f : 0.90f);
+        glBegin(GL_QUAD_STRIP);
+        for (int i = 0; i <= slices; ++i) {
+            float a = (2.0f * 3.14159265f * i) / slices;
+            float cx = std::cos(a), cy = std::sin(a);
+            glNormal3f(cx, cy, 0.0f);
+            glVertex3f(cx * rOuter, cy * rOuter, 0.0f);
+            glVertex3f(cx * rOuter, cy * rOuter, cylLen);
         }
         glEnd();
 
-        // Lưới đan chéo chống chạm màng rung
+        // 2.2. Vành khuyên kim loại mặt trước (Annulus Ring từ rInner đến rOuter tại z = cylLen)
+        glBegin(GL_QUAD_STRIP);
+        glNormal3f(0.0f, 0.0f, 1.0f);
+        for (int i = 0; i <= slices; ++i) {
+            float a = (2.0f * 3.14159265f * i) / slices;
+            float cx = std::cos(a), cy = std::sin(a);
+            glVertex3f(cx * rInner, cy * rInner, cylLen);
+            glVertex3f(cx * rOuter, cy * rOuter, cylLen);
+        }
+        glEnd();
+
+        // 2.3. Nền nón phát sóng màu xám đậm bên trong lòng ống
+        glColor3f(0.22f, 0.24f, 0.28f);
+        glBegin(GL_TRIANGLE_FAN);
+        glNormal3f(0.0f, 0.0f, 1.0f);
+        glVertex3f(0.0f, 0.0f, cylLen - 0.02f);
+        for (int i = 0; i <= slices; ++i) {
+            float a = (2.0f * 3.14159265f * i) / slices;
+            glVertex3f(std::cos(a) * rInner, std::sin(a) * rInner, cylLen - 0.02f);
+        }
+        glEnd();
+
+        // 2.4. Lưới kim loại chắn bụi CẮT CHUẨN THEO PHƯƠNG TRÌNH ĐƯỜNG TRÒN (Không tràn viền!)
         glDisable(GL_LIGHTING);
-        glColor3f(0.35f, 0.38f, 0.42f);
-        glLineWidth(1.0f);
+        glColor3f(0.10f, 0.12f, 0.15f);
+        glLineWidth(1.3f);
         glBegin(GL_LINES);
-        for (float g = -0.55f; g <= 0.55f; g += 0.22f) {
-            glVertex3f(g, -0.52f, 0.002f); glVertex3f(g, 0.52f, 0.002f);
-            glVertex3f(-0.52f, g, 0.002f); glVertex3f(0.52f, g, 0.002f);
+        for (int g = -3; g <= 3; ++g) {
+            float offset = g * 0.16f;
+            float halfChord = std::sqrt(std::fmax(0.0f, rInner * rInner - offset * offset));
+            // Dây ngang
+            glVertex3f(-halfChord, offset, cylLen + 0.005f);
+            glVertex3f(+halfChord, offset, cylLen + 0.005f);
+            // Dây dọc
+            glVertex3f(offset, -halfChord, cylLen + 0.005f);
+            glVertex3f(offset, +halfChord, cylLen + 0.005f);
         }
         glEnd();
         glEnable(GL_LIGHTING);
@@ -701,39 +730,22 @@ void UltrasonicComp::renderPinsAndDetails() {
         glPopMatrix();
     }
 
-    // 2. Thạch anh dao động 4.0MHz HC-49S kim loại ở giữa
-    glPushMatrix();
-    glTranslatef(0.0f, 0.10f, 0.12f);
-    glColor3f(0.85f, 0.88f, 0.92f);
-    glScalef(0.75f, 0.30f, 0.18f);
-    glutSolidCube(1.0f);
-    glPopMatrix();
-
-    // 3. Hàng 4 chân cắm góc vuông (VCC, TRIG, ECHO, GND) ở mép dưới quay ra sau
-    glPushMatrix();
-    glTranslatef(0.0f, -0.75f, -0.08f);
-    // Đế nhựa đen
-    glColor3f(0.12f, 0.12f, 0.14f);
-    glScalef(1.20f, 0.22f, 0.25f);
-    glutSolidCube(1.0f);
-    glPopMatrix();
-    // 4 chân vàng
-    glColor3f(0.92f, 0.78f, 0.22f);
+    // 3. Hàng 4 chân cắm kim loại (VCC, Trig, Echo, GND) ở cạnh dưới PCB
+    bool isHdrSelected = (selectedSubCompIndex == 3);
     for (int p = 0; p < 4; ++p) {
         float px = -0.38f + p * 0.254f;
         glPushMatrix();
-        glTranslatef(px, -0.75f, -0.35f);
-        glScalef(0.06f, 0.06f, 0.45f);
-        glutSolidCube(1.0f);
+        glTranslatef(px, -1.05f, 0.0f);
+        CompDraw::drawBeveledBox(0.06f, 0.35f, 0.06f, {0.90f, 0.78f, 0.20f}, isHdrSelected);
         glPopMatrix();
     }
 
-    // 4. Nếu phát hiện vật cản gần (< 15cm), nháy tia đỏ cảnh báo
+    // 4. Nếu phát hiện vật cản gần (< 30cm), nháy tia đỏ cảnh báo nhỏ gọn ở mép trên
     if (isPowered && obstacleDetected) {
         glPushMatrix();
-        glTranslatef(0.0f, 0.65f, 0.15f);
+        glTranslatef(0.0f, 0.75f, 0.10f);
         glColor3f(1.0f, 0.15f, 0.15f);
-        glutSolidSphere(0.16f, 8, 8);
+        glutSolidSphere(0.10f, 8, 8);
         glPopMatrix();
     }
 }

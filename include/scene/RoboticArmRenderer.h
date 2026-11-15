@@ -8,15 +8,25 @@
 class RoboticArmRenderer {
 public:
     /**
-     * @brief Vẽ toàn bộ Cánh tay Robot 3 bậc tự do cơ khí độ nét cao:
-     * @param yawDeg Góc quay mâm đế SRV_BASE (-90°..+90°)
-     * @param pitchDeg Góc nâng hạ cánh tay đôi SRV_ELBOW (0°..85°)
+     * @brief Vẽ Cánh tay Robot 2 khâu (Boom + Forearm) không đâm xuyên sàn Tầng 2 & vươn qua đầu HC-SR04
+     * @param yawDeg Góc xoay mâm đế SRV_BASE (-90°..+90°)
+     * @param liftProgress Tiến trình hạ tay gắp: 0.0f (Nâng cao nghỉ) -> 1.0f (Vươn ra trước hạ xuống đất)
      * @param gripOpenRatio Độ mở ngàm kẹp SRV_GRIP (0.0 = Đóng chặt, 1.0 = Mở rộng)
      */
     static void renderArmAssembly(
-        float yawDeg, float pitchDeg, float gripOpenRatio,
+        float yawDeg, float liftProgress, float gripOpenRatio,
         bool isBaseSelected, bool isElbowSelected, bool isGripSelected)
     {
+        if (liftProgress < 0.0f) liftProgress = 0.0f;
+        if (liftProgress > 1.0f) liftProgress = 1.0f;
+
+        // Nội suy góc Khâu 1 (Vai - Shoulder Boom) và Khâu 2 (Khuỷu - Forearm):
+        // Khi nghỉ (liftProgress = 0.0): Khâu 1 dựng cao +58° lên trời, Khâu 2 gập nhẹ -35° giữ ngàm ở trên cao.
+        // Khi gắp (liftProgress = 1.0): Khâu 1 vươn về trước ở góc +28° (vẫn CAO HƠN sàn Tầng 2!),
+        // còn Khâu 2 ở đầu mút ngoài mũi xe mới chúc xuống -83° để đưa ngàm gắp xuống mặt sàn phía trước HC-SR04!
+        float shoulderUpDeg = 58.0f - liftProgress * 30.0f; // Luôn dương (+58° -> +28°), KHÔNG BAO GIỜ đâm xuống sàn!
+        float forearmDownDeg = 35.0f + liftProgress * 48.0f; // Quay chúc xuống tại đầu mút ngoài mũi xe
+
         glPushMatrix();
 
         // ====================================================================
@@ -39,8 +49,8 @@ public:
 
         // Thân Servo MG996R đặt giữa đế xoay (Có tem xanh đặc trưng)
         glPushMatrix();
-        glTranslatef(0.0f, 2.20f, 0.0f);
-        CompDraw::drawBeveledBox(2.0f, 2.20f, 4.0f, {0.14f, 0.15f, 0.17f}, isBaseSelected);
+        glTranslatef(0.0f, 2.00f, 0.0f);
+        CompDraw::drawBeveledBox(2.0f, 2.00f, 4.0f, {0.14f, 0.15f, 0.17f}, isBaseSelected);
         // Tem nhãn kim loại MG996R bên sườn
         glTranslatef(0.0f, 0.0f, 0.0f);
         CompDraw::drawBeveledBox(2.04f, 0.85f, 2.8f, {0.10f, 0.45f, 0.85f}, isBaseSelected);
@@ -49,68 +59,82 @@ public:
         // 2 Trụ đỡ khớp khuỷu (Standoff Towers) hai bên trái/phải
         for (float side : {-1.45f, +1.45f}) {
             glPushMatrix();
-            glTranslatef(side, 2.80f, 0.0f);
-            CompDraw::drawBeveledBox(0.35f, 3.60f, 1.10f, {0.72f, 0.75f, 0.80f}, isBaseSelected);
+            glTranslatef(side, 2.20f, 0.0f);
+            CompDraw::drawBeveledBox(0.35f, 2.40f, 1.10f, {0.72f, 0.75f, 0.80f}, isBaseSelected);
             glPopMatrix();
         }
 
         // ====================================================================
-        // KHỚP 2: CÁNH TAY ĐÒN ĐÔI SONG SONG (SRV_ELBOW - GÓC PITCH)
+        // KHỚP 2: CÁNH TAY 2 KHÂU (BOOM ARM + FOREARM LINK)
         // ====================================================================
-        // Dịch chuyển tâm hệ trục lên chốt trục khuỷu (y = 4.30 cm)
-        glTranslatef(0.0f, 4.30f, 0.0f);
+        // Dịch chuyển tâm hệ trục lên chốt vai (y = 3.00 cm trên sàn Tầng 2)
+        glTranslatef(0.0f, 3.00f, 0.0f);
 
-        // Đĩa Servo Horn tròn hợp kim ở hai bên chốt khuỷu
-        glRotatef(pitchDeg, 1.0f, 0.0f, 0.0f);
+        // --------------------------------------------------------------------
+        // KHÂU 1 (BOOM ARM - Dài L1 = 6.8 cm):
+        // Dùng -shoulderUpDeg để vươn LÊN TRÊN (+Y) và RA TRƯỚC (+Z)
+        // --------------------------------------------------------------------
+        glRotatef(-shoulderUpDeg, 1.0f, 0.0f, 0.0f);
 
-        const float armLength = 8.20f;
-        // Vẽ 2 thanh dầm hợp kim song song (Twin-Boom CNC Links) vươn về phía trước (+Z)
-        for (float side : {-1.15f, +1.15f}) {
-            // Thanh dầm chính
+        const float L1 = 6.80f;
+        // Vẽ 2 thanh dầm hợp kim song song (Twin-Boom CNC Links)
+        for (float side : {-1.10f, +1.10f}) {
             glPushMatrix();
-            glTranslatef(side, 0.35f, armLength * 0.5f);
-            CompDraw::drawBeveledBox(0.28f, 0.75f, armLength, {0.82f, 0.85f, 0.88f}, isElbowSelected);
-            glPopMatrix();
-
-            // Thanh giằng liên kết (Parallel Linkage Rod) màu vàng đồng phía dưới
-            glPushMatrix();
-            glTranslatef(side * 0.75f, -0.35f, armLength * 0.5f);
-            CompDraw::drawBeveledBox(0.16f, 0.22f, armLength * 0.92f, {0.90f, 0.70f, 0.15f}, isElbowSelected);
+            glTranslatef(side, 0.0f, L1 * 0.5f);
+            CompDraw::drawBeveledBox(0.30f, 0.70f, L1, {0.82f, 0.85f, 0.90f}, isElbowSelected);
             glPopMatrix();
         }
 
         // Thanh ngang gia cố giữa 2 cánh tay đòn
         glPushMatrix();
-        glTranslatef(0.0f, 0.35f, armLength * 0.45f);
-        CompDraw::drawBeveledBox(2.30f, 0.35f, 0.45f, {0.22f, 0.25f, 0.30f}, isElbowSelected);
+        glTranslatef(0.0f, 0.0f, L1 * 0.5f);
+        CompDraw::drawBeveledBox(2.20f, 0.30f, 0.40f, {0.22f, 0.25f, 0.30f}, isElbowSelected);
         glPopMatrix();
 
+        // Dịch tới đỉnh Khâu 1 (Đầu mút vươn qua mép trước Sàn Tầng 2)
+        glTranslatef(0.0f, 0.0f, L1);
+
+        // --------------------------------------------------------------------
+        // KHÂU 2 (FOREARM + SRV_ELBOW - Dài L2 = 6.5 cm):
+        // Từ trên cao chúc xuống vượt qua đầu HC-SR04 tới điểm gắp
+        // --------------------------------------------------------------------
+        glRotatef(+forearmDownDeg, 1.0f, 0.0f, 0.0f);
+
+        const float L2 = 6.50f;
+        for (float side : {-0.85f, +0.85f}) {
+            glPushMatrix();
+            glTranslatef(side, 0.0f, L2 * 0.5f);
+            CompDraw::drawBeveledBox(0.26f, 0.58f, L2, {0.92f, 0.72f, 0.15f}, isElbowSelected);
+            glPopMatrix();
+        }
+
+        // Dịch ra đầu cổ tay SRV_GRIP (Lúc này ở ngoài mũi xe, vượt qua HC-SR04!)
+        glTranslatef(0.0f, 0.0f, L2);
+
         // ====================================================================
-        // KHỚP 3: CỔ TAY & NGÀM GẮP BÁNH RĂNG ĐỐI XỨNG (SRV_GRIP - GÓC GRIP)
+        // KHỚP 3: CỔ TAY & NGÀM GẮP BÁNH RĂNG ĐỐI XỨNG (SRV_GRIP)
         // ====================================================================
-        // Dịch chuyển tâm hệ trục ra đầu cổ tay (z = armLength)
-        glTranslatef(0.0f, 0.0f, armLength);
-        // Bù góc nghiêng để cổ tay luôn hướng song song với mặt đất (Cơ cấu bình hành)
-        glRotatef(-pitchDeg * 0.65f, 1.0f, 0.0f, 0.0f);
+        // Giữ cho cụm cổ tay và 2 ngón kẹp hướng nghiêng 35 độ so với phương ngang
+        float netAngle = -shoulderUpDeg + forearmDownDeg;
+        glRotatef(35.0f - netAngle, 1.0f, 0.0f, 0.0f);
 
         // 3.1. Khung gá cổ tay & Thân Servo kẹp SRV_GRIP
         glPushMatrix();
-        glTranslatef(0.0f, 0.0f, 0.95f);
-        CompDraw::drawBeveledBox(2.60f, 1.35f, 1.90f, {0.16f, 0.18f, 0.22f}, isGripSelected);
+        glTranslatef(0.0f, 0.0f, 0.85f);
+        CompDraw::drawBeveledBox(2.50f, 1.20f, 1.70f, {0.16f, 0.18f, 0.22f}, isGripSelected);
         glPopMatrix();
 
         // 3.2. Hai ngón kẹp cơ khí đóng/mở đối xứng (Symmetric Parallel Jaws)
-        // gripOpenRatio: 0.0 (đóng sát = 6 độ) -> 1.0 (mở rộng = 46 độ)
         float jawAngle = 6.0f + gripOpenRatio * 40.0f;
 
         for (int dir : {-1, +1}) { // dir = -1 (Ngàm Trái), dir = +1 (Ngàm Phải)
             glPushMatrix();
-            glTranslatef(dir * 0.85f, 0.0f, 1.85f);
+            glTranslatef(dir * 0.80f, 0.0f, 1.70f);
 
             // Bánh răng truyền động màu cam/vàng tại gốc ngón kẹp
             glPushMatrix();
-            glTranslatef(0.0f, 0.45f, 0.0f);
-            CompDraw::drawElectrolyticCap(0.65f, 0.25f, {0.95f, 0.50f, 0.12f}, isGripSelected);
+            glTranslatef(0.0f, 0.35f, 0.0f);
+            CompDraw::drawElectrolyticCap(0.55f, 0.20f, {0.95f, 0.50f, 0.12f}, isGripSelected);
             glPopMatrix();
 
             // Xoay ngón kẹp mở ra hoặc khép vào đối xứng
@@ -118,21 +142,21 @@ public:
 
             // Đốt ngón kẹp ngoài (Proximal Phalanx - Hợp kim cam/xám)
             glPushMatrix();
-            glTranslatef(0.0f, 0.0f, 1.15f);
-            CompDraw::drawBeveledBox(0.32f, 0.65f, 2.30f, {0.95f, 0.48f, 0.12f}, isGripSelected);
+            glTranslatef(0.0f, 0.0f, 0.95f);
+            CompDraw::drawBeveledBox(0.28f, 0.55f, 1.90f, {0.95f, 0.48f, 0.12f}, isGripSelected);
             glPopMatrix();
 
             // Đốt mũi kẹp bẻ quặp vào trong (Distal Claw Tip)
-            glTranslatef(0.0f, 0.0f, 2.25f);
-            glRotatef(-dir * (jawAngle * 0.75f + 22.0f), 0.0f, 1.0f, 0.0f);
+            glTranslatef(0.0f, 0.0f, 1.85f);
+            glRotatef(-dir * (jawAngle * 0.75f + 20.0f), 0.0f, 1.0f, 0.0f);
 
             glPushMatrix();
-            glTranslatef(0.0f, 0.0f, 0.95f);
-            CompDraw::drawBeveledBox(0.28f, 0.65f, 1.90f, {0.85f, 0.88f, 0.92f}, isGripSelected);
+            glTranslatef(0.0f, 0.0f, 0.80f);
+            CompDraw::drawBeveledBox(0.24f, 0.55f, 1.60f, {0.85f, 0.88f, 0.92f}, isGripSelected);
 
-            // Miếng đệm cao su ma sát màu đỏ/đen ở mặt trong ngón kẹp
-            glTranslatef(-dir * 0.16f, 0.0f, 0.15f);
-            CompDraw::drawBeveledBox(0.10f, 0.58f, 1.35f, {0.85f, 0.18f, 0.18f}, isGripSelected);
+            // Miếng đệm cao su ma sát màu đỏ ở mặt trong ngón kẹp
+            glTranslatef(-dir * 0.14f, 0.0f, 0.10f);
+            CompDraw::drawBeveledBox(0.08f, 0.48f, 1.20f, {0.85f, 0.18f, 0.18f}, isGripSelected);
             glPopMatrix();
 
             glPopMatrix();

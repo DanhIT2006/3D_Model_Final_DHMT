@@ -75,31 +75,6 @@ void InputHandler::onKeyDown(unsigned char key, int x, int y, RobotCarScene& sce
             if (scene.compBuck) scene.compBuck->adjustVoltage(-0.2f);
             break;
 
-        case 'i':
-        case 'I':
-            if (scene.isWorkbenchMode) {
-                if (scene.inspectedComponent) {
-                    SubComponent* sub = scene.inspectedComponent->getSelectedSubComponent();
-                    if (sub && sub->isInteractive) {
-                        scene.inspectedComponent->onSubComponentAction(sub->id);
-                    }
-                }
-            } else {
-                HardwareComponent* targetComp = scene.selectedComponent;
-                if (!targetComp) {
-                    targetComp = scene.compL298N ? (HardwareComponent*)scene.compL298N : (HardwareComponent*)scene.compArd;
-                    if (targetComp) {
-                        scene.selectedComponent = targetComp;
-                        targetComp->isSelected = true;
-                    }
-                }
-                if (targetComp) {
-                    scene.enterWorkbench(targetComp);
-                    camera.enterWorkbenchMode();
-                }
-            }
-            break;
-
         case ' ': // Phanh dừng hoặc Tương tác linh kiện
             if (scene.isWorkbenchMode && scene.inspectedComponent) {
                 SubComponent* sub = scene.inspectedComponent->getSelectedSubComponent();

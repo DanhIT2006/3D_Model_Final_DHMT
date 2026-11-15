@@ -92,13 +92,13 @@ void RobotCarScene::initScene() {
     chassisFloor1->addChild(compBuck);
 
     compHcsr04 = new UltrasonicComp();
-    compHcsr04->localPos = Vec3(0.0f, 1.2f, 12.8f);
+    compHcsr04->localPos = Vec3(0.0f, 1.10f, 11.20f);
     chassisFloor1->addChild(compHcsr04);
 
-    // 4. San Tang 2 (Chassis Floor 2) cach Tang 1 delta Y = 6.0 cm
+    // 4. San Tang 2 (Chassis Floor 2) cach Tang 1 delta Y = 6.0 cm (Phia truoc khuyet ngan hon de tay gap khong va cham)
     chassisFloor2 = new SceneNode("FLOOR_2", "San Khung Gam Tang 2");
     chassisFloor2->localPos = Vec3(0.0f, 6.0f, 0.0f);
-    chassisFloor2->mesh = Mesh3D::createBox(15.0f, 0.35f, 23.0f, Vec3(0.08f, 0.09f, 0.12f));
+    chassisFloor2->mesh = Mesh3D::createBox(15.0f, 0.35f, 21.0f, Vec3(0.08f, 0.09f, 0.12f));
     carRoot->addChild(chassisFloor2);
 
     // 5. Khoi tao va lap rap linh kien tren Tang 2
@@ -112,7 +112,7 @@ void RobotCarScene::initScene() {
 
     // 6. Canh tay robot 3 bac tu do co khi chuan (Base Yaw -> Twin-Boom Pitch -> Gear Gripper)
     compSrvBase = new ServoMG996RComp("SRV_BASE", "Khop De Xoay (Base Yaw)", ServoJointType::BASE_YAW);
-    compSrvBase->localPos = Vec3(0.0f, 0.35f, 7.5f);
+    compSrvBase->localPos = Vec3(0.0f, 0.35f, 4.60f);
     chassisFloor2->addChild(compSrvBase);
 
     compSrvElbow = new ServoMG996RComp("SRV_ELBOW", "Khop Khuyu Tay Doi (Twin-Boom Pitch)", ServoJointType::LINEAR_LIFT);
@@ -168,12 +168,14 @@ void RobotCarScene::updateDifferentialDrive(float dt) {
         compMotRL->rpm = compMotFL->rpm;
         compMotRL->wheelAngle = compMotFL->wheelAngle;
         compMotRL->isPowered = compMotFL->isPowered;
+        compMotRL->statusDesc = compMotFL->statusDesc;
     }
     if (compMotRR) {
         compMotRR->linearSpeedCmS = compMotFR->linearSpeedCmS;
         compMotRR->rpm = compMotFR->rpm;
         compMotRR->wheelAngle = compMotFR->wheelAngle;
         compMotRR->isPowered = compMotFR->isPowered;
+        compMotRR->statusDesc = compMotFR->statusDesc;
     }
 
     carRoot->localPos = carPosition;
@@ -184,26 +186,35 @@ void RobotCarScene::updateArmAndGrasping(float dt) {
     if (!compSrvGrip || !targetObject) return;
 
     float yawDeg = compSrvBase ? (compSrvBase->currentAngleDeg - 90.0f) : 0.0f;
-    float pitchDeg = compSrvElbow ? ((140.0f - compSrvElbow->currentAngleDeg) * 0.55f) : 0.0f;
-    if (pitchDeg < 0.0f) pitchDeg = 0.0f;
-    if (pitchDeg > 80.0f) pitchDeg = 80.0f;
+    float liftProgress = compSrvElbow ? ((140.0f - compSrvElbow->currentAngleDeg) / 140.0f) : 0.0f;
+    if (liftProgress < 0.0f) liftProgress = 0.0f;
+    if (liftProgress > 1.0f) liftProgress = 1.0f;
 
-    // Tọa độ mâm xoay trên sàn tầng 2 trong không gian thế giới
+    float shoulderUpDeg = 58.0f - liftProgress * 30.0f;
+    float forearmDownDeg = 35.0f + liftProgress * 48.0f;
+
+    // Tọa độ mâm xoay trên sàn tầng 2 trong không gian thế giới (z = +4.60cm trên xe)
     float totalYawRad = carYawRad + (yawDeg * 3.14159265f / 180.0f);
-    Vec3 basePos = carPosition + Vec3(7.5f * std::sin(carYawRad), 6.35f, 7.5f * std::cos(carYawRad));
+    Vec3 basePos = carPosition + Vec3(4.60f * std::sin(carYawRad), 6.35f, 4.60f * std::cos(carYawRad));
 
-    float pitchRad = pitchDeg * 3.14159265f / 180.0f;
-    float L_arm = 8.20f;
-    float dY1 = -L_arm * std::sin(pitchRad);
-    float dZ1 =  L_arm * std::cos(pitchRad);
+    const float L1 = 6.80f;
+    const float L2 = 6.50f;
+    const float L3 = 3.80f;
 
-    float wristPitchRad = pitchRad * 0.35f;
-    float L_claw = 4.20f;
-    float dY2 = -L_claw * std::sin(wristPitchRad);
-    float dZ2 =  L_claw * std::cos(wristPitchRad);
+    float radShoulder = shoulderUpDeg * 3.14159265f / 180.0f;
+    float dY1 = L1 * std::sin(radShoulder);
+    float dZ1 = L1 * std::cos(radShoulder);
 
-    float horizDist = dZ1 + dZ2;
-    float gripY = std::max(1.5f, 10.65f + dY1 + dY2);
+    float radForearmNet = (shoulderUpDeg - forearmDownDeg) * 3.14159265f / 180.0f;
+    float dY2 = L2 * std::sin(radForearmNet);
+    float dZ2 = L2 * std::cos(radForearmNet);
+
+    float radClaw = 35.0f * 3.14159265f / 180.0f;
+    float dY3 = -L3 * std::sin(radClaw);
+    float dZ3 =  L3 * std::cos(radClaw);
+
+    float horizDist = dZ1 + dZ2 + dZ3;
+    float gripY = std::max(1.5f, basePos.y + 3.00f + dY1 + dY2 + dY3);
     float gripX = basePos.x + horizDist * std::sin(totalYawRad);
     float gripZ = basePos.z + horizDist * std::cos(totalYawRad);
 

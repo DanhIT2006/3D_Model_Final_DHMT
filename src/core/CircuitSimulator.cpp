@@ -75,11 +75,11 @@ void CircuitSimulator::setupStandardCarCircuit() {
     addWire("W_ARD_HCSR04_TRIG", "ARD", "D7",  "HCSR04", "TRIG", blueSig);
     addWire("W_ARD_HCSR04_ECHO", "ARD", "D8",  "HCSR04", "ECHO", blueSig);
 
-    // 8. Tuyến công suất động cơ L298N -> MOT_L, MOT_R
-    addWire("W_L298N_MOTL_A", "L298N", "OUT1", "MOT_L", "A", blueSig);
-    addWire("W_L298N_MOTL_B", "L298N", "OUT2", "MOT_L", "B", blueSig);
-    addWire("W_L298N_MOTR_A", "L298N", "OUT3", "MOT_R", "A", blueSig);
-    addWire("W_L298N_MOTR_B", "L298N", "OUT4", "MOT_R", "B", blueSig);
+    // 8. Tuyến công suất động cơ L298N -> MOT_FL, MOT_FR
+    addWire("W_L298N_MOTL_A", "L298N", "OUT1", "MOT_FL", "A", blueSig);
+    addWire("W_L298N_MOTL_B", "L298N", "OUT2", "MOT_FL", "B", blueSig);
+    addWire("W_L298N_MOTR_A", "L298N", "OUT3", "MOT_FR", "A", blueSig);
+    addWire("W_L298N_MOTR_B", "L298N", "OUT4", "MOT_FR", "B", blueSig);
 
     // 9. Tuyến tín hiệu PWM điều khiển 3 Servo từ Arduino
     addWire("W_ARD_SRV_BASE",  "ARD", "D9",  "SRV_BASE",  "SIG", yellowPWM);
@@ -95,8 +95,10 @@ void CircuitSimulator::stepCircuit(float dt) {
     auto* ard   = dynamic_cast<ArduinoUnoComp*>(getComponent("ARD"));
     auto* l298n = dynamic_cast<L298NDriverComp*>(getComponent("L298N"));
     auto* hcsr04= dynamic_cast<UltrasonicComp*>(getComponent("HCSR04"));
-    auto* motL  = dynamic_cast<DCMotorComp*>(getComponent("MOT_L"));
-    auto* motR  = dynamic_cast<DCMotorComp*>(getComponent("MOT_R"));
+    auto* motFL = dynamic_cast<DCMotorComp*>(getComponent("MOT_FL"));
+    auto* motRL = dynamic_cast<DCMotorComp*>(getComponent("MOT_RL"));
+    auto* motFR = dynamic_cast<DCMotorComp*>(getComponent("MOT_FR"));
+    auto* motRR = dynamic_cast<DCMotorComp*>(getComponent("MOT_RR"));
     auto* srvBase = dynamic_cast<ServoMG996RComp*>(getComponent("SRV_BASE"));
     auto* srvElbow= dynamic_cast<ServoMG996RComp*>(getComponent("SRV_ELBOW"));
     auto* srvGrip = dynamic_cast<ServoMG996RComp*>(getComponent("SRV_GRIP"));
@@ -174,26 +176,16 @@ void CircuitSimulator::stepCircuit(float dt) {
         l298n->onElectricalUpdate();
     }
 
-    // L298N -> MOT_L, MOT_R
-    if (l298n && motL && motR) {
-        // Cập nhật điện áp chân A và B của động cơ
-        Pin* o1 = l298n->getPin("OUT1");
-        Pin* o2 = l298n->getPin("OUT2");
-        Pin* motLA = motL->getPin("A");
-        Pin* motLB = motL->getPin("B");
-        if (motLA && o1) motLA->voltage = o1->voltage;
-        if (motLB && o2) motLB->voltage = o2->voltage;
+    // L298N -> 4 Động cơ DC (MOT_FL, MOT_RL, MOT_FR, MOT_RR)
+    if (l298n) {
+        bool driverPwr = l298n->isPowered;
+        float vL = l298n->outVoltL;
+        float vR = l298n->outVoltR;
 
-        Pin* o3 = l298n->getPin("OUT3");
-        Pin* o4 = l298n->getPin("OUT4");
-        Pin* motRA = motR->getPin("A");
-        Pin* motRB = motR->getPin("B");
-        if (motRA && o3) motRA->voltage = o3->voltage;
-        if (motRB && o4) motRB->voltage = o4->voltage;
-
-        // Cập nhật động học và trạng thái nguồn từ module cầu H L298N
-        motL->updatePhysics(dt, l298n->outVoltL, l298n->isPowered);
-        motR->updatePhysics(dt, l298n->outVoltR, l298n->isPowered);
+        if (motFL) motFL->updatePhysics(dt, vL, driverPwr);
+        if (motRL) motRL->updatePhysics(dt, vL, driverPwr);
+        if (motFR) motFR->updatePhysics(dt, vR, driverPwr);
+        if (motRR) motRR->updatePhysics(dt, vR, driverPwr);
     }
 
     // DOMINO 5V & ARD PWM -> 3 Servo
@@ -226,8 +218,8 @@ void CircuitSimulator::stepCircuit(float dt) {
         float i = 45.0f; // Dòng tĩnh Arduino + LED
         if (buck && buck->isPowered) i += 12.0f;
         if (hcsr04 && hcsr04->isPowered) i += 15.0f;
-        if (motL) i += std::fabs(motL->rpm) * 2.8f;
-        if (motR) i += std::fabs(motR->rpm) * 2.8f;
+        if (motFL) i += std::fabs(motFL->rpm) * 1.4f;
+        if (motFR) i += std::fabs(motFR->rpm) * 1.4f;
         if (srvBase && srvBase->isPowered)  i += 40.0f;
         if (srvElbow && srvElbow->isPowered) i += 50.0f;
         if (srvGrip && srvGrip->isPowered)  i += 35.0f;
