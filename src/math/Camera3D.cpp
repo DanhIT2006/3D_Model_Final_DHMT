@@ -109,6 +109,41 @@ void Camera3D::update(const Vec3& carPosition, float carYawRad) {
     upVec = Vec3(0.0f, 1.0f, 0.0f);
 }
 
+// =========================================================================
+// [SLIDE 4 CODE BLOCK]: MA TRẬN HỆ TRỤC QUAN SÁT T = A.B.C.D & PHÉP CHIẾU
+// Theo giáo trình CG.4 trang 45 với 4 tham số cầu (theta, phi, radius, focalD):
+//   x0 = -x * sin(theta) + y * cos(theta)
+//   y0 = -x * cos(theta) * sin(phi) - y * sin(theta) * sin(phi) + z * cos(phi)
+//   z0 = -x * cos(theta) * cos(phi) - y * sin(theta) * cos(phi) - z * sin(phi) + R
+// Phối cảnh (Perspective): x' = x0 * D / z0, y' = y0 * D / z0 (vật gần to, vật xa nhỏ)
+// Trực giao (Orthographic): x' = x0, y' = y0 (giữ nguyên tỷ lệ CAD kỹ thuật)
+// =========================================================================
+void Camera3D::computeCameraCoords(const Vec3& pWorld, float& x0, float& y0, float& z0, float& xProj, float& yProj) const {
+    float x = pWorld.x - target.x;
+    float y = pWorld.y - target.y;
+    float z = pWorld.z - target.z;
+
+    float sinT = std::sin(theta);
+    float cosT = std::cos(theta);
+    float sinP = std::sin(phi);
+    float cosP = std::cos(phi);
+
+    // 1. Hệ trục quan sát T = A.B.C.D
+    x0 = -x * sinT + y * cosT;
+    y0 = -x * cosT * sinP - y * sinT * sinP + z * cosP;
+    z0 = -x * cosT * cosP - y * sinT * cosP - z * sinP + radius;
+
+    // 2. Phép chiếu
+    if (mode == ViewMode::PERSPECTIVE_ORBIT || mode == ViewMode::CAR_FOLLOW) {
+        float zDepth = (z0 > 0.1f) ? z0 : 0.1f;
+        xProj = x0 * focalD / zDepth;
+        yProj = y0 * focalD / zDepth;
+    } else {
+        xProj = x0;
+        yProj = y0;
+    }
+}
+
 void Camera3D::applyProjection() const {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -116,11 +151,13 @@ void Camera3D::applyProjection() const {
     float aspect = (float)screenWidth / (float)screenHeight;
 
     if (mode == ViewMode::TOP_VIEW || mode == ViewMode::FRONT_VIEW || mode == ViewMode::SIDE_VIEW) {
-        // Chiếu trực giao kỹ thuật (Orthographic Projection - CG.4)
+        // [SLIDE 4]: Chiếu song song trực giao kỹ thuật (Orthographic Projection - CG.4 tr.31 & 48)
+        // Triệt tiêu thành phần độ sâu z, giữ nguyên tỷ lệ kích thước CAD của 2 tầng xe
         float orthoSize = radius * 0.55f;
         glOrtho(-orthoSize * aspect, orthoSize * aspect, -orthoSize, orthoSize, zNear, zFar);
     } else {
-        // Chiếu phối cảnh (Perspective Projection - CG.4)
+        // [SLIDE 4]: Chiếu phối cảnh (Perspective Projection - CG.4 tr.30 & 47)
+        // Chia tỉ lệ theo độ sâu z (x' = x0 * D / z0), tạo cảm giác xa gần chân thực
         gluPerspective(fovY, aspect, zNear, zFar);
     }
 

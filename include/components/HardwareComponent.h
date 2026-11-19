@@ -38,8 +38,9 @@ struct SubComponent {
 };
 
 /**
- * @brief Lớp cơ sở trừu tượng cho 11 linh kiện phần cứng vi điều khiển
- * Tích hợp mô phỏng mạch điện, chân cắm (Pin), kết xuất 3D và phân tích vi mô (Workbench)
+ * @brief [SLIDE 5]: Lớp cơ sở trừu tượng cho 11 linh kiện phần cứng vi điều khiển
+ * Dẫn xuất từ SceneNode để tự động kế thừa ma trận chuyển động thế giới trong Scene Graph.
+ * Tích hợp mô phỏng mạch điện, mảng chân cắm (pins), kết xuất 3D CAD và phân tích vi mô (Workbench Mode).
  */
 class HardwareComponent : public SceneNode {
 public:

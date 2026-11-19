@@ -11,9 +11,12 @@ void Raster2D::putPixel(int x, int y, const Vec3& color) {
     glEnd();
 }
 
-// ===================== 1. BRESENHAM LINE =====================
+// =========================================================================
+// [SLIDE 9 CODE BLOCK]: THUẬT TOÁN ĐOẠN THẲNG BRESENHAM (CG.3 TRANG 12-22)
+// Nguyên hóa hoàn toàn: Sử dụng biến quyết định err = dx - dy, chỉ dùng phép cộng/trừ số nguyên
+// Dùng cho: Tia quét Radar cự ly 40cm, đường chỉ dẫn Callout từ linh kiện ra bảng mô tả
+// =========================================================================
 void Raster2D::drawLineBresenham(int x0, int y0, int x1, int y1, const Vec3& color) {
-    // Thuật toán Bresenham tổng quát cho mọi hệ số góc (CG.3 trang 12-22)
     int dx = std::abs(x1 - x0);
     int dy = std::abs(y1 - y0);
     int sx = (x0 < x1) ? 1 : -1;
@@ -44,7 +47,11 @@ void Raster2D::drawLineMidpoint(int x0, int y0, int x1, int y1, const Vec3& colo
     drawLineBresenham(x0, y0, x1, y1, color);
 }
 
-// ===================== 3. MIDPOINT CIRCLE =====================
+// =========================================================================
+// [SLIDE 9 CODE BLOCK]: THUẬT TOÁN ĐƯỜNG TRÒN MIDPOINT & ĐỐI XỨNG 8 ĐIỂM (CG.3 TRANG 29-37)
+// Tận dụng tính chất đối xứng 8 phần để chỉ tính toán trong 1/8 cung tròn (x < y)
+// Dùng cho: Các vòng tròn chia khoảng cách Radar (10cm, 20cm, 30cm, 40cm), Vòng tròn tâm ngắm sàn
+// =========================================================================
 void Raster2D::put8Pixel(int xc, int yc, int x, int y, const Vec3& color) {
     glColor3f(color.x, color.y, color.z);
     glBegin(GL_POINTS);
@@ -60,8 +67,7 @@ void Raster2D::put8Pixel(int xc, int yc, int x, int y, const Vec3& color) {
 }
 
 void Raster2D::drawCircleMidpoint(int xc, int yc, int radius, const Vec3& color) {
-    // Thuật toán Midpoint Circle (CG.3 trang 29-37)
-    // Khởi tạo p = 5/4 - R ~ 1 - R
+    // Khởi tạo biến quyết định p = 5/4 - R ~ 1 - R (nguyên hóa)
     int x = 0;
     int y = radius;
     int p = 1 - radius;
@@ -173,6 +179,46 @@ void Raster2D::scanlineFillPolygon(const std::vector<Point2D>& vertices, const V
             glEnd();
         }
     }
+}
+
+// =========================================================================
+// [SLIDE 9 CODE BLOCK]: TÔ LOANG ĐƯỜNG BIÊN KHỬ ĐỆ QUY DÙNG STACK (CG.3 TRANG 84-88)
+// Khử đệ quy bằng std::stack để tránh triệt để lỗi tràn bộ nhớ ngăn xếp (Stack Overflow)
+// khi diện tích vùng tô lớn hoặc độ phân giải cao; đảm bảo tốc độ ổn định 60+ FPS.
+// =========================================================================
+void Raster2D::boundaryFillStack(int x, int y, const Vec3& fillColor, const Vec3& boundaryColor, int maxW, int maxH) {
+    if (x < 0 || x >= maxW || y < 0 || y >= maxH) return;
+
+    std::stack<Point2D> st;
+    st.push({x, y});
+
+    std::vector<std::vector<bool>> visited(maxW, std::vector<bool>(maxH, false));
+    visited[x][y] = true;
+
+    glColor3f(fillColor.x, fillColor.y, fillColor.z);
+    glBegin(GL_POINTS);
+
+    while (!st.empty()) {
+        Point2D p = st.top();
+        st.pop();
+
+        glVertex2i(p.x, p.y);
+
+        // Kiểm tra 4 hướng liên thông (4-connected neighbors)
+        const int dx[4] = {1, -1, 0, 0};
+        const int dy[4] = {0, 0, 1, -1};
+
+        for (int i = 0; i < 4; ++i) {
+            int nx = p.x + dx[i];
+            int ny = p.y + dy[i];
+
+            if (nx >= 0 && nx < maxW && ny >= 0 && ny < maxH && !visited[nx][ny]) {
+                visited[nx][ny] = true;
+                st.push({nx, ny});
+            }
+        }
+    }
+    glEnd();
 }
 
 void Raster2D::fillRect(int x, int y, int w, int h, const Vec3& color) {

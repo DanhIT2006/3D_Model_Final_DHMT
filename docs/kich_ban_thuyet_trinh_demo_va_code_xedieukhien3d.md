@@ -1,185 +1,169 @@
-# KỊCH BẢN THUYẾT TRÌNH & BẢO VỆ ĐỒ ÁN (DEMO + LIVE CODE WALKTHROUGH)
-**Đề tài:** Ứng dụng C++/OpenGL xây dựng chương trình mô phỏng và tương tác linh kiện vi điều khiển trên mô hình xe Robot gắp đồ vật (Digital Twin 3D)
-**Thư mục dự án:** `C:\XAMPP\htdocs\BaiTap\XeDieuKhien3D`
+# TÀI LIỆU HƯỚNG DẪN BẢO VỆ ĐỒ ÁN MÔN HỌC
+# KỊCH BẢN THUYẾT TRÌNH & BẢO VỆ ĐỒ ÁN (TRÌNH CHIẾU SLIDE SONG SONG + DEMO TRỰC TIẾP & GIẢI THÍCH MÃ NGUỒN)
+
+* **Đề tài:** Ứng dụng C++/OpenGL xây dựng chương trình mô phỏng và tương tác linh kiện vi điều khiển trên mô hình xe Robot gắp đồ vật (Digital Twin 3D)
+* **Thư mục dự án:** `C:\XAMPP\htdocs\BaiTap\XeDieuKhien3D`
+* **Slide đồng bộ:** `Slide_Trinh_Bay_Xen_Ke_Demo_XeDieuKhien3D.pptx` (10 Slides)
 
 ---
 
 ## PHẦN 1: GÓC NHÌN CỦA GIẢNG VIÊN (HỘI ĐỒNG CHẤM ĐỒ ÁN MUỐN THẤY GÌ?)
 
-Khi chấm một đồ án kết hợp giữa **Đồ họa máy tính (2D/3D)** và **Lập trình hệ thống C++/OpenGL**, giảng viên không chấm điểm dựa trên việc mô hình đẹp như game thương mại, mà tìm kiếm **5 bằng chứng cốt lõi** sau đây để đánh giá điểm Giỏi/Xuất sắc (8.5 – 10):
+Khi chấm một đồ án kết hợp giữa **Đồ họa máy tính (2D/3D)** và **Lập trình hệ thống C++/OpenGL**, giảng viên không đánh giá dựa trên việc mô hình đẹp như game thương mại, mà tìm kiếm **4 bằng chứng cốt lõi** sau để chấm điểm Giỏi / Xuất sắc (8.5 – 10):
 
-### 1.1. Sự ăn khớp thật sự giữa lý thuyết trên lớp (`CG.3` & `CG.4`) và code chạy thực tế
-* **Điều giảng viên muốn thấy:** Sinh viên không chỉ gọi các hàm dựng sẵn của thư viện (`glutSolidCube`, `gluLookAt`) một cách máy móc, mà **hiểu và tự cài đặt được bản chất toán học** trong slide bài giảng:
-  * Biểu diễn vật thể bằng **Danh sách đỉnh – Danh sách cạnh (`WireFrame`)** và **Danh sách đỉnh – Danh sách mặt (`FaceModel`)** *(CG.4, tr.20–26)*.
-  * Tự xây dựng ma trận thuần nhất $4 \times 4$ và tính được **phép biến đổi kết hợp** $M = M_1 \cdot M_2 \cdot M_3$ cho chuỗi chuyển động của xe và cơ cấu nâng gắp *(CG.4, tr.5–16)*.
-  * Hiểu rõ **4 tham số quan sát 3D ($\theta, \Phi, R, D$)** trong lớp `Camera3D` và sự khác biệt giữa phép chiếu phối cảnh (`gluPerspective`) với 3 hình chiếu song song trực giao kỹ thuật Top/Front/Side View (`glOrtho`) *(CG.4, tr.28–49)*.
-  * Vận dụng khéo léo các thuật toán 2D (**Bresenham/Midpoint** vẽ đoạn thẳng – đường tròn – elip, **Cohen-Sutherland** xén hình, **Scanline Fill** tô màu, **Font Bitmap**) vào bảng giao diện HUD/Radar 2D trên màn hình *(CG.3, tr.12–102)*.
+### 1.1. Sự ăn khớp thật sự giữa lý thuyết trên lớp và code chạy thực tế
+* **Mô hình 3D:** Biểu diễn vật thể 3D bằng Danh sách đỉnh – Danh sách cạnh (`WireFrame`) và Danh sách đỉnh – Danh sách mặt đa giác (`FaceModel`) *(CG.4, tr. 20–26)*.
+* **Biến đổi 3D:** Tự xây dựng ma trận thuần nhất $4 \times 4$ và phép nhân kết hợp $M = M_1 \cdot M_2 \cdot M_3$ cho chuỗi chuyển động của khung xe và cánh tay 2 khâu 3 bậc tự do *(CG.4, tr. 5–16)*.
+* **Quan sát & Phép chiếu:** Hiểu rõ 4 tham số quan sát cầu $(\theta, \Phi, R, D)$ trong ma trận $T = A \cdot B \cdot C \cdot D$, sự khác biệt giữa phép chiếu phối cảnh ($x' = x_0 \cdot D / z_0$) với 3 hình chiếu song song trực giao (Top / Front / Side) và cửa sổ Camera cổ tay PiP *(CG.4, tr. 28–49)*.
+* **Đồ họa 2D trên HUD:** Vận dụng các thuật toán 2D (Bresenham / Midpoint vẽ Radar 40 cm & đường chỉ dẫn Callout, Cohen-Sutherland 4-bit xén hình, Scanline & BoundaryFill_Stack tô màu) vào giao diện HUD *(CG.3, tr. 12–102)*.
 
-### 1.2. Tư duy thiết kế hệ thống (OOP & Scene Graph) rõ ràng, dễ bảo trì
-* **Điều giảng viên muốn thấy:** Tại sao khi xe chạy thì toàn bộ linh kiện trên 2 tầng sàn trôi theo? Tại sao khi bàn trượt `SRV_ELBOW` nâng lên thì ngàm gắp `SRV_GRIP` và hộp quà tự động nhấc lên theo mà không cần cộng tọa độ thủ công? Câu trả lời thuyết phục nhất là **cây phân cấp `SceneNode` (Scene Graph)** và lớp cơ sở trừu tượng `HardwareComponent`.
+### 1.2. Tư duy thiết kế hệ thống (OOP, Scene Graph & 2-Tier Component Inspector)
+* **Cây phân cấp Scene Graph:** Toàn bộ 11 linh kiện kế thừa từ lớp cơ sở `HardwareComponent` (dẫn xuất từ `SceneNode`), giúp khi xe di chuyển hoặc khi đế xoay `SRV_BASE` / khuỷu `SRV_ELBOW` chuyển động, mọi nút con (gồm cả khối hàng đang gắp) tự động thừa hưởng ma trận thế giới.
+* **Giải phẫu bo mạch 2 cấp:** Kiến trúc quan sát 2 cấp độ (`CAR_OVERVIEW` $\leftrightarrow$ `COMPONENT_INSPECT`) cho phép cô lập từng bo mạch lên bàn xoay và duyệt mảng `SubComponent` (tụ hóa, IC, diode, thạch anh, jumper) sạch sẽ, dễ mở rộng.
 
-### 1.3. Chiều sâu của chữ "TƯƠNG TÁC LINH KIỆN VI ĐIỀU KHIỂN" trong tên đề tài
-* **Điều giảng viên muốn thấy:** Đề tài không phải là một bức tượng 3D chỉ biết xoay qua xoay lại. Nó phải là một **Bản sao số (Digital Twin)**:
-  * Có **luồng điện áp & tín hiệu thời gian thực**: Bật công tắc `BAT_SW` ($7.4\text{V}$) $\rightarrow$ qua `DOMINO` $\rightarrow$ qua `BUCK LM2596` hạ áp xuống $5.0\text{V}$ nuôi 3 Servo; nếu ngắt `BUCK` hoặc tắt `BAT_SW` trên giao diện, người dùng bấm phím điều khiển cơ cấu nâng gắp sẽ **không nhúc nhích** vì mất nguồn.
-  * Có **phản hồi cự ly & tự hành gắp vật**: Khi xe tiến lại gần vật thể, radar cự ly tính khoảng cách 3D thực tế $\rightarrow$ gửi tín hiệu về `ARD` $\rightarrow$ tự động phanh động cơ `L298N` và kích hoạt chu trình 5 bước tự động gắp vật (Auto Grab).
-  * Có **tương tác Raycasting từ 2D vào 3D**: Click chuột lên màn hình phẳng sẽ bắn tia tìm giao điểm với hộp bao AABB/OBB để chọn linh kiện và hiển thị thông số điện áp/dòng điện trên bảng Inspector.
+### 1.3. Chiều sâu của chữ “TƯƠNG TÁC LINH KIỆN VI ĐIỀU KHIỂN” trong tên đề tài
+* **Luồng điện áp thời gian thực:** Bật/tắt công tắc nguồn `BAT_SW` ($7.4\text{V}$) qua trạm `DOMINO` 3 Bus và mạch hạ áp `BUCK LM2596` ($5.0\text{V} / 3\text{A}$) nuôi riêng 3 Servo `MG996R` (dòng đỉnh $2.5\text{A}$); khi giảm áp Buck dưới $4.8\text{V}$ hoặc ngắt nguồn, cánh tay lập tức khóa lại.
+* **Tương tác phần tử con:** Cô lập riêng Arduino Uno R3 hoặc Module L298N để click tra cứu tụ $220\mu\text{F} / 47\mu\text{F}$, 8 Diode chống dòng ngược, thạch anh 16 MHz và tương tác vật lý trực tiếp (nhấn Reset, rút/cắm 5V Enable Jumper).
+* **Phản hồi cảm biến & Gắp vật:** Cảm biến HC-SR04 đo khoảng cách 3D thực tế (cự ly dừng 5 cm) báo về Arduino để dừng xe, kết hợp vòng tròn tâm ngắm chiếu sàn và Camera PiP giúp ngàm gắp ôm chuẩn khối hàng.
 
-### 1.4. Khả năng làm chủ mã nguồn ("Chỉ trên màn hình Demo – Bật đúng dòng Code")
-* **Điều giảng viên muốn thấy:** Khi giảng viên hỏi *"Em thử đổi kích thước của mạch Arduino Uno, đổi công thức vi sai hay chỉ thuật toán xén hình ở đâu?"*, sinh viên mở ngay đúng file trong `C:\XAMPP\htdocs\BaiTap\XeDieuKhien3D`, chỉ đúng hàm, giải thích đúng biến và sửa trong 10 giây.
-
----
-
-## PHẦN 2: KỊCH BẢN THUYẾT TRÌNH ĐÓNG VAI SINH VIÊN (VỪA DEMO VỪA GIẢI THÍCH CODE)
-
-> **Mẹo bố trí màn hình khi lên bảng bảo vệ:**
-> Chia màn hình máy chiếu theo tỉ lệ **50% bên trái – 50% bên phải**:
-> * **Nửa bên trái:** Cửa sổ chương trình OpenGL đang chạy trực tiếp (`XeDieuKhien3D.exe`).
-> * **Nửa bên phải:** VS Code đang mở sẵn thư mục `C:\XAMPP\htdocs\BaiTap\XeDieuKhien3D`, mở sẵn 5 tab code quan trọng nhất tương ứng với 5 bước demo dưới đây.
+### 1.4. Khả năng làm chủ mã nguồn (“Slide có Code – Demo trực tiếp bên cạnh”)
+* **Phản xạ đối chiếu trực tiếp:** Trình chiếu song song: khi Slide hiện công thức `Camera3D` hay chuỗi ma trận cánh tay, nửa màn hình bên cạnh lập tức thao tác chứng minh; khi giảng viên yêu cầu kiểm tra file trong `C:\XAMPP\htdocs\BaiTap\XeDieuKhien3D`, mở đúng hàm và giải thích ngay lập tức.
 
 ---
 
-### MỞ ĐẦU (1 Phút): Giới Thiệu Bài Toán & Cấu Trúc Dự Án
+## PHẦN 2: KỊCH BẢN THUYẾT TRÌNH ĐÓNG VAI SINH VIÊN (SLIDE SONG SONG + DEMO TRỰC TIẾP)
+
+> **Mẹo bố trí màn hình khi lên bảng bảo vệ (Chia đôi 50% – 50%):**
+> * **Nửa bên trái (50%):** Trình chiếu PowerPoint `Slide_Trinh_Bay_Xen_Ke_Demo_XeDieuKhien3D.pptx` ở chế độ cửa sổ (Reading View) để hiện sơ đồ, công thức và đoạn code C++ cốt lõi (kèm VS Code thu gọn phía sau sẵn sàng bật khi giảng viên hỏi sâu).
+> * **Nửa bên phải (50%):** Cửa sổ chương trình OpenGL đang chạy trực tiếp (`XeDieuKhien3D.exe` ở tốc độ 61 FPS) để thao tác minh họa ngay tại mỗi slide tương ứng.
+
+---
+
+### MỞ ĐẦU (1 Phút) — Slide 1 & Slide 2: Giới Thiệu Đề Tài & Bố Cục 5 Phần Xen Kẽ
 **Lời dẫn của bạn với Giảng viên:**
-> *"Em chào Thầy/Cô. Hôm nay em xin trình bày đề tài: **Ứng dụng C++/OpenGL xây dựng chương trình mô phỏng và tương tác linh kiện vi điều khiển trên mô hình xe Robot gắp đồ vật (Digital Twin 3D)**. Thay vì chỉ vẽ một mô hình 3D tĩnh, mục tiêu của em là xây dựng một **Bản sao số** gồm đúng **10 linh kiện phần cứng thực tế** theo kích thước CAD chuẩn, kết hợp đầy đủ các thuật toán Đồ họa 2D và 3D đã học.*
->
-> *Toàn bộ mã nguồn dự án được em tổ chức tại thư mục `C:\XAMPP\htdocs\BaiTap\XeDieuKhien3D` chia làm 4 tầng độc lập: Toán học 3D (`math/`), Đồ họa cơ sở 2D (`graphics2d/`), Cây phân cảnh (`scene/`) và Logic mạch điện các linh kiện (`components/` & `core/`). Sau đây em xin vừa thao tác trực tiếp trên bản Demo bên trái, vừa đối chiếu sang cách triển khai trong Code bên phải ạ."*
+> *"Em chào Thầy/Cô. Hôm nay em xin trình bày đề tài: **Ứng dụng C++/OpenGL xây dựng chương trình mô phỏng và tương tác linh kiện vi điều khiển trên mô hình xe Robot gắp đồ vật (Digital Twin 3D)**. Thay vì thuyết trình hết slide rồi mới chạy demo, em xin phép chia đôi màn hình: nửa bên trái là Slide trình bày thuật toán và đoạn code cốt lõi của từng phần, nửa bên phải em sẽ thao tác Demo trực tiếp trên chương trình `XeDieuKhien3D` để Thầy/Cô đối chiếu ngay lập tức. Bài trình bày gồm 5 phần như trên Slide 2 ạ."*
 
 ---
 
-### CHẶNG 1 (3 Phút): Demo Quan Sát 3D & Phép Chiếu $\leftrightarrow$ Giải Thích `Camera3D.h`
-*(Kiến thức cốt lõi: Slide `CG.4-3D Graphics-fix.pdf`, trang 28 – 49)*
+### CHẶNG 1 (2 Phút) — Slide 3: Kiến Trúc OOP 4 Tầng & Mô Hình WireFrame / FaceModel
+*(Kiến thức cốt lõi: Slide `CG.4-3D Graphics-fix.pdf`, trang 20 – 26 - `Mesh3D`)*
 
-1. **Thao tác trên cửa sổ Demo (Bên trái):**
-   * Dùng chuột kéo xoay vòng quanh xe theo chiều ngang (thay đổi góc $\theta$), nâng hạ góc nhìn từ trên xuống/dưới lên (thay đổi góc $\Phi$), lăn chuột phóng to/thu nhỏ khoảng cách quan sát ($R$).
-   * Bấm lần lượt các phím số `1`, `2`, `3`, `4`, `5` để chuyển đổi giữa **Góc nhìn Phối cảnh 3D (Phím 1)** và **3 Hình chiếu Trực giao kỹ thuật (Top View phím 2 – nhìn từ trên, Front View phím 3 – nhìn từ trước, Side View phím 4 – nhìn từ bên, Chase Cam phím 5 – bám sau xe)** để thầy/cô thấy rõ cách bố trí Sàn Tầng 1 và Sàn Tầng 2.
+1. **Thao tác trên cửa sổ Demo (Bên phải):**
+   * Chỉ vào mô hình toàn xe 2 tầng đang chạy mượt ở tốc độ 61 FPS.
+   * Bấm phím **F** để chuyển toàn bộ 11 linh kiện từ Khối đặc (`Polygon Mesh`) sang Khung dây (`WireFrame`) rồi bật lại.
 
-2. **Chỉ vào Code (Bên phải – mở file `Camera3D.h` & `Camera3D.cpp`):**
-   * Chỉ vào 4 biến thành viên `theta`, `phi`, `radius` ($R$), `focalD` ($D$) và hàm cập nhật tọa độ quan sát `Camera3D::update()`, hàm ma trận chiếu `Camera3D::applyProjection()`.
-   * **Lời giải thích ghi điểm với Giảng viên:**
-     > *"Thưa Thầy/Cô, khi em kéo chuột xoay camera trên màn hình demo, trong code tại lớp `Camera3D`, em áp dụng đúng hệ tọa độ cầu 4 tham số $(\theta, \Phi, R, D)$ ở trang 28–35 bài giảng 3D Graphics:*
-     > * *Trong hàm `Camera3D::update`, tọa độ mắt được tính từ tọa độ cầu sang Descart:*
-     >   $$x_{eye} = x_{target} + R \cdot \cos\Phi \cdot \sin\theta$$
-     >   $$y_{eye} = y_{target} + R \cdot \sin\Phi$$
-     >   $$z_{eye} = z_{target} + R \cdot \cos\Phi \cdot \cos\theta$$
-     > * *Khi em bật chế độ **Phối cảnh (Phím 1)**, hàm `applyProjection()` gọi `gluPerspective` chia cho độ sâu $z$ theo tỉ lệ đồng dạng tam giác (vật ở gần mắt thì lớn, ở xa thì nhỏ). Còn khi em bấm sang chế độ **Bản vẽ kỹ thuật Top/Front/Side View (Phím 2, 3, 4)**, code chuyển sang **Phép chiếu song song trực giao** bằng hàm `glOrtho` (trang 31 & 48) triệt tiêu thành phần độ sâu, giúp kiểm tra chính xác kích thước CAD của các tầng sàn và linh kiện mà không bị biến dạng phối cảnh ạ."*
+2. **Trình bày trên Slide 3 & Giải thích Code (`Mesh3D.h` & `Mesh3D.cpp`):**
+   * **Từ khóa tìm nhanh trong VS Code:** `[SLIDE 3]`
+   * **Vị trí code:** [Mesh3D.h](file:///c:/XAMPP/htdocs/BaiTap/XeDieuKhien3D/include/scene/Mesh3D.h#L6-L26) & [Mesh3D.cpp](file:///c:/XAMPP/htdocs/BaiTap/XeDieuKhien3D/src/scene/Mesh3D.cpp#L197-L251)
+   > *"Thưa Thầy/Cô, như trên Slide 3, toàn bộ dự án tại `C:\XAMPP\htdocs\BaiTap\XeDieuKhien3D` được em tổ chức theo kiến trúc OOP 4 tầng độc lập để dễ đọc và bảo trì: `Mesh3D`, `Mat4`/`SceneNode`, `Hardware`/`CircuitSimulator` và `Camera3D`/`HUD 2D`. Khi em bấm phím **F** bật chế độ khung dây bên phải, lớp `Mesh3D` sẽ chuyển từ việc duyệt Danh sách mặt đa giác (`FaceModel` với `indexFace`) sang duyệt Danh sách cạnh (`WireFrame` với cặp chỉ số đỉnh `beginP` – `endP`) đúng cấu trúc bài giảng CG.4 trang 20–26. Đồng thời em bật `glPolygonOffset(1.0f, 1.0f)` kết hợp viền cạnh mảnh để khử triệt để hiện tượng sọc rác Z-fighting ạ."*
 
 ---
 
-### CHẶNG 2 (3 Phút): Demo Mô Hình Khung Dây / Mặt Đa Giác & Linh Kiện $\leftrightarrow$ Giải Thích `Mesh3D.h`
-*(Kiến thức cốt lõi: Slide `CG.4-3D Graphics-fix.pdf`, trang 20 – 26)*
+### CHẶNG 2 (2.5 Phút) — Slide 4: Thuật Toán Camera Cầu 3D, Phép Chiếu & Camera PiP
+*(Kiến thức cốt lõi: Slide `CG.4-3D Graphics-fix.pdf`, trang 28 – 49 - `Camera3D.cpp`)*
 
-1. **Thao tác trên cửa sổ Demo (Bên trái):**
-   * Bấm phím `F` để chuyển toàn bộ chiếc xe từ chế độ **Khối đặc (Polygon Mesh)** sang chế độ **Khung dây kết nối (WireFrame)** rồi bật lại.
-   * Click chuột vào một vài linh kiện tiêu biểu ở Tầng 1 (`DOMINO`, `L298N`, `BUCK`) và Tầng 2 (`ARD`, `BAT_SW`, `SRV_BASE`) để làm sáng viền vàng (highlight) linh kiện và hiển thị kích thước $(W \times H \times D)$ trên bảng Inspector.
+1. **Thao tác trên cửa sổ Demo (Bên phải):**
+   * Kéo chuột trái xoay ngang quanh xe (thay đổi góc $\theta$), nâng hạ góc nhìn (thay đổi góc $\Phi$), cuộn chuột phóng to / thu nhỏ bán kính quan sát ($R$).
+   * Bấm các phím `1`, `2`, `3`, `4` chuyển đổi giữa Phối cảnh 3D (`Perspective Orbit`) và 3 Hình chiếu trực giao kỹ thuật (`Top / Front / Side View`); bấm phím **C** bật cửa sổ Camera cổ tay PiP ở góc trên phải.
 
-2. **Chỉ vào Code (Bên phải – mở file `Mesh3D.h` & `Mesh3D.cpp`):**
-   * Chỉ vào cấu trúc `EdgeType { int beginP, endP; }`, `FaceType { vector<int> indexFace; Vec3 normal; Vec3 faceColor; }` và hàm `Mesh3D::createBox(W, H, D, color)`.
-   * **Lời giải thích ghi điểm với Giảng viên:**
-     > *"Thưa Thầy/Cô, để dựng hình các linh kiện theo đúng bảng thông số kỹ thuật (ví dụ mạch `ARD` kích thước $6.8 \times 1.5 \times 5.3\text{ cm}$ ở Sàn Tầng 2 hay `L298N` kích thước $4.3 \times 2.7 \times 4.3\text{ cm}$ ở Sàn Tầng 1), em kết hợp cả 2 phương pháp biểu diễn đối tượng 3D trong bài giảng trang 20–26:*
-     > * *Trong lớp `Mesh3D`, em lưu một **Danh sách đỉnh (`vertices`)** duy nhất.*
-     > * *Khi em bấm phím `F` sang chế độ **WireFrame** trên demo, hàm `drawWireframe()` sẽ duyệt qua **Danh sách cạnh (`edges`)**, nối cặp chỉ số đỉnh đầu `beginP` và đỉnh cuối `endP`.*
-     > * *Khi ở chế độ **Khối đặc**, hàm `drawSolid()` duyệt qua **Danh sách các mặt đa giác (`faces`)** theo thứ tự đỉnh `indexFace` ngược chiều kim đồng hồ để tính vector pháp tuyến $\vec{N}$ phục vụ tô bóng chiếu sáng.*
-     > * *Nhờ hàm `Mesh3D::createBox(W, H, D)`, toàn bộ linh kiện được sinh tự động từ kích thước thực tế trong bảng thông số mà không phải gõ tay tọa độ từng đỉnh lẻ tẻ ạ."*
-
----
-
-### CHẶNG 3 (4 Phút): Demo Chuyển Động Xe & Trụ Nâng AGV Gắp Vật $\leftrightarrow$ Giải Thích `Mat4.h` & `SceneNode.h`
-*(Kiến thức cốt lõi: Slide `CG.4-3D Graphics-fix.pdf`, trang 5 – 16: Hệ tọa độ thuần nhất & Kết hợp các phép biến đổi)*
-
-1. **Thao tác trên cửa sổ Demo (Bên trái):**
-   * Dùng phím `W / A / S / D` điều khiển xe tiến/lùi/rẽ trái/rẽ phải: chỉ cho giảng viên thấy 2 bánh xe `MOT_L`, `MOT_R` quay tròn quanh trục của nó, thân xe chuyển động theo động học vi sai.
-   * Điều khiển cơ cấu trụ nâng thẳng đứng AGV và ngàm kẹp gắp vật:
-     * Bấm `I / K`: Nâng / hạ bàn trượt `SRV_ELBOW` tịnh tiến thẳng đứng dọc theo 2 thanh ray mạ crom.
-     * Bấm `O / P`: Mở rộng / khép chặt cụm ngàm kẹp song song `SRV_GRIP`.
-     * Khi ngàm kẹp chặt khối vật thể màu cam ở cự ly gần, bấm `I` nhấc bổng khối vật thể lên độ cao $10\text{ cm}$!
-     * Hoặc bấm phím `M`: biểu diễn xe **tự hành gắp vật thông minh (Auto Grab 5 bước)** từ tiếp cận $\rightarrow$ dừng xe $\rightarrow$ hạ bàn nâng $\rightarrow$ kẹp ngàm $\rightarrow$ nâng hàng lên cao!
-
-2. **Chỉ vào Code (Bên phải – mở file `Mat4.h`, `Mat4.cpp`, `SceneNode.h` & `RobotCarScene.cpp`):**
-   * Chỉ vào hàm `SceneNode::getWorldMatrix()`, hàm `Mat4::rotateArbitraryAxis()`, và hàm `RobotCarScene::updateDifferentialDrive()`.
-   * **Lời giải thích ghi điểm với Giảng viên:**
-     > *"Đây là phần em tâm đắc nhất khi áp dụng bài học **Hệ tọa độ thuần nhất $4 \times 4$ và Kết hợp các phép biến đổi 3D** (trang 5–16):*
-     > * *Trong lớp `Mat4`, em cài đặt đầy đủ các ma trận cơ sở `translate`, `rotateX/Y/Z` và hàm `rotateArbitraryAxis` theo đúng công thức đưa trục về gốc tọa độ và quay quanh 3 trục chính (trang 13–14):*
-     >   $$M = Tr(-P_0) \cdot R_x(\phi) \cdot R_y(-\theta) \cdot R_z(\alpha) \cdot R_y(\theta) \cdot R_x(-\phi) \cdot Tr(P_0)$$
-     > * *Để các bộ phận chuyển động nhịp nhàng, em thiết kế lớp `SceneNode` theo cấu trúc cây phân cấp Cha – Con:*
-     >   $$\text{CarRoot} \rightarrow \text{Floor1} \rightarrow \text{SRV\_BASE (Trụ)} \rightarrow \text{SRV\_ELBOW (Bàn trượt)} \rightarrow \text{SRV\_GRIP (Ngàm)} \rightarrow \text{TargetObject}$$
-     > * *Mỗi bộ phận chỉ cần lưu biến đổi cục bộ $M_{local}$. Hàm `getWorldMatrix()` tự động nhân dồn ma trận từ nút con lên nút gốc: $M_{world} = M_{parent\_world} \cdot M_{local}$.*
-     > * *Khi bàn trượt `SRV_ELBOW` tịnh tiến thẳng đứng dọc trục $Y$, ngàm kẹp và khối vật thể thừa hưởng ma trận thế giới và đi theo đầu ngàm gắp trong mọi chuyển động một cách hoàn toàn tự động ạ."*
+2. **Trình bày trên Slide 4 & Chỉ vào Code `Camera3D.cpp` ngay trên Slide:**
+   * **Từ khóa tìm nhanh trong VS Code:** `[SLIDE 4]`
+   * **Vị trí code:** [Camera3D.cpp](file:///c:/XAMPP/htdocs/BaiTap/XeDieuKhien3D/src/math/Camera3D.cpp#L112-L160)
+   > *"Thưa Thầy/Cô, nửa phải của Slide 4 là đoạn code cốt lõi trong `Camera3D.cpp` cài đặt ma trận biến đổi hệ trục quan sát $T = A \cdot B \cdot C \cdot D$ (trang 45 giáo trình CG.4) với 4 tham số cầu $(\theta, \Phi, R, D)$:*
+   > * $x_0 = -x\sin(\theta) + y\cos(\theta)$
+   > * $y_0 = -x\cos(\theta)\sin(\Phi) - y\sin(\theta)\sin(\Phi) + z\cos(\Phi)$
+   > * $z_0 = -x\cos(\theta)\cos(\Phi) - y\sin(\theta)\cos(\Phi) - z\sin(\Phi) + R$
+   > * *Khi ở chế độ Phối cảnh, tọa độ được chia cho độ sâu $z_0$ theo tỉ lệ $x' = x_0 \cdot D / z_0$ nên vật ở gần lớn hơn ở xa. Khi em chuyển sang hình chiếu trực giao bên demo, code giữ nguyên $x' = x_0, y' = y_0$ và bỏ thành phần sâu giúp kiểm tra chính xác kích thước CAD của 2 tầng xe. Riêng khung góc trên phải **[C]** là một Viewport OpenGL thứ hai đặt mắt nhìn ngay tại cổ tay ngàm gắp ạ."*
 
 ---
 
-### CHẶNG 4 (3 Phút): Demo Tương Tác Mạch Điện Vi Điều Khiển $\leftrightarrow$ Giải Thích `HardwareComponent.h` & `CircuitSimulator.cpp`
-*(Điểm nhấn chứng minh đúng tính chất "Tương tác linh kiện vi điều khiển" của đề tài)*
+### CHẶNG 3 (3.5 Phút) — Slide 5 & Slide 6: Hệ Thống 11 Linh Kiện & Cô Lập Giải Phẫu Bo Mạch
+*(Điểm nhấn nổi bật: Chế độ Cô lập Workbench Mode & Tương tác Phần tử con `SubComponent`)*
 
-1. **Thao tác trên cửa sổ Demo (Bên trái):**
-   * **Thử nghiệm 1 (Ngắt nguồn tổng bằng phím `T`):** Bấm phím `T` để gạt tắt công tắc pin `BAT_SW` ở đuôi xe Tầng 2 $\rightarrow$ dây dẫn tắt phát sáng ($0\text{V}$), động cơ báo `NGAT NGUON (OFF)`, dòng tiêu thụ tổng $I_{total}$ trên đồng hồ HUD tụt về $0\text{mA}$, bấm lái xe hay bấm `I/K/O/P` ngàm gắp đều đứng im. Bấm `T` bật lại $\rightarrow$ hệ thống hồi sinh, dây dẫn sáng viền neon theo màu chuẩn công nghiệp (Đỏ 7.4V, Cam 5V, Vàng PWM).
-   * **Thử nghiệm 2 (Tương tác Raycasting chọn linh kiện 3D):** Dùng chuột click vào bo mạch Arduino, cầu H L298N, mạch Buck, hay Hộp pin $\rightarrow$ linh kiện được click lập tức sáng viền màu vàng; bảng **INSPECTOR** góc phải màn hình cập nhật ngay tên, kích thước CAD chuẩn, điện áp vào và dòng tiêu thụ thực tế.
-   * **Thử nghiệm 3 (Điều chỉnh điện áp mạch Buck):** Bấm phím `+` hoặc `-` để tăng giảm điện áp mạch Buck LM2596 từ 3.0V đến 6.0V.
+1. **Thao tác trên cửa sổ Demo (Bên phải):**
+   * **Tại Slide 5:** Click chuột vào vài linh kiện ở Tầng 1 (`L298N`, `BUCK`, `DOMINO`, `HCSR04`) và Tầng 2 (`ARD`, `BAT_SW`) để bảng Inspector hiển thị đúng kích thước CAD ($W \times H \times D\text{ cm}$) và số chân Pin.
+   * **Tại Slide 6:** Click chọn Arduino Uno R3 $\rightarrow$ bấm phím **I** (hoặc nút **QUAN SAT CHI TIET**) để vào chế độ Cô lập. Click chọn Thạch anh 16 MHz, Cặp tụ lọc 47 µF và bấm Nút Reset. Sau đó bấm **ESC** ra ngoài, chọn L298N $\rightarrow$ bấm **I** $\rightarrow$ click vào Cặp tụ 220 µF/35 V, Cụm 8 Diode xung D1–D8, và bấm rút/cắm Jumper 5V Enable.
 
-2. **Chỉ vào Code (Bên phải – mở file `HardwareComponent.h`, `CircuitSimulator.cpp` & `SceneNode.cpp`):**
-   * Chỉ vào cấu trúc `Pin`, hàm `CircuitSimulator::stepCircuit(dt)`, và hàm `SceneNode::raycast()`.
-   * **Lời giải thích ghi điểm với Giảng viên:**
-     > *"Thưa Thầy/Cô, để mô phỏng đúng bản chất kỹ thuật của các linh kiện chứ không chỉ là hoạt cảnh dựng sẵn, em xây dựng lớp cơ sở `HardwareComponent` kế thừa từ `SceneNode`. Mỗi linh kiện sở hữu mảng `pins` đúng với số chân thực tế.*
-     > *Trong hàm `stepCircuit` tại `CircuitSimulator.cpp`, hệ thống kiểm tra mạch điện thời gian thực:*
-     > * *`BAT_SW` cấp $7.4\text{V}$ vào `DOMINO` Bus 1.*
-     > * *`BUCK LM2596` nhận $7.4\text{V}$ từ `DOMINO`, hạ áp xuất $5.0\text{V}$ nuôi riêng 3 động cơ Servo dòng lớn (đúng nguyên lý thiết kế mạch thực tế để tránh sụt áp gây treo Arduino).*
-     > * *Trong hàm `ServoMG996RComp::updateMotion(dt)`, nếu điện áp cấp dưới $4.5\text{V}$ thì cơ cấu lập tức ngừng hoạt động.*
-     > * *Khi click chuột lên màn hình, hàm `Camera3D::screenToRay` và `SceneNode::raycast` biến đổi tia Ray vào không gian cục bộ qua ma trận nghịch đảo $M_{world}^{-1}$ để kiểm tra va chạm với hộp bao OBB/AABB của linh kiện ạ."*
+2. **Trình bày trên Slide 5–6 & Giải thích Code (`SubComponent.h`, `ControlComponents.cpp`, `ActuatorComponents.cpp`):**
+   * **Từ khóa tìm nhanh trong VS Code:** `[SLIDE 6]`
+   * **Vị trí code:** [ControlComponents.cpp](file:///c:/XAMPP/htdocs/BaiTap/XeDieuKhien3D/src/components/ControlComponents.cpp#L41-L85) & [ActuatorComponents.cpp](file:///c:/XAMPP/htdocs/BaiTap/XeDieuKhien3D/src/components/ActuatorComponents.cpp#L255-L295)
+   > *"Thưa Thầy/Cô, để thể hiện rõ phần tương tác linh kiện vi điều khiển, ngoài việc dựng đúng 11 linh kiện theo kích thước CAD như bảng ở Slide 5, em thiết kế thêm cơ chế Cô lập Bo mạch (Workbench Mode). Khi bấm phím **I**, chương trình ẩn khung xe, thu bán kính camera về 6–25 cm và duyệt mảng `SubComponent` của đúng bo mạch đó:*
+   > * *Trên **Arduino Uno R3**, em mô hình hóa 8 khối cốt lõi theo sơ đồ thực tế (chip ATmega328P-PU DIP-28, cổng USB & chip ATmega16U2, thạch anh 16.000 MHz chu kỳ 62.5 ns, tụ 47 µF và nút Reset bấm được).*
+   > * *Trên **L298N**, em dựng tản nhiệt nhôm 7 lá, 2 tụ 220 µF/35 V tách rời nhau không dính Z-fighting, 2 hàng 8 Diode bảo vệ dòng ngược Back-EMF và chốt Jumper 5V có thể click rút ra trực tiếp. Đường chỉ dẫn Callout nối từ linh kiện ra bảng mô tả sử dụng thuật toán Bresenham và Midpoint Circle ạ."*
 
 ---
 
-### CHẶNG 5 (3 Phút): Demo Giao Diện HUD 2D, Radar Cự Ly & Xén Hình $\leftrightarrow$ Giải Thích `Raster2D.cpp` & `Clipper2D.cpp`
-*(Kiến thức cốt lõi: Slide `CG.3-2D Graphics.pdf`, trang 12 – 102)*
+### CHẶNG 4 (2 Phút) — Slide 7: Mô Phỏng Mạch Nguồn 3 Bus & Tác Động Điện Áp
+*(Kiến thức cốt lõi: Tương tác điện tử thời gian thực - `CircuitSimulator.cpp`)*
 
-1. **Thao tác trên cửa sổ Demo (Bên trái):**
-   * Chỉ vào góc màn hình hiển thị **Bảng điều khiển 2D (HUD Dashboard)**:
-     * **Widget Radar cự ly 40cm (góc dưới trái):** Các vòng tròn đồng tâm khoảng cách $10\text{cm}, 20\text{cm}, 30\text{cm}, 40\text{cm}$; tia quét radar quay liên tục $360^\circ$; khi xe lại gần hộp mẫu màu cam, một điểm Blip đỏ nhấp nháy xuất hiện đúng vị trí cự ly thực.
-     * **Máy hiện sóng Oscilloscope (góc trên trái):** Hiển thị dạng sóng vuông xung PWM điều khiển tốc độ động cơ theo tần số thời gian thực.
-     * **Tính năng xén hình:** Tia quét Radar và đường sóng Oscilloscope luôn nằm gọn gàng bên trong khung cửa sổ, không bao giờ bị lem nét vẽ ra ngoài.
+1. **Thao tác trên cửa sổ Demo (Bên phải):**
+   * Bấm **ESC** quay lại toàn xe, click chọn mạch hạ áp `BUCK LM2596` $\rightarrow$ bấm nút **GIAM AP [-]** trên bảng Inspector (hoặc tắt công tắc nguồn `BAT_SW` bằng phím **T**).
+   * Thử bấm điều khiển cánh tay Servo (phím **I / K**) để chứng minh cánh tay bị khóa khi mất nguồn $5\text{V}$ hoặc áp dưới $4.8\text{V}$; sau đó bấm tăng áp về $5.00\text{V}$ để khôi phục.
 
-2. **Chỉ vào Code (Bên phải – mở file `Raster2D.cpp` & `Clipper2D.cpp`):**
-   * Chỉ vào các hàm `drawLineBresenham()`, `drawCircleMidpoint()`, `drawEllipseMidpoint()`, `fillRect()`, và `clipLineCohenSutherland()`.
-   * **Lời giải thích ghi điểm với Giảng viên:**
-     > *"Thưa Thầy/Cô, toàn bộ phần giao diện kỹ thuật 2D ở góc màn hình là nơi em áp dụng trực tiếp các thuật toán trong chương **2D Graphics (CG.3)**:*
-     > 1. *Tia quét radar và trục chữ thập được vẽ bằng **Thuật toán đoạn thẳng Bresenham nguyên hóa** (`drawLineBresenham`, trang 12–25), hoàn toàn dùng số nguyên với biến quyết định $p_0 = 2\Delta y - \Delta x$ để tối ưu tốc độ.*
-     > 2. *Các vòng chia khoảng cách trên Radar cự ly và đồng hồ góc Servo được vẽ bằng **Thuật toán đường tròn Midpoint** (`drawCircleMidpoint` với hàm đối xứng 8 phần `put8pixel`, trang 28–36) và **Midpoint vẽ Ellipse** (`drawEllipseMidpoint` với `put4pixel`, trang 39–44).*
-     > 3. *Để tia quét và sóng xung PWM không bị vẽ tràn ra ngoài khung cửa sổ 2D, trước khi vẽ em truyền đoạn thẳng qua hàm `clipLineCohenSutherland()` cài đặt **Thuật toán xén hình Cohen-Sutherland** (trang 54–68): gán mã nhị phân 4-bit (`computeOutCode`), kiểm tra phép AND bit để loại bỏ nhanh hoặc tìm giao điểm cắt gọn tại biên cửa sổ.*
-     > 4. *Các nút bấm và thanh trạng thái được tô đặc bằng thuật toán quét dòng **Scanline Fill** (`fillRect`, trang 78–82) kết hợp xuất nhãn thông số bằng **Font Bitmap** ạ."*
+2. **Trình bày trên Slide 7 & Giải thích Code (`CircuitSimulator.cpp`):**
+   * **Từ khóa tìm nhanh trong VS Code:** `[SLIDE 7]`
+   * **Vị trí code:** [CircuitSimulator.cpp](file:///c:/XAMPP/htdocs/BaiTap/XeDieuKhien3D/src/core/CircuitSimulator.cpp#L90-L135) & [ActuatorComponents.cpp](file:///c:/XAMPP/htdocs/BaiTap/XeDieuKhien3D/src/components/ActuatorComponents.cpp#L1040-L1055)
+   > *"Trong `CircuitSimulator.cpp`, hệ thống lan truyền điện áp thực tế từ hộp 2 pin 18650 ($7.4\text{V}, 2600\text{mAh}$) vào trạm `DOMINO` 3 Bus: Bus $7.4\text{V}$ nuôi trực tiếp mạch cầu H `L298N` và chân `VIN` Arduino; còn nhánh qua mạch hạ áp `BUCK LM2596` xuất $5.00\text{V} / 3\text{A}$ để nuôi riêng 3 Servo `MG996R` có dòng đỉnh $2.5\text{A}$ (tránh sụt áp làm treo Arduino). Trong hàm cập nhật Servo có điều kiện ràng buộc kiểm tra điện áp chân `VCC >= 4.8V`, nên khi em giảm áp Buck bên Demo, cánh tay lập tức ngừng hoạt động đúng nguyên lý phần cứng ạ."*
 
 ---
 
-## PHẦN 3: BỘ CÂU HỎI PHẢN BIỆN GIẢNG VIÊN HAY HỎI NHẤT & CÁCH TRẢ LỜI "ĂN ĐIỂM TUYỆT ĐỐI"
+### CHẶNG 5 (3 Phút) — Slide 8: Động Học Cánh Tay 2 Khâu (3 DOF) & Gắp Khối Hàng
+*(Kiến thức cốt lõi: Slide `CG.4-3D Graphics-fix.pdf`, trang 5 – 16 - `Mat4` & Kinematics)*
 
-| Câu hỏi của Giảng viên | Ý đồ kiểm tra của Giảng viên | Cách bạn trả lời + Thao tác chỉ vào Code |
+1. **Thao tác trên cửa sổ Demo (Bên phải):**
+   * Lái xe tiến tới trước khối hàng màu cam cho đến khi cảm biến HC-SR04 báo cự ly 5 cm trên Radar và Camera PiP.
+   * Hạ khớp nâng LIFT về $0^\circ$ (phím **K**) để vòng tròn tâm ngắm màu xanh lá cây sáng dưới sàn trùng khít khối hàng $\rightarrow$ đóng ngàm GRIP (phím **P**) ôm chặt khối hàng $\rightarrow$ nâng LIFT lên cao (phím **I**) và xoay đế MAST sang ngang (phím **J / L**)!
+
+2. **Trình bày trên Slide 8 & Chỉ vào Code `computeGripTipWorldPos` trên Slide:**
+   * **Từ khóa tìm nhanh trong VS Code:** `[SLIDE 8]`
+   * **Vị trí code:** [RoboticArmRenderer.h](file:///c:/XAMPP/htdocs/BaiTap/XeDieuKhien3D/include/scene/RoboticArmRenderer.h#L170-L215) & [SceneNode.cpp](file:///c:/XAMPP/htdocs/BaiTap/XeDieuKhien3D/src/scene/SceneNode.cpp#L42-L52)
+   > *"Để giải quyết bài toán cánh tay vừa không đâm xuyên sàn Tầng 2, vừa vươn qua đầu cảm biến HC-SR04 để ôm trúng khối hàng ở cự ly 5 cm, em thiết kế cánh tay 2 khâu gấp khúc: đế xoay đặt tại $z = 6.2\text{ cm}$, khâu vai $L_1 = 8.2\text{ cm}$ luôn nâng góc dương ($+14^\circ$ đến $+62^\circ$) và khâu khuỷu $L_2 = 8.6\text{ cm}$ vươn tới tâm kẹp $z = 18.2\text{ cm}$, độ cao $y = 1.65\text{ cm}$. Mọi chuyển động nối tiếp được tính bằng phép nhân chuỗi ma trận thuần nhất $4 \times 4$ ($M_{grip} = M_{car} \cdot M_{base} \cdot M_{arm} \cdot M_{claw}$). Khi khép ngàm tại vùng hợp lệ, khối hàng được gắn làm nút con của `SRV_GRIP` nên tự động nâng lên và xoay theo cánh tay ạ."*
+
+---
+
+### CHẶNG 6 (2 Phút) — Slide 9 & Slide 10: Đồ Họa 2D Trên HUD & Kết Thúc Cảm Ơn
+*(Kiến thức cốt lõi: Slide `CG.3-2D Graphics.pdf`, trang 12 – 88 - `Raster2D.cpp` & `Clipper2D.cpp`)*
+
+1. **Thao tác trên cửa sổ Demo (Bên phải):**
+   * Chỉ chuột lần lượt vào các widget HUD 2D đang hoạt động: Radar cự ly 40 cm (góc trên trái), Khung viền công nghệ cao Camera cổ tay PiP (góc trên phải), và Bảng Inspector linh kiện (góc dưới trái).
+   * Chuyển sang Slide 10 (Cảm Ơn Thầy/Cô) và giữ nguyên cửa sổ Demo + VS Code để sẵn sàng trả lời vấn đáp.
+
+2. **Trình bày trên Slide 9–10:**
+   * **Từ khóa tìm nhanh trong VS Code:** `[SLIDE 9]`
+   * **Vị trí code:** [Raster2D.cpp](file:///c:/XAMPP/htdocs/BaiTap/XeDieuKhien3D/src/graphics2d/Raster2D.cpp#L14-L40), [Clipper2D.cpp](file:///c:/XAMPP/htdocs/BaiTap/XeDieuKhien3D/src/graphics2d/Clipper2D.cpp#L3-L28)
+   > *"Cuối cùng, toàn bộ giao diện HUD 2D bên Demo là nơi em áp dụng trực tiếp chương 2D Graphics (CG.3): tia quét Radar và đường Callout được vẽ bằng thuật toán đoạn thẳng Bresenham số nguyên; các vòng cự ly và tâm ngắm sàn vẽ bằng Midpoint Circle (đối xứng 8 điểm `put8pixel`); toàn bộ tia sóng đều đi qua hàm xén hình Cohen-Sutherland dùng mã vùng 4-bit để cắt gọn không tràn mép khung; các thanh trạng thái tô màu bằng Scanline và BoundaryFill khử đệ quy bằng Stack. Em xin kết thúc phần trình bày tại đây và rất mong nhận được các câu hỏi phản biện từ Thầy/Cô ạ!"*
+
+---
+
+## PHẦN 3: BỘ CÂU HỎI PHẢN BIỆN GIẢNG VIÊN HAY HỎI NHẤT & CÁCH TRẢ LỜI
+
+| Câu hỏi của Giảng viên | Ý đồ kiểm tra | Cách trả lời & Thao tác chỉ vào Code |
 | :--- | :--- | :--- |
-| **Câu 1:** *"Tại sao em phải tự viết lớp `Mat4` mà không dùng luôn ma trận sẵn có của OpenGL như `glTranslatef`, `glRotatef`?"* | Kiểm tra xem sinh viên có hiểu bản chất toán học hay chỉ lạm dụng OpenGL. | *"Thưa Thầy/Cô, nếu dùng hàm OpenGL dựng sẵn thì ma trận bị giấu trong OpenGL State Machine, em sẽ không thể lấy được toạ độ thế giới của ngàm kẹp để tính va chạm gắp vật thể, và cũng không thể tính toán Raycasting từ chuột 2D vào 3D. Việc tự xây dựng lớp `Mat4` với hệ toạ độ thuần nhất $4 \times 4$ giúp em hoàn toàn làm chủ thuật toán, kiểm soát cây phân cảnh Scene Graph và tính toán động học vi sai một cách độc lập ạ."* |
-| **Câu 2:** *"Trong thuật toán Cohen-Sutherland, làm sao chương trình biết ngay một đoạn thẳng nằm hoàn toàn bên ngoài cửa sổ mà không cần tính giao điểm?"* | Kiểm tra hiểu biết về mã vùng 4-bit và phép toán `AND` bit *(CG.3 tr.57)*. | *"Dạ em dùng phép toán bit `(code0 & code1) != 0` trong hàm `clipLineCohenSutherland` tại file `Clipper2D.cpp`. Nếu kết quả khác `0000`, nghĩa là cả hai đầu mút cùng chia sẻ ít nhất một bit `1` (cùng nằm hẳn về phía Trái, Phải, Trên hoặc Dưới cửa sổ), nên đoạn thẳng chắc chắn nằm ngoài và hàm `return false` loại bỏ ngay lập tức mà không tốn phép chia số thực nào ạ."* |
-| **Câu 3:** *"Tại sao thuật toán Bresenham lại tối ưu hơn thuật toán DDA khi vẽ đoạn thẳng?"* | Kiểm tra kiến thức trang 12–25 của slide `CG.3-2D Graphics.pdf`. | *"Dạ thuật toán DDA phải tính toán trên số thực (cộng dồn hệ số góc $m = \Delta y / \Delta x$ rồi làm tròn `round`), gây sai số tích lũy và tốc độ chậm. Thuật toán Bresenham mà em cài đặt trong `Raster2D.cpp` đã nguyên hóa hoàn toàn bài toán: dùng biến quyết định $p_k = 2\Delta y - \Delta x$, chỉ sử dụng phép cộng và phép nhân 2 (dịch bit) trên số nguyên, do đó tối ưu tuyệt đối cho phần cứng đồ họa ạ."* |
-| **Câu 4:** *"Tại sao trên xe có pin $7.4\text{V}$ cấp vào chân `VIN` của Arduino (Arduino cũng có chân ra $5\text{V}$), mà em lại phải thiết kế thêm mạch hạ áp `BUCK LM2596`?"* | Kiểm tra độ hiểu thực tế về thiết kế hệ thống nhúng của sinh viên. | *"Dạ bộ ổn áp LDO $5\text{V}$ tích hợp trên mạch `Arduino Uno R3` chỉ chịu được dòng tối đa khoảng $500\text{mA} - 800\text{mA}$. Trong khi đó mỗi động cơ Servo `MG996R` khi nâng tải có dòng khởi động lên tới $1.5\text{A} - 2.5\text{A}$. Nếu cắm 3 Servo vào chân $5\text{V}$ của Arduino sẽ gây sụt áp làm vi điều khiển bị sập nguồn (Brownout Reset). Do đó mô hình Digital Twin của em dùng mạch `BUCK LM2596` ($5\text{V}/3\text{A}$) cấp nguồn riêng cho 3 Servo, chỉ nối chung dây `GND` và dây tín hiệu `SIG` về Arduino ạ."* |
-| **Câu 5:** *"Cơ chế phát hiện và kẹp vật thể được xử lý trong code như thế nào?"* | Kiểm tra sự liên kết giữa Scene Graph và logic vật lý. | *"Dạ trong hàm `updateArmAndGrasping` tại file `RobotCarScene.cpp`, em lấy ma trận thế giới của ngàm kẹp `compSrvGrip->getWorldMatrix()`, nhân với vector tâm ngàm $[0, 0, 3.4, 1]^T$ để ra tọa độ thực trong thế giới. Khi khoảng cách tới vật thể $< 4.2\text{ cm}$ và góc ngàm khép lại $< 25^\circ$, cờ `isObjectGrasped` kích hoạt, tọa độ vật thể sẽ khóa cứng theo tâm ngàm và nâng lên theo bàn trượt ạ."* |
+| **Câu 1:** *"Tại sao em phải tự viết lớp `Mat4` mà không dùng luôn `glTranslatef`, `glRotatef` của OpenGL?"* | Kiểm tra xem sinh viên hiểu bản chất ma trận $4 \times 4$ hay chỉ gọi hàm thư viện. | *"Dạ nếu chỉ dùng hàm OpenGL dựng sẵn thì ma trận bị ẩn trong State Machine, em không lấy được tọa độ thế giới của tâm ngàm kẹp ($z = 18.2\text{ cm}$) để tính va chạm gắp vật và không làm được Raycasting từ chuột 2D vào 3D. Tự viết lớp `Mat4` giúp em làm chủ hoàn toàn cây Scene Graph ạ."* |
+| **Câu 2:** *"Làm sao em xử lý để cánh tay robot không đâm xuyên sàn Tầng 2 và không đụng cảm biến HC-SR04?"* | Kiểm tra tư duy động học thuận và quy tắc dấu góc quay 3D. | *"Dạ trong OpenGL (trục +Y lên, +Z ra mũi xe), quay góc dương quanh +X làm tay chúc xuống. Em đảo dấu góc khâu vai (`-shoulderUpDeg` với góc luôn dương $14^\circ$–$62^\circ$) để tay đòn $L_1 = 8.2\text{ cm}$ luôn đi vòng lên trên sàn Tầng 2, rồi khâu khuỷu $L_2 = 8.6\text{ cm}$ mới vươn qua đầu HC-SR04 xuống tâm khối hàng ạ."* |
+| **Câu 3:** *"Trong chế độ cô lập L298N, em đã khắc phục lỗi sọc đen trắng (Z-fighting) trên tụ hóa và PCB bằng cách nào?"* | Kiểm tra kinh nghiệm xử lý đồ họa thực tế (Depth Buffer). | *"Dạ em dùng `glEnable(GL_POLYGON_OFFSET_FILL)` với `glPolygonOffset(1.0f, 1.0f)`, nâng đáy mọi phần tử con cao hơn mặt PCB một khoảng $\epsilon = 0.015\text{ cm}$, và vẽ tụ hóa 220 µF thành 2 đoạn nối tiếp (88% vỏ cách điện dưới + 12% nắp nhôm trên) thay vì 2 hình trụ lồng nhau ạ."* |
+| **Câu 4:** *"Trong thuật toán Cohen-Sutherland, làm sao biết ngay đoạn thẳng nằm ngoài cửa sổ mà không cần tính giao điểm?"* | Kiểm tra mã vùng 4-bit và phép toán bit AND *(CG.3, tr. 57)*. | *"Dạ em kiểm tra `(code0 & code1) != 0` trong `Clipper2D.cpp`. Nếu khác `0000` thì hai đầu mút cùng nằm về một phía (Trái/Phải/Trên/Dưới) ngoài khung HUD, nên hàm return false loại bỏ ngay mà không tốn phép chia số thực nào ạ."* |
+| **Câu 5:** *"Tại sao không dùng BoundaryFill đệ quy 4 dòng cho ngắn mà phải dùng Stack?"* | Kiểm tra lưu ý trang 84–88 giáo trình CG.3-2D Graphics. | *"Dạ phương pháp đệ quy dễ gây tràn bộ nhớ ngăn xếp (Stack Overflow) khi vùng tô lớn. Cài đặt `BoundaryFill_Stack` bằng danh sách liên kết push/pop giúp chương trình chạy ổn định ở 61 FPS với mọi kích thước vùng tô ạ."* |
+| **Câu 6:** *"Tại sao Arduino có chân ra 5V rồi mà trên xe vẫn phải gắn thêm mạch hạ áp BUCK LM2596?"* | Kiểm tra độ am hiểu phần cứng hệ thống nhúng thực tế. | *"Dạ mạch ổn áp LDO trên Arduino Uno chỉ chịu dòng khoảng 500–800 mA, trong khi 3 Servo MG996R có dòng đỉnh tới 2.5 A. Cắm trực tiếp vào Arduino sẽ gây sụt áp treo vi điều khiển, nên em tách qua mạch BUCK LM2596 (5V / 3A) cấp nguồn riêng cho cụm cánh tay ạ."* |
 
 ---
 
 ## PHẦN 4: DANH SÁCH KIỂM TRA (CHECKLIST) 15 PHÚT TRƯỚC KHI LÊN BẢNG
 
-- [ ] **1. Chuẩn bị sẵn 2 cửa sổ trên màn hình (Tỉ lệ 50% - 50%):**
-  - Nửa bên trái: Chạy sẵn file `XeDieuKhien3D.exe`.
-  - Nửa bên phải: Mở sẵn VS Code thư mục `C:\XAMPP\htdocs\BaiTap\XeDieuKhien3D` và ghim (Pin) 5 tab code chính:
-    1. `Camera3D.h` & `Camera3D.cpp` *(Chặng 1: Camera cầu $\theta, \Phi, R, D$ & Phép chiếu)*
-    2. `Mesh3D.h` & `Mesh3D.cpp` *(Chặng 2: Khung dây `WireFrame` & Mặt `FaceModel`)*
-    3. `Mat4.cpp` & `SceneNode.cpp` *(Chặng 3: Ma trận Affine $4 \times 4$ & Cây Scene Graph)*
-    4. `CircuitSimulator.cpp` *(Chặng 4: Lan truyền điện áp & Ngắt nguồn `BAT_SW`)*
-    5. `Raster2D.cpp` & `Clipper2D.cpp` *(Chặng 5: Bresenham, Midpoint, Cohen-Sutherland)*
-- [ ] **2. Phóng to chữ trong VS Code:** Bấm `Ctrl + +` tăng cỡ chữ lên **16pt – 18pt** để Thầy/Cô ngồi xa cũng nhìn rõ từng dòng công thức ma trận.
-- [ ] **3. Bảng tra cứu phím tắt điều khiển nhanh (Cheat Sheet):**
-  - `W / A / S / D`: Lái xe tiến / trái / lùi / phải.
-  - `Space`: Phanh dừng xe khẩn cấp.
-  - `I / K`: Nâng lên / Hạ xuống bàn trượt thẳng đứng (Linear Lift).
-  - `O / P`: Mở rộng / Kẹp chặt ngàm gắp (Gripper).
-  - `M`: Chuyển đổi Thủ công $\leftrightarrow$ Tự hành gắp vật thông minh (Auto Grab 5 bước).
-  - `F`: Bật/Tắt khung dây Wireframe (CG.4).
-  - `1, 2, 3, 4, 5`: Đổi góc nhìn Camera (3D tự do, Chiếu bằng, Chiếu đứng, Chiếu cạnh, Bám sau xe).
-  - `T`: Bật/Tắt công tắc nguồn pin `BAT_SW` (7.4V).
-  - `C`: Ẩn/Hiện đường dây điện 3D.
-  - `+ / -`: Tăng/Giảm điện áp mạch Buck LM2596.
-  - `R`: Reset toàn bộ xe, cơ cấu nâng và vật thể về vị trí xuất phát.
-  - `Click chuột trái`: Raycast chọn linh kiện 3D xem thông số trên bảng Inspector.
+* [ ] **1. Chuẩn bị bố cục màn hình 50% – 50%:**
+  * Nửa bên trái: Mở sẵn `Slide_Trinh_Bay_Xen_Ke_Demo_XeDieuKhien3D.pptx` (chế độ Reading View) và VS Code mở sẵn thư mục `C:\XAMPP\htdocs\BaiTap\XeDieuKhien3D` (ghim sẵn 5 tab: `Mesh3D.h`, `Camera3D.cpp`, `ControlComponents.cpp`, `CircuitSimulator.cpp`, `RoboticArmRenderer.h`, `Raster2D.cpp`).
+* [ ] **2. Kiểm tra trạng thái chương trình Demo:**
+  * Nửa bên phải: Chạy sẵn file `XeDieuKhien3D.exe`, kiểm tra FPS đạt ~60 FPS, pin 7.4V, Buck 5.00V, khối hàng đặt sẵn trước mũi xe.
+* [ ] **3. Cỡ chữ trình chiếu mã nguồn:**
+  * Bấm `Ctrl + +` trong VS Code phóng to font chữ lên **16 pt – 18 pt** để giảng viên ngồi dưới nhìn rõ từng dòng công thức.
+* [ ] **4. Bảng tra cứu phím tắt điều khiển nhanh (Cheat Sheet):**
+  * `Chuột trái / phải / cuộn`: Xoay góc nhìn cầu $(\theta, \Phi)$ / Di chuyển Pan / Zoom bán kính $R$.
+  * `1, 2, 3, 4, 5`: Chuyển góc nhìn Camera (Phối cảnh 3D, Top, Front, Side, Bám sau xe).
+  * `C`: Bật / Tắt cửa sổ Camera cổ tay ngàm gắp (`PiP Claw Cam`) góc trên phải.
+  * `W / A / S / D & Space`: Lái xe tiến / trái / lùi / phải theo động học vi sai & Phanh dừng.
+  * `Click chuột trái vào LK`: Raycast chọn 1 trong 11 linh kiện 3D hiển thị thông số trên bảng Inspector.
+  * `I / Enter & ESC`: Vào chế độ Cô lập bo mạch (`Workbench Mode`) & Quay lại toàn xe (`ESC`).
+  * `Tab / [ / ]`: Duyệt nhanh qua 8 phần tử con bên trong bo mạch đang cô lập.
+  * `T & + / -`: Bật/Tắt công tắc pin `BAT_SW` ($7.4\text{V}$) & Tăng/Giảm điện áp `BUCK LM2596`.
+  * `I / K & J / L & O / P`: Nâng/hạ cánh tay 2 khâu, xoay đế mâm, đóng/mở ngàm kẹp gắp khối hàng hóa.
+  * `F & M & R & H`: Bật/tắt WireFrame (`F`), Đổi chế độ Tự hành (`M`), Reset xe (`R`), Xem phím tắt (`H`).

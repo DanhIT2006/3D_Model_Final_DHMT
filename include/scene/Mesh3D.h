@@ -3,26 +3,30 @@
 #include "math/Mat4.h"
 #include <vector>
 
+// =========================================================================
+// [SLIDE 3 CODE BLOCK]: CẤU TRÚC DỮ LIỆU ĐỐI TƯỢNG 3D THEO CG.4 TRANG 20-26
+// Kết hợp Danh sách đỉnh, Danh sách cạnh (WireFrame) và Danh sách mặt (FaceModel)
+// =========================================================================
 struct EdgeType {
-    int beginP;
-    int endP;
+    int beginP; // Chỉ số đỉnh đầu của cạnh
+    int endP;   // Chỉ số đỉnh cuối của cạnh
 };
 
 struct FaceType {
-    std::vector<int> indexFace; // Danh sách chỉ số đỉnh của mặt đa giác
-    Vec3 normal;                // Pháp tuyến phục vụ tính toán ánh sáng
-    Vec3 faceColor;             // Màu mặt (RGB)
+    std::vector<int> indexFace; // Danh sách chỉ số đỉnh của mặt đa giác (ngược chiều kim đồng hồ)
+    Vec3 normal;                // Vector pháp tuyến mặt dùng cho mô hình chiếu sáng Lambert/Phong
+    Vec3 faceColor;             // Màu mặt đa giác (RGB)
 };
 
 /**
- * @brief Mô hình hình học 3D kết hợp WireFrame (Khung dây) và FaceModel (Mặt đa giác)
+ * @brief [SLIDE 3]: Mô hình hình học 3D kết hợp WireFrame (Khung dây) và FaceModel (Mặt đa giác)
  * theo đúng giáo trình CG.4 (trang 20-26)
  */
 class Mesh3D {
 public:
-    std::vector<Vec3> vertices;   // Danh sách đỉnh (Vertices)
-    std::vector<EdgeType> edges;  // Danh sách cạnh (Edges cho WireFrame)
-    std::vector<FaceType> faces;  // Danh sách mặt (Faces cho Solid Mesh)
+    std::vector<Vec3> vertices;   // 1. Danh sách đỉnh (Vertices)
+    std::vector<EdgeType> edges;  // 2. Danh sách cạnh (Edges cho WireFrame mode)
+    std::vector<FaceType> faces;  // 3. Danh sách mặt (Faces cho Solid mode)
 
     Mesh3D() = default;
 

@@ -194,6 +194,11 @@ Mesh3D Mesh3D::createGripperClaw(float length, float width, float thickness, boo
     return base;
 }
 
+// =========================================================================
+// [SLIDE 3 CODE BLOCK]: DUYỆT DANH SÁCH MẶT (FACEMODEL) & DANH SÁCH CẠNH (WIREFRAME)
+// Khi phím F (hoặc W) bật: Duyệt mảng edges với GL_LINES theo cấu trúc bài giảng CG.4 tr.20-26
+// Khi khối đặc: Duyệt mảng faces truyền vector pháp tuyến glNormal3f cho ánh sáng thực
+// =========================================================================
 void Mesh3D::drawSolid(bool useLighting) const {
     if (faces.empty()) return;
 
@@ -237,6 +242,7 @@ void Mesh3D::drawWireframe(Vec3 lineColor, float lineWidth) const {
     glLineWidth(lineWidth);
     glColor3f(lineColor.x, lineColor.y, lineColor.z);
 
+    // Duyệt qua Danh sách cạnh (Edges) nối từng cặp beginP - endP
     glBegin(GL_LINES);
     for (const auto& edge : edges) {
         if (edge.beginP >= 0 && edge.beginP < (int)vertices.size() &&

@@ -39,6 +39,11 @@ Mat4 SceneNode::getLocalMatrix() const {
     return tr * rotY * rotX * rotZ * sc;
 }
 
+// =========================================================================
+// [SLIDE 8 CODE BLOCK]: CÂY PHÂN CẢNH SCENE GRAPH & NHÂN DỒN MA TRẬN THUẦN NHẤT
+// M_world = M_parent_world * M_local (CG.4 trang 5-16)
+// Cho phép ngàm gắp và khối hàng tự động thừa hưởng toàn bộ chuyển động của xe và cánh tay
+// =========================================================================
 Mat4 SceneNode::getWorldMatrix() const {
     if (parent) {
         return parent->getWorldMatrix() * getLocalMatrix();

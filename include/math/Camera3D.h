@@ -58,6 +58,13 @@ public:
     void enterWorkbenchMode();
     void exitWorkbenchMode();
 
+    // =========================================================================
+    // [SLIDE 4 CODE BLOCK]: MA TRẬN HỆ TRỤC QUAN SÁT T = A.B.C.D (CG.4 TRANG 45)
+    // Tính toán tọa độ quan sát (x0, y0, z0) và tọa độ phối cảnh (x', y')
+    // từ 4 tham số cầu (theta, phi, radius, focalD)
+    // =========================================================================
+    void computeCameraCoords(const Vec3& pWorld, float& x0, float& y0, float& z0, float& xProj, float& yProj) const;
+
     // Cập nhật vị trí mắt quan sát dựa trên tham số cầu hoặc vị trí xe
     void update(const Vec3& carPosition, float carYawRad);
 

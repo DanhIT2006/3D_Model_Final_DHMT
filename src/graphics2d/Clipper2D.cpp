@@ -1,5 +1,10 @@
 #include "graphics2d/Clipper2D.h"
 
+// =========================================================================
+// [SLIDE 9 CODE BLOCK]: THUẬT TOÁN XÉN HÌNH COHEN-SUTHERLAND 4-BIT (CG.3 TRANG 55-60)
+// Gán mã vùng 4-bit (Top-Bottom-Right-Left) và kiểm tra phép bit AND (code0 & code1) != 0
+// để loại bỏ ngay lập tức các tia quét/đường sóng nằm ngoài vùng hiển thị HUD mà không tốn phép chia.
+// =========================================================================
 int Clipper2D::computeOutCode(int x, int y, const Rect2D& r) {
     int code = INSIDE;
     if (x < r.xMin)      code |= LEFT;
@@ -10,18 +15,17 @@ int Clipper2D::computeOutCode(int x, int y, const Rect2D& r) {
 }
 
 bool Clipper2D::clipLineCohenSutherland(int& x0, int& y0, int& x1, int& y1, const Rect2D& r) {
-    // Thuật toán xén đoạn thẳng Cohen-Sutherland (CG.3 trang 55-60)
     int code0 = computeOutCode(x0, y0, r);
     int code1 = computeOutCode(x1, y1, r);
     bool accept = false;
 
     while (true) {
         if ((code0 | code1) == 0) {
-            // Cả 2 điểm nằm trọn vẹn bên trong cửa sổ xén
+            // Chấp nhận toàn phần: Cả 2 điểm nằm trọn vẹn bên trong cửa sổ xén
             accept = true;
             break;
         } else if (code0 & code1) {
-            // Cả 2 điểm cùng nằm hẳn về một phía ngoài cửa sổ xén (Loại bỏ hiển nhiên)
+            // Loại bỏ hiển nhiên: (code0 & code1) != 0, cả 2 điểm cùng nằm hẳn về một phía ngoài cửa sổ
             break;
         } else {
             // Một phần đoạn thẳng có thể cắt qua cửa sổ xén

@@ -87,6 +87,12 @@ void CircuitSimulator::setupStandardCarCircuit() {
     addWire("W_ARD_SRV_GRIP",  "ARD", "D11", "SRV_GRIP",  "SIG", yellowPWM);
 }
 
+// =========================================================================
+// [SLIDE 7 CODE BLOCK]: MÔ PHỎNG MẠCH NGUỒN 3 BUS & LAN TRUYỀN ĐIỆN ÁP THỜI GIAN THỰC
+// 1. Pack 2 Pin 18650 (7.4V / 2600mAh) qua công tắc BAT_SW vào trạm DOMINO 3 Bus
+// 2. Bus 7.4V cấp nguồn động lực trực tiếp cho mạch cầu H L298N & chân VIN Arduino Uno
+// 3. Mạch hạ áp BUCK LM2596 xuất 5.00V / 3A nuôi riêng 3 Servo MG996R (dòng đỉnh 2.5A)
+// =========================================================================
 void CircuitSimulator::stepCircuit(float dt) {
     // 1. Lan truyền điện áp tuần tự giữa các linh kiện
     auto* bat   = dynamic_cast<BatterySwitchComp*>(getComponent("BAT_SW"));

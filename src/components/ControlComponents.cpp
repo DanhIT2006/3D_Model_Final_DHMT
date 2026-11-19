@@ -38,6 +38,11 @@ ArduinoUnoComp::ArduinoUnoComp()
     initSubComponents();
 }
 
+// =========================================================================
+// [SLIDE 6 CODE BLOCK]: GIẢI PHẪU BO MẠCH ARDUINO UNO R3 (8 KHỐI PHẦN TỬ CON)
+// Mô hình hóa chi tiết: CPU ATmega328P DIP-28, Nút nhấn Reset phần cứng,
+// Cổng USB Type-B & ATmega16U2, Jack DC Barrel, LDO 5V, Thạch anh 16.000MHz, Tụ lọc 47uF
+// =========================================================================
 void ArduinoUnoComp::initSubComponents() {
     subComponents.clear();
 

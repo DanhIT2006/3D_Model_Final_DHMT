@@ -163,10 +163,13 @@ public:
         glPopMatrix();
     }
 
-    /**
-     * @brief Hàm tính chính xác tọa độ 3D của Tâm Điểm Kẹp (Giữa 2 miếng đệm đỏ của ngàm gắp)
-     * Đồng bộ tuyệt đối với các lệnh glTranslatef / glRotatef trong renderArmAssembly
-     */
+    // =========================================================================
+    // [SLIDE 8 CODE BLOCK]: ĐỘNG HỌC THUẬN CÁNH TAY 2 KHÂU (3 BẬC TỰ DO - 3 DOF)
+    // Tự động tính toán vị trí tâm 2 má kẹp đỏ (Grip Tip Center) theo chuỗi ma trận:
+    // M_grip = M_car * M_base * M_arm * M_claw (CG.4 trang 5-16)
+    // Đế xoay z = 6.2cm, Khâu vai L1 = 8.2cm, Khâu khuỷu L2 = 8.6cm
+    // Hạ thấp nhất (liftDeg = 0): Vươn xa z = 18.2cm, độ cao y = 1.65cm khớp tâm khối hàng
+    // =========================================================================
     static Vec3 computeGripTipWorldPos(
         const Vec3& carWorldPos, float carYawRad,
         float floor2Height,      // Độ cao mặt sàn Tầng 2 (6.35f cm)

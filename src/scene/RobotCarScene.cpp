@@ -182,6 +182,11 @@ void RobotCarScene::updateDifferentialDrive(float dt) {
     carRoot->localRot.y = carYawRad;
 }
 
+// =========================================================================
+// [SLIDE 8 CODE BLOCK]: CƠ CHẾ GẮP HÚT VẬT THỂ TỰ ĐỘNG (SOFT MAGNETIC GRASP)
+// Vùng kiểm tra va chạm gắp: deltaXZ <= 3.8 cm và deltaY <= 3.2 cm
+// Khi khép ngàm (grip <= 35 độ), khối hàng tự động khóa tâm vào chính giữa 2 miếng đệm cao su đỏ
+// =========================================================================
 void RobotCarScene::updateArmAndGrasping(float dt) {
     if (!compSrvGrip || !targetObject) return;
 

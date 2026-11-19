@@ -186,6 +186,11 @@ SubComponent* HardwareComponent::pickSubComponent(const Vec3& rayOrigin, const V
     return nullptr;
 }
 
+// =========================================================================
+// [SLIDE 6 CODE BLOCK]: CHẾ ĐỘ CÔ LẬP BO MẠCH TRÊN BÀN XOAY (WORKBENCH MODE)
+// Ẩn toàn bộ khung xe, đưa linh kiện lên bàn xoay CAD, áp dụng glPolygonOffset(1.0f, 1.0f)
+// kết hợp nâng đáy epsilon = 0.015 cm để khử triệt để hiện tượng sọc rác Z-fighting
+// =========================================================================
 void HardwareComponent::renderWorkbench(bool wireframeMode, bool xrayMode) {
     glPushMatrix();
     // Nâng linh kiện lên cao hơn mặt bàn xoay (y = 0) để toàn bộ thân và chân cắm không bị chìm

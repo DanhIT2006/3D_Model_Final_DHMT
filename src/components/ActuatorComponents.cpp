@@ -252,6 +252,11 @@ L298NDriverComp::L298NDriverComp()
     initSubComponents();
 }
 
+// =========================================================================
+// [SLIDE 6 CODE BLOCK]: GIẢI PHẪU BO MẠCH CẦU H L298N (8 KHỐI PHẦN TỬ CON)
+// Mô hình hóa chi tiết: Tản nhiệt nhôm 7 lá, Cặp tụ hóa 220uF/35V tách rời,
+// 8 Diode bảo vệ dòng ngược Back-EMF (D1-D8), Chốt Jumper 5V Enable rút/cắm được
+// =========================================================================
 void L298NDriverComp::initSubComponents() {
     subComponents.clear();
 
@@ -1035,11 +1040,17 @@ void ServoMG996RComp::updateMotion(float dt) {
     }
 }
 
+// =========================================================================
+// [SLIDE 7 CODE BLOCK]: RÀNG BUỘC ĐIỆN ÁP HOẠT ĐỘNG SERVO MG996R (VCC >= 4.8V)
+// Servo MG996R yêu cầu dải nguồn 4.8V - 7.2V (dòng đỉnh 2.5A khi nâng tải).
+// Được cấp nguồn riêng từ mạch hạ áp BUCK LM2596 (5.00V / 3A). Khi BUCK bị giảm áp
+// dưới 4.8V hoặc tắt công tắc BAT_SW (7.4V), isPowered = false và cánh tay lập tức bị khóa cứng.
+// =========================================================================
 void ServoMG996RComp::onElectricalUpdate() {
     Pin* vcc = getPin("VCC");
     Pin* sig = getPin("SIG");
 
-    isPowered = (vcc && vcc->voltage >= 4.5f);
+    isPowered = (vcc && vcc->voltage >= 4.8f);
 
     if (isPowered && sig) {
         targetAngleDeg = sig->pwmDuty * 180.0f;
